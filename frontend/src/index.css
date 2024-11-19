@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body{
+    background-color: rgb(241, 245, 241);
+}
+
+h1, h2, h3, h4, h5, h6{
+    font-family: 'Roboto', sans-serif;
+    color: #000d6b;
+    font-weight: 600;
+}
+
+h3, h4 {
+  font-size: 1.8rem;
+}
+
+h5, h6 {
+  font-size: 1.2rem;
+}
+
+a {
+  color: unset;
+  text-decoration: none;
+}
+
+a:hover {
+  color: unset;
+}
+
+ul{
+  margin: 0;
+  list-style: none;
+}
+
+.section__title{
+  color: #000d6b;
+  font-weight: 600;
+  font-size: 2rem;
+}
+
+.section__subtitle{
+  color: f9a826;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.section__description{
+  color: #7c8a97;
+  font-size: .9rem;
+  line-height: 30px;
+}
+
+section{
+  padding: 50px 0;
+}
+
+.btn{
+  padding: 7px 15px;
+  background-color: #000d6b;
+  color: white;
+  border: none;
+  outline: none;
+  border-radius: 5px;
+}
+
+.btn:hover{
+  color: white;
+background: #000c6db0;
+}
+
+@media only screen and (max-width: 768px) {
+  section{
+    padding: 30px 0;
+  }
+
+  .section__title{
+    font-size: 1.6rem;
+  }
+
+  .section__subtitle{
+    font-size: 1.1rem;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "uscarparts-e352f",
+  "private_key_id": "d8b0651fce3c3929fe3c6afb93a006cf4941a011",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCvLtx7pElNd6/l\nU0APRBWezPAcB/NUUyFcE2tAHUeCvyhdEsEnY9e1V6jbMu1YifO6FqqWhybkTL/y\nqSzr0nDp4fvJDHQPM1Y3wLZAHEP16JondHODaUTj6fw2JsirAQzdCpCAQs/T+ny5\nozJs/lIjUxa8uTCTdk9Qa1eSrR3nQkG/xgn6dPsmwG75tzGa27dKKFTHMr7OaHZ+\nNbpBShHVQimwiXcDQVnIBKuX7JRDPdF8eo3n3rYQnZO/P4RJXSWp9FfdC8dyAF9s\nd6534qeH/T3FUUPU8TVmCjMLajskQJ9XDfSXQMC9BrkbXx+kkUT8suO1JXT1ZuOx\nnls5iMI9AgMBAAECggEASWtH34/GYu+u6dsepWdA8mlslirk2anveMHwuJGs10ib\nN4q1JfeLv4YqEBgDbhB+87YtL2IcNCFQbvhlCb6MMRFTb3rHJ1m6ICqlly/hca3W\n8YM2KFSVmTmGyQEvJ7AMfpU/Y2nc5Tf9TuXtK83YidJ4XIb2q06xxf/+10uzlSg2\nAyIT6rt5MzVSdmuY3n6r5/Z/H+0nW+DDafROz8P6yhjFp9cX7Z9l2u3HZ1bLmIyO\nBa4LvoAlTdYUZvW2bE52e3mZUagXYzGoWRebjxqu5mMlVo7EiB9sgvMz1Ob7iNsT\nvC+yiShDL0DtjMs4Q8gmkFhWf3CbM2Hg2px3QJpsxwKBgQDyBilulSZzLgZ0P+Op\nP2BUnuC4zUmf321yhbxLXa5bpz+4+O5wKB82Y+BN7nwEODD8lPiWUK1qOIXhz1FS\nn9E7Xt9BHqGFx9WCsN/YwLxkG9m8iomK0Gn2NWgY2VaJKW0+QiJFLx+dxdDgUze5\nf+9bzwTo0brbWc2afbkj9EFRiwKBgQC5TJb0JZMXzF/798iM6znlcDUonPW7v+zU\n7HLrnCVLfOWvM08RO3doEz1Fi0ungRGgWUuzFuz16OcvQUFCRps+oUIqGGegsq5l\niTPZLQ41Dxeef6JLr2tIxJV+aagPBJoP8w9ilGYWB1thzxhZwGWC2p3hY8IJ2XBu\npwEqHmukVwKBgGQxbteLwXYvWJapmFsJlJyThV6cBd28hjfB65ibuMHStEukKjme\nMoW2xTYeA5NPm+AE4ACCd7ggnDRGOlllNh5JAU2ZG68hcl9/T7wQ1izvZq1qANTJ\nwQQfSe/3kZ6I2uPKRxuzDXioWvdzG/+cWf/87QBhSuTiAX7yi0G6LYxPAoGBAJke\nI+MNpZXVyT8BytQ/kDD63sJ3qUuC1eZAmNn+xoaxZ261/FEmDY6Pz2LHLzX0Hqed\nAkOz3w15bogK6S0mASToxi7YydDttdSrYo/Efmfz17WejHL0Orf/0fSKxFfcmp4x\nYHY6YH01iRqysdGAfaF6m1njQDU5W4HkOL8gMhyzAoGBAKRDpQ4QpjSguhRimE/z\nDNMFcDPEsFGynGbIglfZ78f/7ZYSUmIOug2z4iE9kJtPB/6bAn1kWc3liu5FGPZK\ncT8CtGeCIWKKwxhB60YZ9aNrC+lxXoUBe7VQlCCsLckbt4QvCx97gnfyAhX4r8Sc\nHmHa9TvLV9gPbNS7p94MUEJ5\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-v7r9f@uscarparts-e352f.iam.gserviceaccount.com",
+  "client_id": "103501551140839992590",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-v7r9f%40uscarparts-e352f.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
