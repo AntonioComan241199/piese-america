@@ -107,68 +107,61 @@ const AllOrders = () => {
   }, [token]);
 
   return (
-    <div className="p-6 flex flex-col items-center">
-      <h2 className="text-3xl font-bold mb-6">Toate comenzile</h2>
-      {loading && <p className="text-blue-500">Se încarcă comenzile...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-      <button
-        onClick={exportToCSV}
-        className="mb-4 bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-      >
-        Export Comenzi
-      </button>
-      <div className="overflow-x-auto w-full">
-        <table className="min-w-full table-auto border-collapse border border-gray-300 text-center">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-4 py-2">Client</th>
-              <th className="border px-4 py-2">Phone</th>
-              <th className="border px-4 py-2">Email</th>
-              <th className="border px-4 py-2">Mașină</th>
-              <th className="border px-4 py-2">Status</th>
-              <th className="border px-4 py-2">Data</th>
-              <th className="border px-4 py-2">Acțiuni</th>
+    <div className="container my-4">
+      <h2 className="text-center mb-4">Toate comenzile</h2>
+      {loading && <div className="alert alert-info">Se încarcă comenzile...</div>}
+      {error && <div className="alert alert-danger">{error}</div>}
+      <div className="mb-3 text-end">
+        <button onClick={exportToCSV} className="btn btn-primary">
+          Export Comenzi
+        </button>
+      </div>
+      <div className="table-responsive">
+        <table className="table table-bordered table-hover">
+          <thead className="table-light">
+            <tr>
+              <th>Client</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Mașină</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th>Acțiuni</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order._id} className="hover:bg-gray-50">
-                <td className="border px-4 py-2">
-                  {order.firstName} {order.lastName}
-                </td>
-                <td className="border px-4 py-2">{order.phoneNumber}</td>
-                <td className="border px-4 py-2">{order.email}</td>
-                <td className="border px-4 py-2">
-                  {order.carMake} {order.carModel}
-                </td>
-                <td className="border px-4 py-2">
+              <tr key={order._id}>
+                <td>{order.firstName} {order.lastName}</td>
+                <td>{order.phoneNumber}</td>
+                <td>{order.email}</td>
+                <td>{order.carMake} {order.carModel}</td>
+                <td>
                   <select
                     value={order.status}
                     onChange={(e) => updateStatus(order._id, e.target.value)}
-                    className="bg-white border border-gray-300 rounded px-2 py-1"
+                    className="form-select form-select-sm"
                   >
                     <option value="pending">Pending</option>
                     <option value="processed">Processed</option>
                     <option value="completed">Completed</option>
                   </select>
                 </td>
-                <td className="border px-4 py-2">
-                  {new Date(order.orderDate).toLocaleDateString()}
-                </td>
-                <td className="border px-4 py-2 space-x-2">
+                <td>{new Date(order.orderDate).toLocaleDateString()}</td>
+                <td>
                   <button
                     onClick={() => {
                       if (window.confirm("Esti sigur ca vrei sa stergi comanda?")) {
                         deleteOrder(order._id);
                       }
                     }}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    className="btn btn-danger btn-sm me-2"
                   >
                     Șterge
                   </button>
                   <button
                     onClick={() => window.open(`/order-detail/${order._id}`, "_blank")}
-                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                    className="btn btn-success btn-sm"
                   >
                     Detalii
                   </button>

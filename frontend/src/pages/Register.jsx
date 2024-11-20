@@ -44,7 +44,7 @@ export default function Register() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-        credentials: "include", // Include cookie-uri
+        credentials: "include",
       });
 
       if (!loginResponse.ok) {
@@ -65,83 +65,65 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-1 lg:px-3">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <img alt="Your Company" src={Logo} className="mx-auto h-9 w-auto" />
-        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-          Creaza un cont nou
-        </h2>
-      </div>
-
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
-              Email address
-            </label>
-            <div className="mt-2">
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-4">
+          <div className="text-center mb-4">
+            <img src={Logo} alt="Your Company" className="img-fluid mb-3" style={{ maxHeight: "160px" }} />
+            <h2 className="fw-bold">Creează un cont nou</h2>
+          </div>
+          <form onSubmit={handleSubmit} className="p-4 border rounded shadow-sm bg-white">
+            {error && <div className="alert alert-danger text-center">{error}</div>}
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">
+                Adresa de email
+              </label>
               <input
-                id="email"
-                name="email"
                 type="email"
-                required
-                autoComplete="email"
+                className="form-control"
+                id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                required
               />
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
-              Password
-            </label>
-            <div className="mt-2">
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">
+                Parola
+              </label>
               <input
-                id="password"
-                name="password"
                 type="password"
-                required
-                autoComplete="new-password"
+                className="form-control"
+                id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                required
               />
             </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="confirm-password"
-              className="block text-sm/6 font-medium text-gray-900"
-            >
-              Confirm Password
-            </label>
-            <div className="mt-2">
+            <div className="mb-3">
+              <label htmlFor="confirm-password" className="form-label">
+                Confirmă parola
+              </label>
               <input
-                id="confirm-password"
-                name="confirmPassword"
                 type="password"
-                required
+                className="form-control"
+                id="confirm-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                required
               />
             </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Register
+            <button type="submit" className="btn btn-primary w-100">
+              Creează cont
             </button>
-          </div>
-        </form>
-
-        {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+          </form>
+          <p className="mt-3 text-center">
+            Ai deja un cont?{" "}
+            <a href="/signin" className="text-decoration-none text-primary">
+              Conectează-te aici
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
