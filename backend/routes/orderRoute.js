@@ -10,11 +10,11 @@ import authMiddleware from '../middleware/authMiddleware.js'; // Import implicit
 
 const router = express.Router();
 
-// Rute
-router.post('/', createOrder); // Creare comandă (fără autentificare)
+// Rute comenzi
+router.post('/create', createOrder); // Creare comandă (fără autentificare)
 router.get('/admin', authMiddleware, getAllOrders); // Vizualizare toate comenzile (doar pentru admin)
-router.get('/client', authMiddleware, getClientOrders); // Vizualizare comenzile clientului
-router.patch('/:id', authMiddleware, updateOrderStatus); // Actualizare status comandă
-router.delete('/:id', authMiddleware, deleteOrder); // Ștergere comandă
+router.get('/client', authMiddleware, getClientOrders); // Vizualizare comenzile clientului de completat
+router.patch('/:id', authMiddleware, updateOrderStatus); // Actualizare status comandă de completat
+router.delete('/:id', authMiddleware, deleteOrder); // Ștergere comandă de completat
 
 export default router;

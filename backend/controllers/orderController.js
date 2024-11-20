@@ -1,101 +1,99 @@
-import Order from '../models/Order.js'; // Importăm modelul Order
+import Order from "../models/Order.js";
+import { createLog } from "../utils/createLog.js";
 
 // 1. Creare comandă nouă
 export const createOrder = async (req, res) => {
     try {
-        const {
-            firstName,
-            lastName,
-            email,
-            phoneNumber,
-            carMake,
-            carModel,
-            carYear,
-            engine,
-            partDetails,
-        } = req.body;
+        const order = new Order(req.body);
+        await order.save();
 
-        // Creăm o comandă nouă pe baza datelor primite
-        const newOrder = new Order({
-            firstName,
-            lastName,
-            email,
-            phoneNumber,
-            carMake,
-            carModel,
-            carYear,
-            engine,
-            partDetails,
+        // Creează log după salvarea comenzii
+        await createLog({
+            action: "Order Created",
+            userId: req.user.id, // presupunem că middleware-ul de autentificare a adăugat utilizatorul în req
+            orderId: order._id,
+            details: `Order created for ${order.carMake} ${order.carModel}`,
         });
 
-        await newOrder.save(); // Salvăm comanda în baza de date
-        res.status(201).json({ message: 'Comanda a fost creată cu succes!' });
+        res.status(201).json({ success: true, data: order });
     } catch (error) {
-        console.error('Eroare la crearea comenzii:', error);
-        res.status(500).json({ message: 'Eroare la crearea comenzii.' });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // 2. Preluare toate comenzile (doar pentru admin)
 export const getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.find(); // Preluăm toate comenzile
-        res.status(200).json(orders);
+        const orders = await Order.find(); // Găsește toate comenzile
+        res.status(200).json({ success: true, data: orders });
     } catch (error) {
-        console.error('Eroare la preluarea comenzilor:', error);
-        res.status(500).json({ message: 'Eroare la preluarea comenzilor.' });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // 3. Preluare comenzile unui client (pe baza email-ului, după autentificare)
 export const getClientOrders = async (req, res) => {
     try {
-        const clientEmail = req.user.email; // Email-ul utilizatorului logat
-        const orders = await Order.find({ email: clientEmail }); // Filtrăm comenzile după email
-        res.status(200).json(orders);
+        console.log("User info:", req.user); // Loghează utilizatorul autenticat
+        const clientEmail = req.user.email;
+        const orders = await Order.find({ email: clientEmail });
+        res.status(200).json({ success: true, data: orders });
     } catch (error) {
-        console.error('Eroare la preluarea comenzilor clientului:', error);
-        res.status(500).json({ message: 'Eroare la preluarea comenzilor.' });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
+
 
 // 4. Actualizare status comandă (de ex. pending -> processed)
 export const updateOrderStatus = async (req, res) => {
     try {
-        const { id } = req.params; // ID-ul comenzii
-        const { status } = req.body; // Statusul nou
+        const { id } = req.params; // ID-ul comenzii din URL
+        const { status } = req.body; // Statusul nou din corpul requestului
 
         const order = await Order.findByIdAndUpdate(
             id,
             { status },
-            { new: true } // Returnăm comanda actualizată
+            { new: true, runValidators: true } // Returnează comanda actualizată
         );
 
         if (!order) {
-            return res.status(404).json({ message: 'Comanda nu a fost găsită.' });
+            return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        res.status(200).json(order);
+        // Creează log pentru actualizarea statusului comenzii
+        await createLog({
+            action: "Order Status Updated",
+            userId: req.user.id, // presupunem că middleware-ul de autentificare a adăugat utilizatorul în req
+            orderId: order._id,
+            details: `Order status changed to ${status}`,
+        });
+
+        res.status(200).json({ success: true, data: order });
     } catch (error) {
-        console.error('Eroare la actualizarea statusului comenzii:', error);
-        res.status(500).json({ message: 'Eroare la actualizarea statusului comenzii.' });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // 5. Ștergere comandă
 export const deleteOrder = async (req, res) => {
     try {
-        const { id } = req.params; // ID-ul comenzii
-
+        const { id } = req.params; // ID-ul comenzii din URL
         const order = await Order.findByIdAndDelete(id);
 
         if (!order) {
-            return res.status(404).json({ message: 'Comanda nu a fost găsită.' });
+            return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        res.status(200).json({ message: 'Comanda a fost ștearsă cu succes!' });
+        // Creează log pentru ștergerea comenzii
+        await createLog({
+            action: "Order Deleted",
+            userId: req.user.id, // presupunem că middleware-ul de autentificare a adăugat utilizatorul în req
+            orderId: order._id,
+            details: `Order for ${order.carMake} ${order.carModel} was deleted`,
+        });
+
+        res.status(200).json({ success: true, message: "Order deleted successfully" });
     } catch (error) {
-        console.error('Eroare la ștergerea comenzii:', error);
-        res.status(500).json({ message: 'Eroare la ștergerea comenzii.' });
+        res.status(500).json({ success: false, message: error.message });
     }
 };

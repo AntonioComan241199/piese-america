@@ -3,11 +3,7 @@ import User from '../models/User.js';
 import { errorHandler } from '../utils/error.js';
 import Listing from '../models/Order.js';
 
-export const test = (req, res) => {
-  res.json({
-    message: 'Api route is working!',
-  });
-};
+
 
 export const updateUser = async (req, res, next) => {
   if (req.user.id !== req.params.id)
@@ -23,9 +19,7 @@ export const updateUser = async (req, res, next) => {
         $set: {
           username: req.body.username,
           email: req.body.email,
-          password: req.body.password,
-          avatar: req.body.avatar,
-        },
+          password: req.body.password        },
       },
       { new: true }
     );

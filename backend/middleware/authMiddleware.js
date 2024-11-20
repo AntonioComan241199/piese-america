@@ -1,19 +1,17 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
-    const token = req.header('Authorization'); // Extragem tokenul din header
-
+    const token = req.headers.authorization?.split(" ")[1]; // Extrage token-ul din header
     if (!token) {
-        return res.status(401).json({ message: 'Acces neautorizat. Tokenul lipsește.' });
+        return res.status(401).json({ message: "Access denied, no token provided" });
     }
 
     try {
-        // Verificăm tokenul folosind secretul definit în `.env`
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; // Adăugăm informațiile utilizatorului în obiectul `req`
-        next(); // Continuăm către următorul middleware sau handler
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Decodează token-ul
+        req.user = decoded; // Adaugă datele utilizatorului în req.user
+        next();
     } catch (error) {
-        res.status(401).json({ message: 'Token invalid.' });
+        res.status(401).json({ message: "Invalid token" });
     }
 };
 
