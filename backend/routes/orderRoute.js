@@ -11,7 +11,7 @@ import authMiddleware from '../middleware/authMiddleware.js'; // Import implicit
 const router = express.Router();
 
 // Rute comenzi
-router.post('/create', createOrder); // Creare comandă (fără autentificare)
+router.post("/create", authMiddleware, createOrder);
 router.get('/admin', authMiddleware, getAllOrders); // Vizualizare toate comenzile (doar pentru admin)
 router.get('/client', authMiddleware, getClientOrders); // Vizualizare comenzile clientului de completat
 router.patch('/:id', authMiddleware, updateOrderStatus); // Actualizare status comandă de completat
