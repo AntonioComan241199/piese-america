@@ -32,6 +32,9 @@ export default function Signin() {
 
       const data = await response.json();
 
+      // Salvează token-ul în localStorage
+      localStorage.setItem("token", data.token);
+
       // Actualizează starea autentificării în Redux
       dispatch(
         login({
@@ -43,7 +46,7 @@ export default function Signin() {
       );
 
       // Navighează utilizatorul la pagina principală după autentificare
-      navigate("/home");
+      navigate("/home", { replace: true }); // Forțează re-ruta
     } catch (error) {
       setError(error.message);
     }
@@ -54,11 +57,21 @@ export default function Signin() {
       <div className="row justify-content-center">
         <div className="col-md-4">
           <div className="text-center mb-5">
-            <img src={Logo} alt="Your Company" className="img-fluid mb-3" style={{ maxHeight: "160px"}} />
-            <h2 className="fw-bold">Conecteaza-te la contul tau</h2>
+            <img
+              src={Logo}
+              alt="Your Company"
+              className="img-fluid mb-3"
+              style={{ maxHeight: "160px" }}
+            />
+            <h2 className="fw-bold">Conectează-te la contul tău</h2>
           </div>
-          <form onSubmit={handleSubmit} className="p-4 border rounded shadow-sm bg-white">
-            {error && <div className="alert alert-danger text-center">{error}</div>}
+          <form
+            onSubmit={handleSubmit}
+            className="p-4 border rounded shadow-sm bg-white"
+          >
+            {error && (
+              <div className="alert alert-danger text-center">{error}</div>
+            )}
             <div className="mb-3">
               <label htmlFor="email" className="form-label">
                 Adresa de email
@@ -86,13 +99,13 @@ export default function Signin() {
               />
             </div>
             <button type="submit" className="btn btn-primary w-100">
-              Conecteaza-te
+              Conectează-te
             </button>
           </form>
           <p className="mt-3 text-center">
             Nu ai un cont?{" "}
             <a href="/register" className="text-decoration-none text-primary">
-              Creeaza unul aici
+              Creează unul aici
             </a>
           </p>
         </div>

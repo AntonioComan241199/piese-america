@@ -8,7 +8,7 @@ const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET); // Decodează token-ul
-        req.user = decoded; // Adaugă datele utilizatorului în req.user
+        req.user = decoded; // Atașează datele utilizatorului în req.user
         next();
     } catch (error) {
         res.status(401).json({ message: "Invalid token" });

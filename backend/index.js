@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import userRouter from './routes/UserRoute.js';
 import authRouter from './routes/authRoute.js';
 import orderRoute from './routes/orderRoute.js';
+import carRoutes from "./routes/carRoutes.js"; 
 import cookieParser from 'cookie-parser';
 import cors from "cors";
 
@@ -34,6 +35,7 @@ mongoose.connect(process.env.MONGODB_URI).then(() => {
 app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/order', orderRoute);
+app.use("/api/cars", carRoutes); // Prefixăm rutele cu /api/cars
 
 
 // Middleware pentru erori

@@ -10,7 +10,7 @@ export const createOrder = async (req, res) => {
         // Creează log după salvarea comenzii
         await createLog({
             action: "Order Created",
-            userId: req.user.id, // presupunem că middleware-ul de autentificare a adăugat utilizatorul în req
+            userId: req.user._id, // Utilizează _id în loc de id
             orderId: order._id,
             details: `Order created for ${order.carMake} ${order.carModel}`,
         });

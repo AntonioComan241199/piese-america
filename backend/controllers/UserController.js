@@ -56,3 +56,14 @@ export const getUserOrders = async (req, res, next) => {
     return next(errorHandler(401, 'You can only view your own orders!'));
   }
 };
+
+export const getAuthenticatedUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+};

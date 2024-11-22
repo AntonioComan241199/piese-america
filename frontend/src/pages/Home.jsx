@@ -1,9 +1,11 @@
+// eslint-disable-next-line no-unused-vars
 import React from "react";
 import Helmet from "../components/Helmet/Helmet";
 import { Carousel } from "react-bootstrap";
 import slider1 from "../assets/all-images/slider-img/BannerCarParts1.png";
 import slider2 from "../assets/all-images/slider-img/slider-2.jpg";
-import slider3 from "../assets/all-images/slider-img/slider-3.jpg";
+import slider21 from "../assets/all-images/slider-img/slider-2(1).jpg";
+import slider3 from "../assets/all-images/slider-img/slider-3(1).jpg";
 
 const Home = () => {
   return (
@@ -18,14 +20,12 @@ const Home = () => {
               style={{ maxHeight: "600px", objectFit: "cover" }}
             />
             <Carousel.Caption>
-              <h3>Găsește piesele perfecte pentru mașina ta</h3>
-              <p>Importăm direct din America, rapid și fiabil.</p>
             </Carousel.Caption>
           </Carousel.Item>
           <Carousel.Item>
             <img
               className="d-block w-100"
-              src={slider2}
+              src={slider21}
               alt="Second slide"
               style={{ maxHeight: "600px", objectFit: "cover" }}
             />

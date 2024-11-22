@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState } from "react";
 import Logo from "../assets/all-images/Logo.webp";
 import { useNavigate } from "react-router-dom";

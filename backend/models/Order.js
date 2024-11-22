@@ -8,7 +8,10 @@ const OrderSchema = new mongoose.Schema({
     carMake: { type: String, required: true },   // Marca mașinii
     carModel: { type: String, required: true },  // Modelul mașinii
     carYear: { type: Number, required: true },   // Anul de fabricație al mașinii
-    engine: { type: String, required: true },    // Motorizare
+    fuelType: { type: String, required: true },    // Motorizare
+    engineSize: { type: Number, required: true }, // Capacitate cilindrică
+    transmission: { type: String, required: true }, // Cutie de vite
+    vin : { type: String, required: true }, // Numărul de identificare al vehiculului
     partDetails: { type: String, required: true }, // Detalii piesă comandată
     status: { type: String, default: 'pending' }, // Statusul comenzii (pending, processed, completed)
     orderDate: { type: Date, default: Date.now }, // Data la care s-a plasat comanda

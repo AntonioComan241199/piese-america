@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { fetchWithAuth } from "../utils/fetchWithAuth";
 
 const AllOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -10,22 +11,10 @@ const AllOrders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/order/admin", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to fetch orders");
-      }
-
-      const data = await response.json();
-      setOrders(data.data);
+      const data = await fetchWithAuth("http://localhost:5000/api/order/admin");
+      setOrders(data.data); // presupunem că datele sunt în `data.data`
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to fetch orders");
     } finally {
       setLoading(false);
     }
@@ -33,48 +22,31 @@ const AllOrders = () => {
 
   const updateStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/order/${orderId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update status");
-      }
-
-      const updatedOrder = await response.json();
+      const updatedOrder = await fetchWithAuth(
+        `http://localhost:5000/api/order/${orderId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, status: updatedOrder.data.status } : order
         )
       );
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to update status");
     }
   };
 
   const deleteOrder = async (orderId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/order/${orderId}`, {
+      await fetchWithAuth(`http://localhost:5000/api/order/${orderId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to delete order");
-      }
-
       setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to delete order");
     }
   };
 
@@ -103,7 +75,7 @@ const AllOrders = () => {
   };
 
   useEffect(() => {
-    fetchOrders();
+    if (token) fetchOrders();
   }, [token]);
 
   return (
@@ -151,7 +123,7 @@ const AllOrders = () => {
                 <td>
                   <button
                     onClick={() => {
-                      if (window.confirm("Esti sigur ca vrei sa stergi comanda?")) {
+                      if (window.confirm("Ești sigur că vrei să ștergi comanda?")) {
                         deleteOrder(order._id);
                       }
                     }}

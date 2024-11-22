@@ -1,18 +1,19 @@
 import jwt from "jsonwebtoken";
-import { errorHandler } from "../utils/error.js";
 
 export const verifyToken = (req, res, next) => {
-  const token = req.header("Authorization")?.split(" ")[1];
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
-    return next(errorHandler(401, "Access denied. No token provided."));
+  if (!authHeader) {
+    return res.status(401).json({ message: "Access denied. No token provided." });
   }
+
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Atașăm datele utilizatorului la request
+    req.user = decoded; // Atașăm datele utilizatorului
     next();
   } catch (err) {
-    next(errorHandler(401, "Invalid or expired token."));
+    return res.status(401).json({ message: "Invalid or expired token." });
   }
 };
