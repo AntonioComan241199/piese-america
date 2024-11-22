@@ -12,6 +12,7 @@ import Footer from "./components/Footer/Footer";
 import AllOrders from "./pages/AllOrders";
 import MyOrders from "./pages/MyOrders";
 import RequestOrder from "./pages/RequestOrder";
+import OrderDetails from "./pages/OrderDetails";
 import { checkAuth } from "./slices/authSlice";
 
 // Wrapper pentru rutele protejate
@@ -53,6 +54,17 @@ const AppWrapper = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/order-details/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetails />
+            </ProtectedRoute>
+          }
+
+        />
+        
+
         <Route
           path="/my-orders"
           element={

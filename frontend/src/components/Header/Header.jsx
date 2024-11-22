@@ -16,8 +16,8 @@ import "../../styles/Header.css";
 
 const navLinks = [
   { path: "/home", display: "Home" },
-  { path: "/request-order", display: "Cere ofertă" },
   { path: "/contact", display: "Contact" },
+  { path: "/request-order", display: "Cere ofertă" },
 ];
 
 const Header = () => {
