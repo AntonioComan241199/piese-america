@@ -4,19 +4,26 @@ import { createLog } from "../utils/createLog.js";
 // 1. Creare comandă nouă
 export const createOrder = async (req, res) => {
     try {
+        console.log("req.user in createOrder:", req.user); // Debugging
+
         const order = new Order(req.body);
         await order.save();
 
-        // Creează log după salvarea comenzii
-        await createLog({
-            action: "Order Created",
-            userId: req.user._id, // Utilizează _id în loc de id
-            orderId: order._id,
-            details: `Order created for ${order.carMake} ${order.carModel}`,
-        });
+        // Creează log doar dacă req.user are id
+        if (req.user?.id) {
+            await createLog({
+                action: "Order Created",
+                userId: req.user.id,
+                orderId: order._id,
+                details: `Order created for ${order.carMake} ${order.carModel}`,
+            });
+        } else {
+            console.warn("req.user.id is missing. Log not created.");
+        }
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {
+        console.error("Error in createOrder:", error); // Debugging
         res.status(500).json({ success: false, message: error.message });
     }
 };
