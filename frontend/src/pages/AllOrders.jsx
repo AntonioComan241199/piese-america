@@ -24,21 +24,20 @@ const AllOrders = () => {
   };
 
   useEffect(() => {
-    const checkAndFetch = async () => {
-      // Asigură-te că token-ul este verificat
+    const initialize = async () => {
       if (!token) {
-        await dispatch(checkAuth());
+        await dispatch(checkAuth()); // Verifică token-ul
       }
-      // Dacă există token, începe procesul de preluare a comenzilor
+    };
+
+    initialize().then(() => {
       if (token) {
         fetchOrders();
       } else {
         setError("No access token available. Please log in again.");
       }
-    };
-
-    checkAndFetch();
-  }, [token, dispatch]); // Monitorizează modificările stării `token` și `dispatch`
+    });
+  }, [dispatch, token]); // Rulează efectul doar când token-ul sau dispatch-ul se schimbă
 
   const updateStatus = async (orderId, newStatus) => {
     try {
@@ -47,6 +46,7 @@ const AllOrders = () => {
         {
           method: "PATCH",
           body: JSON.stringify({ status: newStatus }),
+          headers: { "Content-Type": "application/json" }, // Specifică tipul de conținut
         }
       );
       setOrders((prevOrders) =>

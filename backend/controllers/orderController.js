@@ -2,14 +2,12 @@ import Order from "../models/Order.js";
 import { createLog } from "../utils/createLog.js";
 
 // 1. Creare comandă nouă
+// 1. Creare comandă nouă
 export const createOrder = async (req, res) => {
     try {
-        console.log("req.user in createOrder:", req.user); // Debugging
+        const order = new Order(req.body);
+        await order.save();
 
-        const order = new Order(req.body); // Creează o comandă nouă cu datele primite
-        await order.save(); // Salvează comanda în baza de date
-
-        // Creează log doar dacă utilizatorul este autentificat
         if (req.user?.id) {
             await createLog({
                 action: "Order Created",
@@ -17,31 +15,31 @@ export const createOrder = async (req, res) => {
                 orderId: order._id,
                 details: `Order created for ${order.carMake} ${order.carModel}`,
             });
-        } else {
-            console.warn("Utilizator neautentificat. Log-ul nu a fost creat.");
         }
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {
-        console.error("Error in createOrder:", error); // Debugging
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
 // 2. Preluare toate comenzile (doar pentru admin)
 export const getAllOrders = async (req, res) => {
+    if (req.user?.role !== "admin") {
+        return res.status(403).json({ success: false, message: "Access forbidden" });
+    }
+
     try {
-        const orders = await Order.find(); // Găsește toate comenzile
+        const orders = await Order.find();
         res.status(200).json({ success: true, data: orders });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// 3. Preluare comenzile unui client (pe baza email-ului, după autentificare)
+// 3. Preluare comenzile unui client
 export const getClientOrders = async (req, res) => {
     try {
-        console.log("User info:", req.user); // Loghează utilizatorul autenticat
         const clientEmail = req.user.email;
         const orders = await Order.find({ email: clientEmail });
         res.status(200).json({ success: true, data: orders });
@@ -51,26 +49,29 @@ export const getClientOrders = async (req, res) => {
 };
 
 
-// 4. Actualizare status comandă (de ex. pending -> processed)
+// 4. Actualizare status comandă (doar pentru admin)
 export const updateOrderStatus = async (req, res) => {
+    if (req.user?.role !== "admin") {
+        return res.status(403).json({ success: false, message: "Access forbidden" });
+    }
+
     try {
-        const { id } = req.params; // ID-ul comenzii din URL
-        const { status } = req.body; // Statusul nou din corpul requestului
+        const { id } = req.params;
+        const { status } = req.body;
 
         const order = await Order.findByIdAndUpdate(
             id,
             { status },
-            { new: true, runValidators: true } // Returnează comanda actualizată
+            { new: true, runValidators: true }
         );
 
         if (!order) {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        // Creează log pentru actualizarea statusului comenzii
         await createLog({
             action: "Order Status Updated",
-            userId: req.user.id, // presupunem că middleware-ul de autentificare a adăugat utilizatorul în req
+            userId: req.user.id,
             orderId: order._id,
             details: `Order status changed to ${status}`,
         });
@@ -117,16 +118,15 @@ export const getOrderById = async (req, res) => {
 
         res.status(200).json({ success: true, data: order });
     } catch (error) {
-        console.error("Error in getOrderById:", error); // Debugging
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// 7. Adăugare comentariu la comandă
+// 5. Adăugare comentariu la comandă
 export const addCommentToOrder = async (req, res) => {
     try {
-        const { id } = req.params; // ID-ul comenzii
-        const { text, user } = req.body; // Textul comentariului și utilizatorul care l-a adăugat
+        const { id } = req.params;
+        const { text, user } = req.body;
 
         if (!text || !user) {
             return res.status(400).json({ success: false, message: "Textul și utilizatorul sunt obligatorii!" });
@@ -138,13 +138,11 @@ export const addCommentToOrder = async (req, res) => {
             return res.status(404).json({ success: false, message: "Comanda nu a fost găsită!" });
         }
 
-        // Adaugă comentariul în array-ul de comentarii
         order.comments.push({ text, user });
         await order.save();
 
         res.status(200).json({ success: true, data: order.comments });
     } catch (error) {
-        console.error("Error in addCommentToOrder:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

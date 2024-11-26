@@ -56,12 +56,7 @@ export const signin = async (req, res, next) => {
 
     user.refreshToken = refreshToken;
     await user.save();
-
-    console.log("Before save:", user.refreshToken);
-    await user.save();
-    console.log("After save:", user.refreshToken);
-
-    console.log("Sending tokens:", { accessToken, refreshToken });
+    
     res.status(200).json({
       accessToken,
       refreshToken,

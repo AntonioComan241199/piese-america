@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
+import { useSelector } from "react-redux";
 
 const OrderDetail = () => {
   const { id } = useParams();
@@ -10,6 +11,7 @@ const OrderDetail = () => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [comment, setComment] = useState("");
   const [commentUser, setCommentUser] = useState("");
+  const { user } = useSelector((state) => state.auth); // Obține detaliile utilizatorului din Redux
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -27,6 +29,11 @@ const OrderDetail = () => {
   }, [id]);
 
   const updateOrderStatus = async (newStatus) => {
+    if (user?.role !== "admin") {
+      alert("Doar administratorii pot schimba statusul comenzii.");
+      return;
+    }
+
     if (!window.confirm(`Ești sigur că vrei să actualizezi statusul la '${newStatus}'?`)) return;
 
     setUpdatingStatus(true);
@@ -48,12 +55,16 @@ const OrderDetail = () => {
       alert("Te rugăm să completezi toate câmpurile pentru comentariu.");
       return;
     }
-
+  
     try {
-      const response = await fetchWithAuth(`http://localhost:5000/api/order/${id}/comments`, {
-        method: "POST",
-        body: JSON.stringify({ text: comment, user: commentUser }),
-      });
+      const response = await fetchWithAuth(
+        `http://localhost:5000/api/order/${id}/comments`,
+        {
+          method: "POST",
+          body: JSON.stringify({ text: comment, user: commentUser }), // Asigură-te că body-ul este JSON
+        }
+      );
+  
       setOrder((prevOrder) => ({
         ...prevOrder,
         comments: response.data,
@@ -143,22 +154,24 @@ const OrderDetail = () => {
                 >
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </span>
-                <div className="ms-3">
-                  <button
-                    className="btn btn-sm btn-outline-success me-2"
-                    disabled={updatingStatus || order.status === "completed"}
-                    onClick={() => updateOrderStatus("completed")}
-                  >
-                    Completează
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline-warning"
-                    disabled={updatingStatus || order.status === "processed"}
-                    onClick={() => updateOrderStatus("processed")}
-                  >
-                    Procesează
-                  </button>
-                </div>
+                {user?.role === "admin" && (
+                  <div className="ms-3">
+                    <button
+                      className="btn btn-sm btn-outline-success me-2"
+                      disabled={updatingStatus || order.status === "completed"}
+                      onClick={() => updateOrderStatus("completed")}
+                    >
+                      Completează
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-warning"
+                      disabled={updatingStatus || order.status === "processed"}
+                      onClick={() => updateOrderStatus("processed")}
+                    >
+                      Procesează
+                    </button>
+                  </div>
+                )}
               </div>
             </td>
           </tr>
@@ -176,14 +189,18 @@ const OrderDetail = () => {
       {/* Comentarii */}
       <div className="my-4">
         <h4>Comentarii</h4>
-        <ul className="list-group">
-          {order.comments.map((comment, index) => (
-            <li key={index} className="list-group-item">
-              <strong>{comment.user}:</strong> {comment.text} <br />
-              <small>{new Date(comment.date).toLocaleString("ro-RO")}</small>
-            </li>
-          ))}
-        </ul>
+        {order.comments?.length > 0 ? (
+          <ul className="list-group">
+            {order.comments.map((comment, index) => (
+              <li key={index} className="list-group-item">
+                <strong>{comment.user}:</strong> {comment.text} <br />
+                <small>{new Date(comment.date).toLocaleString("ro-RO")}</small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Nu există comentarii pentru această comandă.</p>
+        )}
         <div className="mt-3">
           <input
             type="text"

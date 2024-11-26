@@ -9,16 +9,23 @@ export const fetchWithAuth = async (url, options = {}) => {
   if (!token) throw new Error("No access token available");
 
   try {
+    // Asigură-te că Content-Type este setat pentru cererile POST, PUT, PATCH
+    const isBodyMethod = ["POST", "PUT", "PATCH"].includes(options.method?.toUpperCase());
+    const defaultHeaders = {
+      Authorization: `Bearer ${token}`,
+      ...(isBodyMethod && { "Content-Type": "application/json" }), // Setează doar dacă metoda necesită corp
+    };
+
     const response = await fetch(url, {
       ...options,
       headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
+        ...defaultHeaders,
+        ...options.headers, // Permite suprascrierea headerelor
       },
     });
 
+    // Gestionare token expirat
     if (response.status === 401 && refreshToken) {
-      // Încercare de reîmprospătare a token-ului
       const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
         method: "POST",
         headers: {
@@ -34,15 +41,15 @@ export const fetchWithAuth = async (url, options = {}) => {
 
       const refreshData = await refreshResponse.json();
 
-      // Actualizează token-ul în Redux
+      // Actualizează token-ul în Redux și localStorage
       store.dispatch(setToken({ token: refreshData.accessToken }));
 
       // Reface cererea originală cu noul token
       const retryResponse = await fetch(url, {
         ...options,
         headers: {
-          ...options.headers,
-          Authorization: `Bearer ${refreshData.accessToken}`,
+          ...defaultHeaders,
+          Authorization: `Bearer ${refreshData.accessToken}`, // Folosește noul token
         },
       });
 
@@ -55,7 +62,8 @@ export const fetchWithAuth = async (url, options = {}) => {
 
     // Dacă răspunsul inițial este ok
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error: ${response.status}`);
     }
 
     return response.json();

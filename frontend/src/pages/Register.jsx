@@ -1,8 +1,7 @@
-// eslint-disable-next-line no-unused-vars
 import React, { useState } from "react";
 import Logo from "../assets/all-images/Logo.webp";
-import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useNavigate, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { login } from "../slices/authSlice";
 
 export default function Register() {
@@ -10,21 +9,35 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Redirecționează utilizatorul autentificat
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/home");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Verifică dacă parolele coincid
+    if (password.length < 8) {
+      setError("Parola trebuie să aibă cel puțin 8 caractere!");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Parolele nu se potrivesc!");
       return;
     }
 
+    setLoading(true);
+
     try {
-      // 1. Cerere pentru înregistrare
       const response = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: {
@@ -38,7 +51,6 @@ export default function Register() {
         throw new Error(errorData.message || "Înregistrare eșuată");
       }
 
-      // 2. Autentificare automată
       const loginResponse = await fetch("http://localhost:5000/api/auth/signin", {
         method: "POST",
         headers: {
@@ -54,14 +66,20 @@ export default function Register() {
       }
 
       const userData = await loginResponse.json();
+      dispatch(
+        login({
+          email: userData.email,
+          name: userData.username,
+          token: userData.accessToken,
+          refreshToken: userData.refreshToken,
+        })
+      );
 
-      // 3. Actualizează starea autentificării în Redux
-      dispatch(login({ email: userData.email, name: userData.username }));
-
-      // 4. Navighează utilizatorul la pagina principală
       navigate("/home");
     } catch (error) {
       setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,22 +125,27 @@ export default function Register() {
               </label>
               <input
                 type="password"
-                className="form-control"
+                className={`form-control ${
+                  password && confirmPassword && password !== confirmPassword ? "is-invalid" : ""
+                }`}
                 id="confirm-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+              {password && confirmPassword && password !== confirmPassword && (
+                <div className="invalid-feedback">Parolele nu se potrivesc!</div>
+              )}
             </div>
-            <button type="submit" className="btn btn-primary w-100">
-              Creează cont
+            <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+              {loading ? "Se creează contul..." : "Creează cont"}
             </button>
           </form>
           <p className="mt-3 text-center">
             Ai deja un cont?{" "}
-            <a href="/signin" className="text-decoration-none text-primary">
+            <Link to="/signin" className="text-decoration-none text-primary">
               Conectează-te aici
-            </a>
+            </Link>
           </p>
         </div>
       </div>
