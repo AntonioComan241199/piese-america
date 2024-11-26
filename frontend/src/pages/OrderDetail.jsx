@@ -51,17 +51,26 @@ const OrderDetail = () => {
   };
 
   const addComment = async () => {
-    if (!comment || !commentUser) {
-      alert("Te rugăm să completezi toate câmpurile pentru comentariu.");
+    if (!comment) {
+      alert("Te rugăm să completezi comentariul.");
       return;
     }
+  
+    // Determină numele utilizatorului pe baza rolului
+    const commentAuthor =
+      user?.role === "admin"
+        ? "Agent Piese Auto America"
+        : `${order.firstName} ${order.lastName}`;
   
     try {
       const response = await fetchWithAuth(
         `http://localhost:5000/api/order/${id}/comments`,
         {
           method: "POST",
-          body: JSON.stringify({ text: comment, user: commentUser }), // Asigură-te că body-ul este JSON
+          headers: {
+            "Content-Type": "application/json", // Asigură-te că tipul conținutului este setat corect
+          },
+          body: JSON.stringify({ text: comment, user: commentAuthor }),
         }
       );
   
@@ -69,12 +78,12 @@ const OrderDetail = () => {
         ...prevOrder,
         comments: response.data,
       }));
-      setComment("");
-      setCommentUser("");
+      setComment(""); // Resetează câmpul de comentarii după adăugare
     } catch (err) {
       alert("Eroare la adăugarea comentariului: " + err.message);
     }
   };
+  
 
   const copyClientInfo = () => {
     const clientInfo = `
@@ -202,13 +211,6 @@ const OrderDetail = () => {
           <p>Nu există comentarii pentru această comandă.</p>
         )}
         <div className="mt-3">
-          <input
-            type="text"
-            placeholder="Nume utilizator"
-            value={commentUser}
-            onChange={(e) => setCommentUser(e.target.value)}
-            className="form-control mb-2"
-          />
           <textarea
             placeholder="Scrie un comentariu..."
             value={comment}
