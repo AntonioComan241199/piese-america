@@ -6,10 +6,10 @@ export const createOrder = async (req, res) => {
     try {
         console.log("req.user in createOrder:", req.user); // Debugging
 
-        const order = new Order(req.body);
-        await order.save();
+        const order = new Order(req.body); // Creează o comandă nouă cu datele primite
+        await order.save(); // Salvează comanda în baza de date
 
-        // Creează log doar dacă req.user are id
+        // Creează log doar dacă utilizatorul este autentificat
         if (req.user?.id) {
             await createLog({
                 action: "Order Created",
@@ -18,7 +18,7 @@ export const createOrder = async (req, res) => {
                 details: `Order created for ${order.carMake} ${order.carModel}`,
             });
         } else {
-            console.warn("req.user.id is missing. Log not created.");
+            console.warn("Utilizator neautentificat. Log-ul nu a fost creat.");
         }
 
         res.status(201).json({ success: true, data: order });
@@ -101,6 +101,50 @@ export const deleteOrder = async (req, res) => {
 
         res.status(200).json({ success: true, message: "Order deleted successfully" });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 6. Preluare detalii comandă după ID
+export const getOrderById = async (req, res) => {
+    try {
+        const { id } = req.params; // Extrage ID-ul comenzii din URL
+        const order = await Order.findById(id); // Găsește comanda în baza de date
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        res.status(200).json({ success: true, data: order });
+    } catch (error) {
+        console.error("Error in getOrderById:", error); // Debugging
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 7. Adăugare comentariu la comandă
+export const addCommentToOrder = async (req, res) => {
+    try {
+        const { id } = req.params; // ID-ul comenzii
+        const { text, user } = req.body; // Textul comentariului și utilizatorul care l-a adăugat
+
+        if (!text || !user) {
+            return res.status(400).json({ success: false, message: "Textul și utilizatorul sunt obligatorii!" });
+        }
+
+        const order = await Order.findById(id);
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Comanda nu a fost găsită!" });
+        }
+
+        // Adaugă comentariul în array-ul de comentarii
+        order.comments.push({ text, user });
+        await order.save();
+
+        res.status(200).json({ success: true, data: order.comments });
+    } catch (error) {
+        console.error("Error in addCommentToOrder:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

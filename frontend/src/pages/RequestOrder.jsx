@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 
+
 const initialFormData = {
   firstName: "",
   lastName: "",
@@ -127,23 +128,32 @@ const RequestOrder = () => {
     e.preventDefault();
     setMessage("");
     setLoading(true);
-
+  
     try {
+      // Construiește antetele cererii
+      const headers = {
+        "Content-Type": "application/json",
+      };
+  
+      // Adaugă token doar dacă utilizatorul este autentificat
       const token = localStorage.getItem("token");
+      if (isAuthenticated && token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+  
+      // Trimiterea cererii către backend
       const response = await fetch("http://localhost:5000/api/order/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
+        headers,
         body: JSON.stringify(formData),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Request failed");
       }
-
+  
+      // Resetarea formularului și afișarea mesajului de succes
       setMessage("Cererea a fost trimisă cu succes!");
       setFormData(initialFormData);
       setMakes([]);
@@ -154,6 +164,7 @@ const RequestOrder = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="container py-5">
@@ -211,8 +222,11 @@ const RequestOrder = () => {
             name="email"
             className="form-control"
             value={formData.email}
-            disabled={isAuthenticated}
-            required
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+            required={!isAuthenticated} // Email este obligatoriu doar dacă utilizatorul nu este autentificat
+            disabled={isAuthenticated} // Email-ul este completabil doar dacă utilizatorul nu este autentificat
           />
         </div>
 

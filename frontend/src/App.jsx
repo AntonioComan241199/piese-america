@@ -12,7 +12,7 @@ import Footer from "./components/Footer/Footer";
 import AllOrders from "./pages/AllOrders";
 import MyOrders from "./pages/MyOrders";
 import RequestOrder from "./pages/RequestOrder";
-import OrderDetails from "./pages/OrderDetails";
+import OrderDetail from "./pages/OrderDetail";
 import { checkAuth } from "./slices/authSlice";
 
 // Wrapper pentru rutele protejate
@@ -55,10 +55,10 @@ const AppWrapper = () => {
           }
         />
         <Route
-          path="/order-details/:id"
+          path="/order-detail/:id"
           element={
             <ProtectedRoute>
-              <OrderDetails />
+              <OrderDetail />
             </ProtectedRoute>
           }
 

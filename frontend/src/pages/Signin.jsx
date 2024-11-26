@@ -22,7 +22,6 @@ export default function Signin() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-        credentials: "include", // Include cookie-uri pentru sesiune
       });
 
       if (!response.ok) {
@@ -32,8 +31,9 @@ export default function Signin() {
 
       const data = await response.json();
 
-      // Salvează token-ul în localStorage
-      localStorage.setItem("token", data.token);
+      // Salvează token-urile în localStorage
+      localStorage.setItem("token", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken); // Salvează refreshToken
 
       // Actualizează starea autentificării în Redux
       dispatch(
@@ -41,7 +41,8 @@ export default function Signin() {
           email: data.email,
           name: data.username,
           role: data.role,
-          token: data.token,
+          token: data.accessToken,
+          refreshToken: data.refreshToken, // Adaugă refreshToken în Redux
         })
       );
 

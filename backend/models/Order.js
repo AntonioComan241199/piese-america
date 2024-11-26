@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+const CommentSchema = new mongoose.Schema({
+    text: { type: String, required: true }, // Textul comentariului
+    date: { type: Date, default: Date.now }, // Data adăugării comentariului
+    user: { type: String, required: true }, // Utilizatorul care a adăugat comentariul
+});
+
 const OrderSchema = new mongoose.Schema({
     firstName: { type: String, required: true }, // Prenumele clientului
     lastName: { type: String, required: true },  // Numele clientului
@@ -15,6 +21,7 @@ const OrderSchema = new mongoose.Schema({
     partDetails: { type: String, required: true }, // Detalii piesă comandată
     status: { type: String, default: 'pending' }, // Statusul comenzii (pending, processed, completed)
     orderDate: { type: Date, default: Date.now }, // Data la care s-a plasat comanda
+    comments: [CommentSchema], // Adaugă câmpul comments
 });
 
 

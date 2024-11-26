@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
+import { checkAuth } from "../slices/authSlice";
 
 const AllOrders = () => {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
 
   const fetchOrders = async () => {
     setLoading(true);
+    setError(""); // Resetează eroarea înainte de fiecare apel
     try {
       const data = await fetchWithAuth("http://localhost:5000/api/order/admin");
       setOrders(data.data); // presupunem că datele sunt în `data.data`
@@ -19,6 +22,23 @@ const AllOrders = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const checkAndFetch = async () => {
+      // Asigură-te că token-ul este verificat
+      if (!token) {
+        await dispatch(checkAuth());
+      }
+      // Dacă există token, începe procesul de preluare a comenzilor
+      if (token) {
+        fetchOrders();
+      } else {
+        setError("No access token available. Please log in again.");
+      }
+    };
+
+    checkAndFetch();
+  }, [token, dispatch]); // Monitorizează modificările stării `token` și `dispatch`
 
   const updateStatus = async (orderId, newStatus) => {
     try {
@@ -74,10 +94,6 @@ const AllOrders = () => {
     URL.revokeObjectURL(url);
   };
 
-  useEffect(() => {
-    if (token) fetchOrders();
-  }, [token]);
-
   return (
     <div className="container my-4">
       <h2 className="text-center mb-4">Toate comenzile</h2>
@@ -104,10 +120,14 @@ const AllOrders = () => {
           <tbody>
             {orders.map((order) => (
               <tr key={order._id}>
-                <td>{order.firstName} {order.lastName}</td>
+                <td>
+                  {order.firstName} {order.lastName}
+                </td>
                 <td>{order.phoneNumber}</td>
                 <td>{order.email}</td>
-                <td>{order.carMake} {order.carModel}</td>
+                <td>
+                  {order.carMake} {order.carModel}
+                </td>
                 <td>
                   <select
                     value={order.status}
