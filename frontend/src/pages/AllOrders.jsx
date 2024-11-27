@@ -8,14 +8,14 @@ const AllOrders = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
-  const { token } = useSelector((state) => state.auth);
+  const { token, authChecked, loading: authLoading } = useSelector((state) => state.auth);
 
   const fetchOrders = async () => {
     setLoading(true);
-    setError(""); // Resetează eroarea înainte de fiecare apel
+    setError("");
     try {
       const data = await fetchWithAuth("http://localhost:5000/api/order/admin");
-      setOrders(data.data); // presupunem că datele sunt în `data.data`
+      setOrders(data.data);
     } catch (err) {
       setError(err.message || "Failed to fetch orders");
     } finally {
@@ -24,86 +24,29 @@ const AllOrders = () => {
   };
 
   useEffect(() => {
-    const initialize = async () => {
-      if (!token) {
-        await dispatch(checkAuth()); // Verifică token-ul
-      }
-    };
-
-    initialize().then(() => {
-      if (token) {
-        fetchOrders();
-      } else {
-        setError("No access token available. Please log in again.");
-      }
-    });
-  }, [dispatch, token]); // Rulează efectul doar când token-ul sau dispatch-ul se schimbă
-
-  const updateStatus = async (orderId, newStatus) => {
-    try {
-      const updatedOrder = await fetchWithAuth(
-        `http://localhost:5000/api/order/${orderId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ status: newStatus }),
-          headers: { "Content-Type": "application/json" }, // Specifică tipul de conținut
-        }
-      );
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order._id === orderId ? { ...order, status: updatedOrder.data.status } : order
-        )
-      );
-    } catch (err) {
-      setError(err.message || "Failed to update status");
+    // Verifică autentificarea dacă nu a fost verificată
+    if (!authChecked) {
+      dispatch(checkAuth());
     }
-  };
+  }, [dispatch, authChecked]);
 
-  const deleteOrder = async (orderId) => {
-    try {
-      await fetchWithAuth(`http://localhost:5000/api/order/${orderId}`, {
-        method: "DELETE",
-      });
-      setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));
-    } catch (err) {
-      setError(err.message || "Failed to delete order");
+  useEffect(() => {
+    // Încarcă comenzile doar după ce autentificarea este verificată și token-ul este disponibil
+    if (authChecked && token) {
+      fetchOrders();
+    } else if (authChecked && !token) {
+      setError("No access token available. Please log in again.");
     }
-  };
+  }, [authChecked, token]);
 
-  const exportToCSV = () => {
-    const csvContent = [
-      ["Client", "Phone", "Email", "Mașină", "Status", "Data"],
-      ...orders.map((order) => [
-        `${order.firstName} ${order.lastName}`,
-        order.phoneNumber,
-        order.email,
-        `${order.carMake} ${order.carModel}`,
-        order.status,
-        new Date(order.orderDate).toLocaleDateString(),
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "orders.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  if (authLoading || loading) {
+    return <div className="alert alert-info">Se încarcă comenzile...</div>;
+  }
 
   return (
     <div className="container my-4">
       <h2 className="text-center mb-4">Toate comenzile</h2>
-      {loading && <div className="alert alert-info">Se încarcă comenzile...</div>}
       {error && <div className="alert alert-danger">{error}</div>}
-      <div className="mb-3 text-end">
-        <button onClick={exportToCSV} className="btn btn-primary">
-          Export Comenzi
-        </button>
-      </div>
       <div className="table-responsive">
         <table className="table table-bordered table-hover">
           <thead className="table-light">

@@ -13,7 +13,9 @@ import AllOrders from "./pages/AllOrders";
 import MyOrders from "./pages/MyOrders";
 import RequestOrder from "./pages/RequestOrder";
 import OrderDetail from "./pages/OrderDetail";
+import MyProfile from "./pages/MyProfile";
 import { checkAuth } from "./slices/authSlice";
+
 
 // Wrapper pentru rutele protejate
 const ProtectedRoute = ({ children }) => {
@@ -51,6 +53,14 @@ const AppWrapper = () => {
           element={
             <ProtectedRoute>
               <AllOrders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-profile"
+          element={
+            <ProtectedRoute>
+              <MyProfile />
             </ProtectedRoute>
           }
         />

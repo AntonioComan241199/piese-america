@@ -79,6 +79,15 @@ const Footer = () => {
                   costel.barbu@artri.ro
                 </a>
               </li>
+              <li className="mb-2">
+                Email secundar:{" "}
+                <a
+                  href="mailto:automed.piese@gmail.com"
+                  className="text-light text-decoration-none"
+                >
+                  automed.piese@gmail.com
+                </a>
+              </li>
               <li>Program: Luni - Vineri 09:00 - 17:00</li>
             </ul>
           </Col>

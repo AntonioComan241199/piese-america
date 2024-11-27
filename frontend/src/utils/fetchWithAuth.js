@@ -1,7 +1,7 @@
 import { store } from "../redux/store/store";
 import { logout, setToken } from "../slices/authSlice";
 
-export const fetchWithAuth = async (url, options = {}) => {
+export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
   const state = store.getState();
   const token = state.auth.token;
   const refreshToken = state.auth.refreshToken;
@@ -16,7 +16,7 @@ export const fetchWithAuth = async (url, options = {}) => {
       ...(isBodyMethod && { "Content-Type": "application/json" }), // Setează doar dacă metoda necesită corp
     };
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       ...options,
       headers: {
         ...defaultHeaders,
@@ -45,22 +45,19 @@ export const fetchWithAuth = async (url, options = {}) => {
       store.dispatch(setToken({ token: refreshData.accessToken }));
 
       // Reface cererea originală cu noul token
-      const retryResponse = await fetch(url, {
+      response = await fetch(url, {
         ...options,
         headers: {
           ...defaultHeaders,
           Authorization: `Bearer ${refreshData.accessToken}`, // Folosește noul token
         },
       });
-
-      if (!retryResponse.ok) {
-        throw new Error(`Error: ${retryResponse.status}`);
-      }
-
-      return retryResponse.json();
     }
 
-    // Dacă răspunsul inițial este ok
+    // Dacă răspunsul trebuie returnat brut
+    if (rawResponse) return response;
+
+    // Procesare răspuns JSON
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || `Error: ${response.status}`);

@@ -22,7 +22,13 @@ const navLinks = [
 
 const Header = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, authChecked } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!authChecked) {
+      dispatch(checkAuth());
+    }
+  }, [dispatch, authChecked]);
 
   useEffect(() => {
     // Asigură-te că verifici autentificarea la inițializare
@@ -98,7 +104,7 @@ const Header = () => {
             </Col>
             <Col lg={4} md={4} className="text-end">
               <Link to="/contact" className="btn btn-primary">
-                <i className="ri-phone-line me-1"></i> Ai o problemă?
+                <i className="ri-phone-line me-1"></i> Te pot ajuta?
               </Link>
             </Col>
           </Row>
