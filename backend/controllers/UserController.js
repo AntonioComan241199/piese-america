@@ -1,93 +1,126 @@
-import bcryptjs from 'bcryptjs';
-import User from '../models/User.js';
-import { errorHandler } from '../utils/error.js';
-import Listing from '../models/Order.js';
+import User from "../models/User.js";
+import Order from "../models/Order.js";
+import bcrypt from "bcrypt";
 
 
 
+// Actualizare profil utilizator
 export const updateUser = async (req, res, next) => {
-  if (req.user.id !== req.params.id)
-    return next(errorHandler(401, 'You can only update your own account!'));
+  const { id } = req.params;
+
+  // Verificare permisiuni: utilizatorul își poate actualiza propriul cont sau trebuie să fie admin
+  if (req.user.id !== id && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Nu aveți acces la această resursă." });
+  }
 
   try {
-    const user = await User.findById(req.params.id);
+    const updatedData = req.body;
 
-    if (!user) return next(errorHandler(404, 'User not found!'));
+    // Dacă se actualizează parola, o hash-uim
+    if (updatedData.password) {
+      updatedData.password = bcrypt.hashSync(updatedData.password, 10);
+    }
 
-    // Actualizează doar câmpurile permise
-    if (req.body.username) user.username = req.body.username;
-    if (req.body.phone) user.phone = req.body.phone;
-    if (req.body.firstName) user.firstName = req.body.firstName;
-    if (req.body.lastName) user.lastName = req.body.lastName;
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $set: updatedData },
+      { new: true, runValidators: true }
+    ).select("-password"); // Exclude parola din răspuns
 
-    const updatedUser = await user.save();
+    if (!updatedUser) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    }
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({ message: "Profilul utilizatorului a fost actualizat cu succes.", user: updatedUser });
   } catch (error) {
     next(error);
   }
 };
 
+// Schimbare parolă
 export const changePassword = async (req, res, next) => {
-  if (req.user.id !== req.params.id)
-    return next(errorHandler(401, 'You can only change your own password!'));
+  const { id } = req.params;
+  const { currentPassword, newPassword } = req.body;
+
+  // Permite schimbarea parolei doar pentru utilizatorul autentificat
+  if (req.user.id !== id) {
+    return res.status(403).json({ message: "Nu aveți acces la această resursă." });
+  }
 
   try {
-    const user = await User.findById(req.params.id);
-
-    if (!user) return next(errorHandler(404, 'User not found!'));
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    }
 
     // Verifică dacă parola curentă este corectă
-    const isPasswordCorrect = bcryptjs.compareSync(
-      req.body.currentPassword,
-      user.password
-    );
-
+    const isPasswordCorrect = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordCorrect) {
-      return next(errorHandler(401, 'Parola curentă este incorectă!'));
+      return res.status(401).json({ message: "Parola curentă este incorectă." });
     }
 
-    // Hash-uiește și setează parola nouă
-    user.password = bcryptjs.hashSync(req.body.newPassword, 10);
+    // Hash-uim și setăm parola nouă
+    user.password = bcrypt.hashSync(newPassword, 10);
     await user.save();
 
-    res.status(200).json({ message: 'Parola a fost schimbată cu succes!' });
+    res.status(200).json({ message: "Parola a fost schimbată cu succes!" });
   } catch (error) {
     next(error);
   }
 };
 
+// Ștergere utilizator
 export const deleteUser = async (req, res, next) => {
-  if (req.user.id !== req.params.id)
-    return next(errorHandler(401, 'You can only delete your own account!'));
+  const { id } = req.params;
+
+  // Permite ștergerea utilizatorului doar de către el însuși sau un admin
+  if (req.user.id !== id && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Nu aveți acces la această resursă." });
+  }
+
   try {
-    await User.findByIdAndDelete(req.params.id);
-    res.clearCookie('access_token');
-    res.status(200).json('User has been deleted!');
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    }
+
+    res.status(200).json({ message: "Utilizatorul a fost șters cu succes!" });
   } catch (error) {
     next(error);
   }
 };
 
+// Obține toate comenzile unui utilizator
 export const getUserOrders = async (req, res, next) => {
-  if (req.user.id === req.params.id) {
-    try {
-      const listings = await Listing.find({ userRef: req.params.id });
-      res.status(200).json(listings);
-    } catch (error) {
-      next(error);
+  const { id } = req.params;
+
+  // Permite vizualizarea comenzilor doar pentru utilizatorul propriu sau pentru admin
+  if (req.user.id !== id && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Nu aveți acces la această resursă." });
+  }
+
+  try {
+    const orders = await Order.find({ userId: id }).populate("offerId", "offerNumber total status");
+
+    if (!orders.length) {
+      return res.status(404).json({ message: "Nu s-au găsit comenzi pentru acest utilizator." });
     }
-  } else {
-    return next(errorHandler(401, 'You can only view your own orders!'));
+
+    res.status(200).json({ message: "Comenzile au fost obținute cu succes.", orders });
+  } catch (error) {
+    next(error);
   }
 };
 
+// Obține datele utilizatorului autentificat
 export const getAuthenticatedUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    }
 
-    res.status(200).json(user);
+    res.status(200).json({ message: "Datele utilizatorului autentificat au fost obținute cu succes.", user });
   } catch (error) {
     next(error);
   }

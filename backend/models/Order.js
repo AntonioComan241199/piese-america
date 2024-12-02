@@ -1,30 +1,61 @@
 import mongoose from "mongoose";
 
+// Schema pentru comentarii
 const CommentSchema = new mongoose.Schema({
-    text: { type: String, required: true }, // Textul comentariului
-    date: { type: Date, default: Date.now }, // Data adăugării comentariului
-    user: { type: String, required: true }, // Utilizatorul care a adăugat comentariul
+  text: { type: String, required: true }, // Textul comentariului
+  date: { type: Date, default: Date.now }, // Data adăugării comentariului
+  user: { type: String, required: true }, // Utilizatorul care a adăugat comentariul
 });
 
+// Schema pentru cereri
 const OrderSchema = new mongoose.Schema({
-    firstName: { type: String, required: true }, // Prenumele clientului
-    lastName: { type: String, required: true },  // Numele clientului
-    email: { type: String, required: true },     // Email-ul clientului
-    phoneNumber: { type: String, required: true }, // Telefonul clientului
-    carMake: { type: String, required: true },   // Marca mașinii
-    carModel: { type: String, required: true },  // Modelul mașinii
-    carYear: { type: Number, required: true },   // Anul de fabricație al mașinii
-    fuelType: { type: String, required: true },    // Motorizare
-    engineSize: { type: Number, required: true }, // Capacitate cilindrică
-    transmission: { type: String, required: true }, // Cutie de vite
-    vin : { type: String, required: true }, // Numărul de identificare al vehiculului
-    partDetails: { type: String, required: true }, // Detalii piesă comandată
-    status: { type: String, default: 'pending' }, // Statusul comenzii (pending, processed, completed)
-    orderDate: { type: Date, default: Date.now }, // Data la care s-a plasat comanda
-    comments: [CommentSchema], // Adaugă câmpul comments
+  orderNumber: { type: Number, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userType: { type: String, enum: ["persoana_fizica", "persoana_juridica"], required: true },
+  firstName: { type: String }, // Prenume (pentru persoana fizică)
+  lastName: { type: String },  // Nume (pentru persoana fizică)
+  companyDetails: {
+    companyName: { type: String }, // Numele companiei (persoană juridică)
+    cui: { type: String },         // Cod unic de înregistrare (persoană juridică)
+    nrRegCom: { type: String },    // Nr. Registrul Comerțului (persoană juridică)
+  },
+  email: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  carMake: { type: String, required: true },
+  carModel: { type: String, required: true },
+  carYear: { type: Number, required: true },
+  fuelType: { type: String, required: true },
+  enginePower: { type: Number, required: true },
+  engineSize: { type: Number, required: true },
+  transmission: { type: String, required: true },
+  vin: { type: String, required: true },
+  partDetails: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ["asteptare_oferta", "ofertat", "comanda_spre_finalizare", "finalizare", "livrat"],
+    default: "asteptare_oferta",
+  },
+  orderDate: { type: Date, default: Date.now },
+  comments: [CommentSchema],
+  offerId: { type: mongoose.Schema.Types.ObjectId, ref: "Offer" },
 });
 
 
-const Order = mongoose.model('Order', OrderSchema);
+
+// Middleware pentru generarea automată a `orderNumber`
+OrderSchema.pre("save", async function (next) {
+  if (!this.orderNumber) {
+    const Counter = mongoose.model("Counter"); // Model pentru contor
+    const counter = await Counter.findOneAndUpdate(
+      { name: "orderNumber" },
+      { $inc: { value: 1 } },
+      { new: true, upsert: true }
+    );
+    this.orderNumber = counter.value;
+  }
+  next();
+});
+
+const Order = mongoose.model("Order", OrderSchema);
 
 export default Order;

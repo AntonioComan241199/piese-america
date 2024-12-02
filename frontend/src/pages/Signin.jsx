@@ -5,15 +5,25 @@ import { useDispatch } from "react-redux";
 import { login } from "../slices/authSlice";
 
 export default function Signin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Previne reîncărcarea paginii
+    e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       const response = await fetch("http://localhost:5000/api/auth/signin", {
@@ -21,35 +31,44 @@ export default function Signin() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Autentificare eșuată");
+        throw new Error(errorData.message || "Autentificare eșuată.");
       }
 
       const data = await response.json();
 
-      // Salvează token-urile în localStorage
-      localStorage.setItem("token", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken); // Salvează refreshToken
+      // Salvare token-uri în localStorage
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
 
-      // Actualizează starea autentificării în Redux
+      // Actualizare stare utilizator în Redux
       dispatch(
         login({
-          email: data.email,
-          name: data.username,
-          role: data.role,
-          token: data.accessToken,
-          refreshToken: data.refreshToken, // Adaugă refreshToken în Redux
+          user: {
+            id: data.user.id,
+            email: data.user.email,
+            role: data.user.role,
+            userType: data.user.userType,
+          },
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
         })
       );
 
-      // Navighează utilizatorul la pagina principală după autentificare
-      navigate("/home", { replace: true }); // Forțează re-ruta
-    } catch (error) {
-      setError(error.message);
+      // Navigare către pagina principală sau rol specific
+      if (data.user.role === "admin") {
+        navigate("/admin-dashboard", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,8 +100,9 @@ export default function Signin() {
                 type="email"
                 className="form-control"
                 id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -94,13 +114,18 @@ export default function Signin() {
                 type="password"
                 className="form-control"
                 id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary w-100">
-              Conectează-te
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={loading}
+            >
+              {loading ? "Autentificare..." : "Conectează-te"}
             </button>
           </form>
           <p className="mt-3 text-center">

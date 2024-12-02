@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 
+// verifyToken.js
 export const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -16,4 +17,15 @@ export const verifyToken = (req, res, next) => {
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token." });
   }
+};
+
+
+// checkRole.js
+export const checkRole = (requiredRole) => {
+  return (req, res, next) => {
+    if (!req.user || req.user.role !== requiredRole) {
+      return res.status(403).json({ message: `Access denied: ${requiredRole}s only` });
+    }
+    next();
+  };
 };

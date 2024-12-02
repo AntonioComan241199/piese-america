@@ -30,15 +30,6 @@ const Header = () => {
     }
   }, [dispatch, authChecked]);
 
-  useEffect(() => {
-    // Asigură-te că verifici autentificarea la inițializare
-    dispatch(checkAuth());
-  }, [dispatch]);
-
-  useEffect(() => {
-    console.log("Header updated - Authenticated:", isAuthenticated, "User:", user);
-  }, [isAuthenticated, user]);
-
   const handleLogout = () => {
     dispatch(logout());
   };
@@ -57,14 +48,18 @@ const Header = () => {
             </Col>
             <Col xs={12} md={6} className="text-md-end">
               {isAuthenticated ? (
-                <Button
-                  onClick={handleLogout}
-                  variant="outline-light"
-                  size="sm"
-                  className="me-2"
-                >
-                  Logout
-                </Button>
+                <>
+                  <span className="me-3">
+                    Salut, {user?.role === "admin" ? "Admin" : user?.email}!
+                  </span>
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline-light"
+                    size="sm"
+                  >
+                    Logout
+                  </Button>
+                </>
               ) : (
                 <>
                   <Link to="/signin" className="text-white text-decoration-none me-3">
@@ -130,15 +125,21 @@ const Header = () => {
                 </Nav.Link>
               ))}
 
+              {/* Linkuri speciale pentru utilizatori autentificați */}
               {isAuthenticated && user?.role === "client" && (
                 <Nav.Link as={NavLink} to="/my-orders">
-                  Comenzile mele
+                  Cererile mele de oferte
                 </Nav.Link>
               )}
               {isAuthenticated && user?.role === "admin" && (
-                <Nav.Link as={NavLink} to="/all-orders">
-                  Comenzi clienți
-                </Nav.Link>
+                <>
+                  <Nav.Link as={NavLink} to="/all-orders">
+                    Cereri Oferte
+                  </Nav.Link>
+                  <Nav.Link as={NavLink} to="/offer-management">
+                    Management Oferte
+                  </Nav.Link>
+                </>
               )}
               {isAuthenticated && (
                 <Nav.Link as={NavLink} to="/my-profile">

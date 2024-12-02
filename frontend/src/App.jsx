@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Provider, useDispatch, useSelector } from "react-redux";
+import { Provider, useDispatch } from "react-redux";
 import { useEffect } from "react";
 import store from "./store";
+
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import Home from "./pages/Home";
 import Contact from "./pages/Contact";
@@ -12,40 +14,49 @@ import Footer from "./components/Footer/Footer";
 import AllOrders from "./pages/AllOrders";
 import MyOrders from "./pages/MyOrders";
 import RequestOrder from "./pages/RequestOrder";
-import OrderDetail from "./pages/OrderDetail";
+import OrderDetails from "./pages/OrderDetails";
+import OfferDetail from "./pages/OfferDetail";
+import OfferGenerator from "./pages/OfferGenerator";
+import OfferManagement from "./pages/OfferManagement";
 import MyProfile from "./pages/MyProfile";
+
 import { checkAuth } from "./slices/authSlice";
 
+import { ProtectedRoute } from "./utils/ProtectedRoute";
+import { PublicRoute } from "./utils/PublicRoute";
 
-// Wrapper pentru rutele protejate
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useSelector((state) => state.auth);
-
-  if (!isAuthenticated) {
-    return <Signin />; // Redirecționează utilizatorii neautentificați
-  }
-
-  return children; // Returnează componenta protejată
-};
-
-// Wrapper pentru verificarea autentificării la nivel de aplicație
 const AppWrapper = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Verifică dacă utilizatorul este autentificat la inițializarea aplicației
     dispatch(checkAuth());
   }, [dispatch]);
 
   return (
-    <>
+    <ErrorBoundary>
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/signin" element={<Signin />} />
-        <Route path="/register" element={<Register />} />
+
+        {/* Rute publice */}
+        <Route
+          path="/signin"
+          element={
+            <PublicRoute>
+              <Signin />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
 
         {/* Rute protejate */}
         <Route
@@ -68,25 +79,41 @@ const AppWrapper = () => {
           path="/order-detail/:id"
           element={
             <ProtectedRoute>
-              <OrderDetail />
+              <OrderDetails />
             </ProtectedRoute>
           }
-
         />
-        
-
         <Route
-          path="/my-orders"
+          path="/offer-detail/:offerId"
           element={
             <ProtectedRoute>
-              <MyOrders />
+              <OfferDetail />
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/offer-generator/:orderId"
+          element={
+            <ProtectedRoute>
+              <OfferGenerator />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/offer-management"
+          element={
+            <ProtectedRoute>
+              <OfferManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/my-orders" element={<MyOrders />} />
+        <Route path="/my-orders/:id" element={<OrderDetails />} />
+
         <Route path="/request-order" element={<RequestOrder />} />
       </Routes>
       <Footer />
-    </>
+    </ErrorBoundary>
   );
 };
 

@@ -1,26 +1,28 @@
-import express from 'express';
+import express from "express";
 import {
-    createOrder,
-    getAllOrders,
-    getClientOrders,
-    updateOrderStatus,
-    deleteOrder,
-    getOrderById,
-    addCommentToOrder
-} from '../controllers/orderController.js'; // Import explicit pentru ES Modules
-import authMiddleware from '../middleware/authMiddleware.js'; // Import implicit pentru middleware
+  createOrder,
+  getAllOrders,
+  getUserOrders,
+  getOrderById,
+  updateOrderStatus,
+  addCommentToOrder,
+  deleteOrder,
+  exportOrders,
+} from "../controllers/orderController.js";
+import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
 const router = express.Router();
 
-// Rute comenzi
-router.post("/create", createOrder); // Ruta pentru crearea comenzilor fără autentificare
-router.post("/create", authMiddleware, createOrder);
-router.get('/admin', authMiddleware, getAllOrders); // Vizualizare toate comenzile (doar pentru admin)
-router.get('/client', authMiddleware, getClientOrders); // Vizualizare comenzile clientului de completat
-router.patch('/:id', authMiddleware, updateOrderStatus); // Actualizare status comandă de completat
-router.delete('/:id', authMiddleware, deleteOrder); // Ștergere comandă de completat
-router.get('/:id', authMiddleware, getOrderById); // Preluare detalii comandă
-router.post('/:id/comments', authMiddleware, addCommentToOrder); // Adaugă un comentariu la o comandă
+// Rute pentru administratori
+router.get("/admin", verifyToken, checkRole("admin"), getAllOrders); // Obține toate cererile
+router.patch("/admin/:id/status", verifyToken, checkRole("admin"), updateOrderStatus); // Actualizare status
+router.delete("/admin/:id", verifyToken, checkRole("admin"), deleteOrder); // Ștergere cerere
+router.get("/admin/export", verifyToken, checkRole("admin"), exportOrders); // Export cereri
 
+// Rute pentru utilizatori autentificați
+router.post("/", verifyToken, createOrder); // Creare cerere
+router.get("/client/orders", verifyToken, getUserOrders); // Obține cererile proprii
+router.get("/client/orders/:id", verifyToken, getOrderById); // Detalii cerere
+router.post("/client/orders/:id/comments", verifyToken, addCommentToOrder); // Adăugare comentariu
 
 export default router;

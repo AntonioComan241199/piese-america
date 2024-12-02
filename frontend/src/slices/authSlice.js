@@ -1,40 +1,70 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+
 const initialState = {
   isAuthenticated: false,
   user: null,
-  token: null,
-  refreshToken: null,
+  accessToken: null, // Acces token pentru autentificare
+  refreshToken: null, // Refresh token pentru reînnoire
   loading: true,
-  authChecked: false, // Indică dacă autentificarea a fost verificată
+  authChecked: false, // Confirmarea verificării autentificării
 };
 
-// Asynchronous checkAuth action
-export const checkAuth = createAsyncThunk("auth/checkAuth", async (_, { rejectWithValue }) => {
-  try {
-    const token = localStorage.getItem("token");
-    const refreshToken = localStorage.getItem("refreshToken");
+// Verificare și reînnoire token-uri
+export const checkAuth = createAsyncThunk(
+  "auth/checkAuth",
+  async (_, { rejectWithValue }) => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
 
-    if (!token) {
-      throw new Error("No token found");
-    }
+      // Dacă nu există niciun token
+      if (!refreshToken) throw new Error("No refresh token found");
 
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const currentTime = Math.floor(Date.now() / 1000);
+      // Verificare validitate accessToken
+      if (accessToken) {
+        const payload = JSON.parse(atob(accessToken.split(".")[1]));
+        const currentTime = Math.floor(Date.now() / 1000);
 
-    if (payload.exp > currentTime) {
+        if (payload.exp > currentTime) {
+          return {
+            accessToken,
+            refreshToken,
+            user: { email: payload.email, role: payload.role, id: payload.id },
+          };
+        }
+      }
+
+      // Reînnoire token folosind refreshToken
+      const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: refreshToken }),
+      });
+
+      if (!refreshResponse.ok) throw new Error("Refresh token expired or invalid");
+
+      const refreshData = await refreshResponse.json();
+      localStorage.setItem("accessToken", refreshData.accessToken);
+
+      const refreshedPayload = JSON.parse(atob(refreshData.accessToken.split(".")[1]));
+
       return {
-        token,
+        accessToken: refreshData.accessToken,
         refreshToken,
-        user: { email: payload.email, role: payload.role, id: payload.id },
+        user: {
+          email: refreshedPayload.email,
+          role: refreshedPayload.role,
+          id: refreshedPayload.id,
+        },
       };
-    } else {
-      throw new Error("Token expired");
+    } catch (error) {
+      return rejectWithValue(error.message);
     }
-  } catch (error) {
-    return rejectWithValue(error.message);
   }
-});
+);
 
 const authSlice = createSlice({
   name: "auth",
@@ -42,33 +72,29 @@ const authSlice = createSlice({
   reducers: {
     login: (state, action) => {
       state.isAuthenticated = true;
-      state.user = {
-        email: action.payload.email,
-        role: action.payload.role,
-        id: action.payload.id,
-      };
-      state.token = action.payload.token;
+      state.user = action.payload.user;
+      state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
       state.loading = false;
       state.authChecked = true;
 
-      localStorage.setItem("token", action.payload.token);
+      localStorage.setItem("accessToken", action.payload.accessToken);
       localStorage.setItem("refreshToken", action.payload.refreshToken);
     },
     logout: (state) => {
       state.isAuthenticated = false;
       state.user = null;
-      state.token = null;
+      state.accessToken = null;
       state.refreshToken = null;
       state.loading = false;
       state.authChecked = true;
 
-      localStorage.removeItem("token");
+      localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
     },
-    setToken: (state, action) => {
-      state.token = action.payload.token;
-      localStorage.setItem("token", action.payload.token);
+    setAccessToken: (state, action) => {
+      state.accessToken = action.payload.accessToken;
+      localStorage.setItem("accessToken", action.payload.accessToken);
     },
   },
   extraReducers: (builder) => {
@@ -80,7 +106,7 @@ const authSlice = createSlice({
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
         state.loading = false;
         state.authChecked = true;
@@ -88,13 +114,13 @@ const authSlice = createSlice({
       .addCase(checkAuth.rejected, (state) => {
         state.isAuthenticated = false;
         state.user = null;
-        state.token = null;
+        state.accessToken = null;
         state.refreshToken = null;
         state.loading = false;
-        state.authChecked = true; // Chiar dacă eșuează, autentificarea este verificată
+        state.authChecked = true; // Indică verificarea completă
       });
   },
 });
 
-export const { login, logout, setToken } = authSlice.actions;
+export const { login, logout, setAccessToken } = authSlice.actions;
 export default authSlice.reducer;
