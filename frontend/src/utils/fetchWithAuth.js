@@ -26,6 +26,7 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
       accessToken = refreshData.accessToken;
     } catch (err) {
       console.error("Failed to refresh token:", err.message);
+      store.dispatch(logout());
       throw new Error("Failed to refresh token");
     }
   }
@@ -36,14 +37,16 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
   }
 
   try {
-    const isBodyMethod = ["POST", "PUT", "PATCH"].includes(options.method?.toUpperCase());
+    const method = options.method?.toUpperCase() || "GET";
+    const isBodyMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
     const defaultHeaders = {
       Authorization: `Bearer ${accessToken}`,
       ...(isBodyMethod && { "Content-Type": "application/json" }),
     };
 
-    let response = await fetch(url, {
+    const response = await fetch(url, {
       ...options,
+      method,
       headers: {
         ...defaultHeaders,
         ...options.headers,
@@ -51,6 +54,11 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        store.dispatch(logout());
+        throw new Error("Unauthorized. Please log in again.");
+      }
+
       const errorData = await response.json();
       throw new Error(errorData.message || `Error: ${response.status}`);
     }

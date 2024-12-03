@@ -1,16 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-
 const initialState = {
   isAuthenticated: false,
   user: null,
-  accessToken: null, // Acces token pentru autentificare
-  refreshToken: null, // Refresh token pentru reînnoire
+  accessToken: null,
+  refreshToken: null,
   loading: true,
-  authChecked: false, // Confirmarea verificării autentificării
+  authChecked: false,
 };
 
-// Verificare și reînnoire token-uri
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
   async (_, { rejectWithValue }) => {
@@ -18,10 +16,8 @@ export const checkAuth = createAsyncThunk(
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = localStorage.getItem("refreshToken");
 
-      // Dacă nu există niciun token
-      if (!refreshToken) throw new Error("No refresh token found");
+      if (!refreshToken) return rejectWithValue("No refresh token found");
 
-      // Verificare validitate accessToken
       if (accessToken) {
         const payload = JSON.parse(atob(accessToken.split(".")[1]));
         const currentTime = Math.floor(Date.now() / 1000);
@@ -35,16 +31,17 @@ export const checkAuth = createAsyncThunk(
         }
       }
 
-      // Reînnoire token folosind refreshToken
       const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: refreshToken }),
       });
 
-      if (!refreshResponse.ok) throw new Error("Refresh token expired or invalid");
+      if (!refreshResponse.ok) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        throw new Error("Refresh token expired or invalid");
+      }
 
       const refreshData = await refreshResponse.json();
       localStorage.setItem("accessToken", refreshData.accessToken);
@@ -61,6 +58,7 @@ export const checkAuth = createAsyncThunk(
         },
       };
     } catch (error) {
+      console.error("checkAuth error:", error.message);
       return rejectWithValue(error.message);
     }
   }
@@ -111,13 +109,14 @@ const authSlice = createSlice({
         state.loading = false;
         state.authChecked = true;
       })
-      .addCase(checkAuth.rejected, (state) => {
+      .addCase(checkAuth.rejected, (state, action) => {
+        console.error("checkAuth rejected:", action.payload);
         state.isAuthenticated = false;
         state.user = null;
         state.accessToken = null;
         state.refreshToken = null;
         state.loading = false;
-        state.authChecked = true; // Indică verificarea completă
+        state.authChecked = true;
       });
   },
 });

@@ -121,6 +121,8 @@ const OrderDetails = () => {
         <p><strong>Putere motor:</strong> {order.enginePower} CP</p>
         <p><strong>Cutie de viteze:</strong> {order.transmission}</p>
         <p><strong>VIN:</strong> {order.vin}</p>
+        <hr />
+        <p><strong>Detalii piesă:</strong> {order.partDetails}</p>
 
         <hr />
         <h4>Comentarii</h4>
