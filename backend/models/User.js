@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Middleware pentru actualizarea câmpului `updatedAt`
+// Middleware pentru actualizarea câmpului updatedAt
 UserSchema.pre("save", function (next) {
   if (this.isModified()) {
     this.updatedAt = Date.now();
