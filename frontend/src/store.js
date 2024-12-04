@@ -1,10 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./slices/authSlice";
+import authReducer, { checkAuth } from "../../slices/authSlice";
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
     auth: authReducer,
   },
 });
 
-export default store;
+// Initializează autentificarea din localStorage la încărcare
+store.dispatch(checkAuth());
