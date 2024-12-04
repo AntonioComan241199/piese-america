@@ -128,18 +128,17 @@ export const deleteOffer = async (req, res, next) => {
 export const selectOptions = async (req, res, next) => {
   const { selectedParts } = req.body;
 
+  if (!Array.isArray(selectedParts) || selectedParts.length === 0) {
+    return next(errorHandler(400, "Lista de piese selectate este invalidă sau goală."));
+  }
+
   try {
     const offer = await Offer.findById(req.params.offerId);
 
     if (!offer) {
-      return next(errorHandler(404, "Oferta nu a fost gasita."));
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
     }
 
-    if (!selectedParts || !Array.isArray(selectedParts) || selectedParts.length === 0) {
-      return next(errorHandler(400, "Lista de piese selectate este invalida sau inexistenta."));
-    }
-
-    // Mapam piesele selectate
     const updatedSelectedParts = offer.parts.filter((part) =>
       selectedParts.some((selected) => String(part._id) === String(selected.selectedOption))
     );
@@ -148,31 +147,26 @@ export const selectOptions = async (req, res, next) => {
       return next(errorHandler(400, "Selecțiile clientului nu corespund pieselor disponibile."));
     }
 
-    // Recalculam totalul pe baza pieselor selectate
-    const updatedTotal = updatedSelectedParts.reduce(
-      (sum, part) =>
-        sum +
-        (part.options.find((option) => String(option._id) === String(part.selectedOption))?.price || 0) *
-          part.quantity,
+    // Actualizare în baza de date
+    offer.selectedParts = updatedSelectedParts;
+    offer.total = updatedSelectedParts.reduce(
+      (sum, part) => sum + part.total,
       0
     );
-
-    // Actualizam câmpul `selectedParts` și totalul
-    offer.selectedParts = updatedSelectedParts;
-    offer.total = updatedTotal;
     offer.status = "comanda_spre_finalizare";
 
-    const updatedOffer = await offer.save();
+    await offer.save();
 
     res.status(200).json({
       success: true,
       message: "Piesele selectate au fost salvate cu succes.",
-      offer: updatedOffer,
+      offer,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 
 
@@ -438,29 +432,30 @@ export const updateOffer = async (req, res, next) => {
 
 // Actualizare piese selectate într-o oferta
 export const updateSelectedParts = async (req, res, next) => {
-  try {
-    const { offerId } = req.params;
-    const { selectedParts } = req.body;
+  const { offerId } = req.params;
+  const { selectedParts, billingAddress, deliveryAddress, pickupAtCentral } = req.body;
 
-    if (!selectedParts || selectedParts.length === 0) {
-      return next(errorHandler(400, "Lista de piese selectate este invalida sau inexistenta."));
+  try {
+    if (!selectedParts || !Array.isArray(selectedParts) || selectedParts.length === 0) {
+      return next(errorHandler(400, "Lista de piese selectate este invalidă sau goală."));
     }
 
     const offer = await Offer.findById(offerId);
     if (!offer) {
-      return next(errorHandler(404, "Oferta nu a fost gasita."));
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
     }
 
-    if (offer.status === "comanda_spre_finalizare") {
-      return next(errorHandler(403, "Selecțiile nu pot fi modificate dupa ce oferta a fost trimisa pentru finalizare."));
+    if (offer.status !== "proiect" && offer.status !== "trimisa") {
+      return next(errorHandler(403, "Selecțiile nu pot fi modificate după ce oferta este în proces de finalizare."));
     }
 
     const updatedSelectedParts = [];
     let updatedTotal = 0;
 
+    // Mapare și recalculare total
     offer.parts.forEach((part) => {
       const selectedPart = selectedParts.find(
-        (p) => String(p.selectedOption) === String(part.options[0]._id)
+        (p) => String(p.selectedOption) === String(part.options[0]?._id)
       );
 
       if (selectedPart) {
@@ -485,21 +480,30 @@ export const updateSelectedParts = async (req, res, next) => {
       }
     });
 
+    if (updatedSelectedParts.length === 0) {
+      return next(errorHandler(400, "Selecțiile pieselor nu corespund pieselor disponibile."));
+    }
+
+    // Actualizare ofertă
     offer.selectedParts = updatedSelectedParts;
     offer.total = updatedTotal;
+    offer.billingAddress = billingAddress;
+    offer.deliveryAddress = pickupAtCentral ? null : deliveryAddress;
+    offer.pickupAtCentral = pickupAtCentral;
     offer.status = "comanda_spre_finalizare";
 
     const updatedOffer = await offer.save();
 
     res.status(200).json({
       success: true,
-      message: "Piesele selectate au fost actualizate cu succes.",
+      message: "Piesele selectate și adresele au fost actualizate cu succes.",
       offer: updatedOffer,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 
 export const updateQuantities = async (req, res, next) => {
@@ -643,6 +647,70 @@ export const generateOfferPDF = async (req, res, next) => {
 
     doc.end();
     doc.pipe(res);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const finalizeOffer = async (req, res, next) => {
+  const { billingAddress, deliveryAddress, pickupAtCentral, selectedParts } = req.body;
+
+  try {
+    const offer = await Offer.findById(req.params.offerId);
+
+    if (!offer) {
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
+    }
+
+    if (!selectedParts || selectedParts.length === 0) {
+      return next(errorHandler(400, "Selecțiile pieselor sunt necesare."));
+    }
+
+    const updatedSelectedParts = [];
+    let updatedTotal = 0;
+
+    offer.parts.forEach((part) => {
+      const selectedPart = selectedParts.find(
+        (p) => String(p.selectedOption) === String(part.options[0]._id)
+      );
+
+      if (selectedPart) {
+        const selectedOption = part.options.find(
+          (opt) => String(opt._id) === String(selectedPart.selectedOption)
+        );
+
+        if (selectedOption) {
+          const partTotal = selectedOption.price * part.quantity;
+          updatedTotal += partTotal;
+
+          updatedSelectedParts.push({
+            partCode: part.partCode,
+            partType: part.partType,
+            manufacturer: part.manufacturer,
+            pricePerUnit: selectedOption.price,
+            quantity: part.quantity,
+            total: partTotal,
+            selectedOption: selectedOption._id,
+          });
+        }
+      }
+    });
+
+    offer.selectedParts = updatedSelectedParts;
+    offer.total = updatedTotal;
+    offer.status = "comanda_spre_finalizare";
+    offer.billingAddress = billingAddress;
+    offer.deliveryAddress = pickupAtCentral ? null : deliveryAddress;
+    offer.pickupAtCentral = pickupAtCentral;
+
+    const updatedOffer = await offer.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Oferta a fost finalizată cu succes.",
+      offer: updatedOffer,
+    });
   } catch (error) {
     next(error);
   }

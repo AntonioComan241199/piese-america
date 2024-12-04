@@ -158,20 +158,25 @@ export const refreshToken = async (req, res, next) => {
 
 // Deconectare utilizator
 export const signOut = async (req, res, next) => {
-  try {
-    const { email } = req.body;
+  const { email } = req.body; // Presupunem că email-ul este trimis din frontend
 
+  try {
     const user = await User.findOne({ email });
-    if (user) {
-      user.refreshToken = null;
-      await user.save();
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
     }
+
+    // Invalidează token-ul din baza de date
+    user.refreshToken = null;
+    await user.save();
 
     res.status(200).json({ message: "Deconectare reușită." });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Middleware pentru validarea datelor din cereri
 export const validateSignup = [

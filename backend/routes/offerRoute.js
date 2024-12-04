@@ -14,7 +14,8 @@ import {
   getUserOffers,
   getOfferStats,
   updateQuantities,
-  generateOfferPDF
+  generateOfferPDF,
+  finalizeOffer
 } from "../controllers/offerController.js";
 import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
@@ -72,6 +73,9 @@ router.patch("/:offerId/selected-parts", verifyToken, updateSelectedParts);
 router.patch("/:offerId/update-quantities", verifyToken, updateQuantities);
 
 router.get("/:offerId/pdf", verifyToken, generateOfferPDF);
+
+router.patch("/:offerId/finalize", verifyToken, finalizeOffer);
+
 
 
 

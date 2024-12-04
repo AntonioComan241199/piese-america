@@ -12,6 +12,7 @@ const MyOffers = () => {
   const [error, setError] = useState("");
   const [showSelectModal, setShowSelectModal] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState({});
+  const [isReadOnly, setIsReadOnly] = useState(false); // Stare pentru modul de vizualizare
 
   const fetchOffers = async () => {
     const token = localStorage.getItem("accessToken");
@@ -59,10 +60,23 @@ const MyOffers = () => {
     }
   }, [isAuthenticated, authChecked]);
 
+  const handleViewSelections = (offer) => {
+    setSelectedOffer(offer);
+    setShowSelectModal(true);
+    setIsReadOnly(true); // Setăm modalul în modul read-only
+  };
+
   const handleSelectProducts = (offer) => {
     setSelectedOffer(offer);
     setShowSelectModal(true);
+    setIsReadOnly(false); // Setăm modalul în modul de editare
   };
+
+  const handleCloseModal = () => {
+    setSelectedOffer({});
+    setShowSelectModal(false);
+  };
+  
 
   const handleDownloadPDF = (offer) => {
     const doc = new jsPDF();
@@ -100,7 +114,12 @@ const MyOffers = () => {
     doc.save(`Oferta_${offer.offerNumber}.pdf`);
   };
 
-  const saveSelections = async (selections) => {
+  const saveSelections = async ({
+    selectedParts,
+    billingAddress,
+    deliveryAddress,
+    pickupAtCentral,
+  }) => {
     try {
       const token = localStorage.getItem("accessToken");
 
@@ -117,7 +136,12 @@ const MyOffers = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ selectedParts: selections }),
+          body: JSON.stringify({
+            selectedParts,
+            billingAddress,
+            deliveryAddress,
+            pickupAtCentral,
+          }),
         }
       );
 
@@ -194,14 +218,22 @@ const MyOffers = () => {
 
       <SelectProductsModal
         show={showSelectModal}
-        onHide={() => setShowSelectModal(false)}
+        onHide={handleCloseModal}
         offer={
-          selectedOffer.status === "comanda_spre_finalizare"
+          selectedOffer.status === "comanda_spre_finalizare" ||
+          selectedOffer.status === "oferta_acceptata" ||
+          selectedOffer.status === "oferta_respinsa"
             ? { ...selectedOffer, parts: selectedOffer.selectedParts }
             : selectedOffer
         }
-        onSaveSelection={saveSelections}
+        readonlyMode={
+          selectedOffer.status === "comanda_spre_finalizare" ||
+          selectedOffer.status === "oferta_acceptata" ||
+          selectedOffer.status === "oferta_respinsa"
+        }
+        onSaveSelection={(data) => saveSelections(data)}
       />
+
 
       {offers.length > 0 ? (
         <div className="table-responsive">
@@ -236,14 +268,16 @@ const MyOffers = () => {
                         className="btn btn-primary btn-sm me-2"
                         onClick={() => handleSelectProducts(offer)}
                       >
-                        Selectează produse
+                        {offer.selectedParts?.length > 0
+                          ? "Editează selecțiile"
+                          : "Selectează produse"}
                       </button>
                     )}
                     {offer.status === "comanda_spre_finalizare" && (
                       <>
                         <button
                           className="btn btn-secondary btn-sm me-2"
-                          onClick={() => handleSelectProducts(offer)}
+                          onClick={() => handleViewSelections(offer)}
                         >
                           Vizualizează selecțiile
                         </button>
