@@ -11,14 +11,12 @@ import Signin from "./pages/Signin";
 import Register from "./pages/Register";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
-import AllOrders from "./pages/AllOrders";
 import MyOrders from "./pages/MyOrders";
 import MyOffers from "./pages/MyOffers";
 import RequestOrder from "./pages/RequestOrder";
 import OrderDetails from "./pages/OrderDetails";
 import OfferDetail from "./pages/OfferDetail";
 import OfferGenerator from "./pages/OfferGenerator";
-import OfferManagement from "./pages/OfferManagement";
 import MyProfile from "./pages/MyProfile";
 import AdminOrders from "./pages/AdminOrders";
 import AdminOffers from "./pages/AdminOffers";
@@ -64,26 +62,10 @@ const AppWrapper = () => {
 
         {/* Rute protejate */}
         <Route
-          path="/all-orders"
-          element={
-            <ProtectedRoute>
-              <AllOrders />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/my-profile"
           element={
             <ProtectedRoute>
               <MyProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/order-details/:id"
-          element={
-            <ProtectedRoute>
-              <OrderDetails />
             </ProtectedRoute>
           }
         />
@@ -100,14 +82,6 @@ const AppWrapper = () => {
           element={
             <ProtectedRoute>
               <OfferGenerator />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/offer-management"
-          element={
-            <ProtectedRoute>
-              <OfferManagement />
             </ProtectedRoute>
           }
         />

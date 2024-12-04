@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import SelectProductsModal from "./SelectProductsModal";
 
 const MyOffers = () => {
@@ -60,6 +62,42 @@ const MyOffers = () => {
   const handleSelectProducts = (offer) => {
     setSelectedOffer(offer);
     setShowSelectModal(true);
+  };
+
+  const handleDownloadPDF = (offer) => {
+    const doc = new jsPDF();
+    const tableColumn = [
+      "Cod Piesa",
+      "Tip",
+      "Producator",
+      "Pret/unitate",
+      "Cantitate",
+      "Total",
+    ];
+    const tableRows = [];
+
+    offer.selectedParts.forEach((part) => {
+      const rowData = [
+        part.partCode,
+        part.partType,
+        part.manufacturer,
+        `${part.pricePerUnit} RON`,
+        part.quantity,
+        `${part.total} RON`,
+      ];
+      tableRows.push(rowData);
+    });
+
+    doc.text(`Detalii oferta #${offer.offerNumber}`, 14, 10);
+    doc.text(`Status: ${offer.status}`, 14, 20);
+    doc.text(`Total oferta: ${offer.total} RON`, 14, 30);
+    doc.autoTable({
+      startY: 40,
+      head: [tableColumn],
+      body: tableRows,
+    });
+
+    doc.save(`Oferta_${offer.offerNumber}.pdf`);
   };
 
   const saveSelections = async (selections) => {
@@ -147,34 +185,6 @@ const MyOffers = () => {
     }
   };
 
-  const handleDownloadPDF = async (offerId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`http://localhost:5000/api/offer/${offerId}/pdf`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error("Eroare la descărcarea PDF-ului.");
-      }
-  
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `offer_${offerId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      setError(error.message);
-    }
-  };
-  
-
   if (loading) return <div className="text-center">Se încarcă...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
 
@@ -256,7 +266,7 @@ const MyOffers = () => {
                       offer.status === "oferta_respinsa") && (
                       <button
                         className="btn btn-info btn-sm"
-                        onClick={() => handleDownloadPDF(offer._id)}
+                        onClick={() => handleDownloadPDF(offer)}
                       >
                         Descarcă PDF
                       </button>

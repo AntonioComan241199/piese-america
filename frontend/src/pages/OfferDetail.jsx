@@ -38,7 +38,9 @@ const OfferDetail = () => {
     const doc = new jsPDF();
     const tableColumn = ["Cod Piesa", "Tip", "Producator", "Pret/unitate", "Cantitate", "Total"];
     const tableRows = [];
-
+  
+    let totalSelectedParts = 0;
+  
     offer.selectedParts.forEach((part) => {
       const rowData = [
         part.partCode,
@@ -48,9 +50,10 @@ const OfferDetail = () => {
         part.quantity,
         `${part.total} RON`,
       ];
+      totalSelectedParts += part.total; // Calculăm totalul pentru produsele selectate
       tableRows.push(rowData);
     });
-
+  
     doc.text(`Detalii oferta #${offer.offerNumber}`, 14, 10);
     doc.text(`Status: ${offer.status}`, 14, 20);
     doc.autoTable({
@@ -58,9 +61,13 @@ const OfferDetail = () => {
       head: [tableColumn],
       body: tableRows,
     });
-
+  
+    // Adăugăm totalul la final
+    doc.text(`Total selectii: ${totalSelectedParts} RON`, 14, doc.previousAutoTable.finalY + 10);
+  
     doc.save(`Oferta_${offer.offerNumber}.pdf`);
   };
+  
 
   if (loading) return <div className="alert alert-info">Se încarcă oferta...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;

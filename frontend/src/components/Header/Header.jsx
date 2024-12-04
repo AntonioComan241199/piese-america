@@ -127,17 +127,22 @@ const Header = () => {
 
               {/* Linkuri speciale pentru utilizatori autentificați */}
               {isAuthenticated && user?.role === "client" && (
-                <Nav.Link as={NavLink} to="/my-orders">
-                  Cererile mele de oferte
-                </Nav.Link>
+                <>
+                  <Nav.Link as={NavLink} to="/my-orders">
+                    Cererile mele de ofertare
+                  </Nav.Link>
+                  <Nav.Link as={NavLink} to="/my-offers">
+                    Oferte primite
+                  </Nav.Link>
+                </>
               )}
               {isAuthenticated && user?.role === "admin" && (
                 <>
-                  <Nav.Link as={NavLink} to="/all-orders">
-                    Cereri Oferte
+                  <Nav.Link as={NavLink} to="/admin-orders">
+                    Cereri Ofertare
                   </Nav.Link>
-                  <Nav.Link as={NavLink} to="/offer-management">
-                    Management Oferte
+                  <Nav.Link as={NavLink} to="/admin-offers">
+                    Management Ofertare
                   </Nav.Link>
                 </>
               )}
