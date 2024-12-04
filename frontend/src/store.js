@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer, { checkAuth } from "../../slices/authSlice";
+import authReducer, { checkAuth } from "./slices/authSlice";
 
 export const store = configureStore({
   reducer: {
@@ -9,3 +9,5 @@ export const store = configureStore({
 
 // Initializează autentificarea din localStorage la încărcare
 store.dispatch(checkAuth());
+
+export default store;
