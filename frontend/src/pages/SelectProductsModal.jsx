@@ -12,6 +12,7 @@ const SelectProductsModal = ({
   const [groupedParts, setGroupedParts] = useState([]);
   const [selections, setSelections] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [totalSelectie, setTotalSelectie] = useState(0);
   const [billingAddress, setBillingAddress] = useState({
     street: "",
     number: "",
@@ -39,6 +40,7 @@ const SelectProductsModal = ({
     }
   }, [readonlyMode]);
 
+  
   useEffect(() => {
     if (!show) {
       setCurrentStep(1); // Resetează modalul la pasul 1 când este închis
@@ -127,63 +129,108 @@ const SelectProductsModal = ({
     }
   }, [isDeliverySame, billingAddress]);
 
-  const handleSelectChange = (partType, optionId) => {
-    const selectedPart = groupedParts
-      .find((group) => group.partType === partType)
-      ?.options.find((option) => option.optionId === optionId);
-  
-    const pricePerUnit = selectedPart?.price || 0;
-    const quantity = groupedParts.find((group) => group.partType === partType)?.quantity || 0;
-  
-    setSelections((prevSelections) =>
-      prevSelections.map((selection) =>
-        selection.partType === partType
-          ? {
-              ...selection,
-              selectedOption: optionId,
-              include: true,
-              pricePerUnit,
-              quantity,
-              total: pricePerUnit * quantity,
-            }
-          : selection
-      )
-    );
-  };
-  
-  
-  const handleCheckboxChange = (partType, optionId, include) => {
-    setSelections((prevSelections) =>
-      prevSelections.map((selection) =>
-        selection.partType === partType && selection.selectedOption === optionId
-          ? {
-              ...selection,
-              include,
-              total: include
-                ? selection.pricePerUnit * selection.quantity
-                : 0,
-            }
-          : selection
-      )
-    );
-  };
-  
-  
+
+  useEffect(() => {
+    if (!readonlyMode && offer?.parts) {
+      const grouped = {};
+      offer.parts.forEach((part) => {
+        if (!grouped[part.partType]) {
+          grouped[part.partType] = { partType: part.partType, options: [] };
+        }
+        part.options.forEach((option) => {
+          grouped[part.partType].options.push({
+            optionId: option._id,
+            manufacturer: option.manufacturer,
+            price: option.price,
+            quantity: part.quantity, // Cantitatea asociată acestei opțiuni
+          });
+        });
+      });
+      setGroupedParts(Object.values(grouped));
+
+      // Initializează selecțiile implicite
+      const initialSelections = Object.values(grouped).flatMap((group) =>
+        group.options.map((option) => ({
+          partType: group.partType,
+          selectedOption: option.optionId,
+          include: false,
+          quantity: option.quantity,
+          pricePerUnit: option.price,
+          total: 0,
+        }))
+      );
+      setSelections(initialSelections);
+    }
+  }, [offer, readonlyMode]);
+
+
+  useEffect(() => {
+    const total = selections.reduce((sum, selection) => sum + (selection.include ? selection.total : 0), 0);
+    setTotalSelectie(total);
+  }, [selections])
 
   const handleRadioChange = (partType, optionId) => {
     setSelections((prevSelections) =>
-      prevSelections.map((selection) =>
-        selection.partType === partType
-          ? {
+      prevSelections.map((selection) => {
+        if (selection.partType === partType) {
+          return {
+            ...selection,
+            include: selection.selectedOption === optionId, // Include doar opțiunea selectată
+            total: selection.selectedOption === optionId ? selection.pricePerUnit * selection.quantity : 0,
+          };
+        }
+        return selection;
+      })
+    );
+  };
+
+
+  const handleSelectChange = (partType, optionId) => {
+    setSelections((prevSelections) =>
+      prevSelections.map((selection) => {
+        if (selection.partType === partType) {
+          const group = groupedParts.find((g) => g.partType === partType);
+          const option = group?.options.find((o) => o.optionId === optionId);
+  
+          if (option) {
+            return {
               ...selection,
               selectedOption: optionId,
               include: true,
-              total: selection.quantity * selection.pricePerUnit, // Total recalculat
-            }
-          : selection
-      )
+              manufacturer: option.manufacturer,
+              pricePerUnit: option.price,
+              quantity: option.quantity,
+              total: option.price * option.quantity,
+            };
+          }
+        }
+        return selection;
+      })
     );
   };
+  
+  
+  
+  
+  
+  
+  
+  
+  const handleCheckboxChange = (partType, optionId, checked) => {
+    setSelections((prevSelections) =>
+      prevSelections.map((selection) => {
+        if (selection.partType === partType && selection.selectedOption === optionId) {
+          return {
+            ...selection,
+            include: checked,
+            total: checked ? selection.pricePerUnit * selection.quantity : 0,
+          };
+        }
+        return selection;
+      })
+    );
+  };
+  
   
   
 
@@ -195,95 +242,81 @@ const SelectProductsModal = ({
     setAddress({ ...address, [field]: value });
   };
 
-  const renderStep1 = () => {
-    const totalSelectie = selections.reduce((sum, selection) => {
-      return sum + (selection.include ? selection.total || 0 : 0);
-    }, 0);
   
-    return (
-      <Form>
-        {groupedParts.length > 0 ? (
-          groupedParts.map((group, index) => (
-            <div key={index} className="mb-4">
-              <h5 className="text-primary">{group.partType}</h5>
-              <div className="border rounded p-3">
-                {group.options.length > 1 ? (
-                  group.options.map((option) => (
-                    <div
-                      key={option.optionId}
-                      className="d-flex justify-content-between align-items-center mb-2"
-                    >
-                      <Form.Check
-                        type="radio"
-                        label={`${option.manufacturer} - ${option.price} RON/buc`}
-                        name={`part-${group.partType}`}
-                        checked={selections.some(
-                          (selection) =>
-                            selection.partType === group.partType &&
-                            selection.selectedOption === option.optionId
-                        )}
-                        onChange={() =>
-                          handleSelectChange(group.partType, option.optionId)
-                        }
-                      />
-                      <span className="text-muted">
-                        Cantitate: {option.quantity} buc. -{" "}
-                        <strong>
-                          Subtotal: {option.price * option.quantity} RON
-                        </strong>
-                      </span>
-                    </div>
-                  ))
-                ) : group.options.length === 1 ? (
-                  <div
-                    key={group.options[0].optionId}
-                    className="d-flex justify-content-between align-items-center mb-2"
-                  >
+  
+  const renderStep1 = () => (
+    <Form>
+      {groupedParts.length > 0 ? (
+        groupedParts.map((group, index) => (
+          <div key={index} className="mb-4">
+            <h5 className="text-primary">{group.partType}</h5>
+            <div className="border rounded p-3">
+              {group.options.length > 1 ? (
+                group.options.map((option) => (
+                  <div key={option.optionId} className="d-flex justify-content-between align-items-center mb-2">
                     <Form.Check
-                      type="checkbox"
-                      label={`${group.options[0]?.manufacturer} - ${group.options[0]?.price} RON/buc`}
+                      type="radio"
+                      label={`${option.manufacturer} - ${option.price} RON/buc`}
+                      name={`part-${group.partType}`}
                       checked={selections.some(
                         (selection) =>
                           selection.partType === group.partType &&
-                          selection.selectedOption ===
-                            group.options[0].optionId &&
+                          selection.selectedOption === option.optionId &&
                           selection.include
                       )}
-                      onChange={(e) =>
-                        handleCheckboxChange(
-                          group.partType,
-                          group.options[0].optionId,
-                          e.target.checked
-                        )
-                      }
+                      onChange={() => handleRadioChange(group.partType, option.optionId)}
                     />
                     <span className="text-muted">
-                      Cantitate: {group.options[0]?.quantity} buc. -{" "}
-                      <strong>
-                        Subtotal:{" "}
-                        {group.options[0]?.price * group.options[0]?.quantity}{" "}
-                        RON
-                      </strong>
+                      Cantitate: {option.quantity} buc. -{" "}
+                      <strong>Subtotal: {option.price * option.quantity} RON</strong>
                     </span>
                   </div>
-                ) : (
-                  <div className="text-danger">Opțiuni indisponibile.</div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div
+                  key={group.options[0]?.optionId}
+                  className="d-flex justify-content-between align-items-center mb-2"
+                >
+                  <Form.Check
+                    type="checkbox"
+                    label={`${group.options[0]?.manufacturer} - ${group.options[0]?.price} RON/buc`}
+                    checked={selections.some(
+                      (selection) =>
+                        selection.partType === group.partType &&
+                        selection.selectedOption === group.options[0]?.optionId &&
+                        selection.include
+                    )}
+                    onChange={(e) =>
+                      handleCheckboxChange(
+                        group.partType,
+                        group.options[0]?.optionId,
+                        e.target.checked
+                      )
+                    }
+                  />
+                  <span className="text-muted">
+                    Cantitate: {group.options[0]?.quantity || 0} buc. -{" "}
+                    <strong>
+                      Subtotal: {group.options[0]?.price * (group.options[0]?.quantity || 0)} RON
+                    </strong>
+                  </span>
+                </div>
+              )}
             </div>
-          ))
-        ) : (
-          <div className="alert alert-warning">Nu există piese disponibile pentru selecție.</div>
-        )}
-        {/* Total Selectie */}
-        <div className="d-flex justify-content-end mt-4">
-          <h5 className="text-primary">
-            Total selecție: <span>{totalSelectie} RON</span>
-          </h5>
-        </div>
-      </Form>
-    );
-  };
+          </div>
+        ))
+      ) : (
+        <div className="alert alert-warning">Nu există piese disponibile pentru selecție.</div>
+      )}
+      <div className="d-flex justify-content-end mt-4">
+        <h5 className="text-primary">Total selecție: {totalSelectie} RON</h5>
+      </div>
+    </Form>
+  );
+  
+  
+  
+  
   
   
   
@@ -465,43 +498,39 @@ const SelectProductsModal = ({
 
   const renderStep3 = () => {
     const totalGeneral = selections.reduce((sum, selection) => {
-      return (
-        sum +
-        (selection.include && selection.selectedOption
-          ? selection.quantity * selection.pricePerUnit
-          : 0)
-      );
+      return sum + (selection.include && selection.selectedOption ? selection.total : 0);
     }, 0);
-  
-    console.log("Selections in Step 3:", selections);
   
     return (
       <div>
         <h5>Piese selectate:</h5>
         {selections
           .filter((selection) => selection.include && selection.selectedOption)
-          .map((selection, index) => (
-            <div key={index} className="mb-2">
-              <strong>Tip piesă:</strong> {selection.partType || "N/A"}
-              <br />
-              <strong>Producător:</strong> {selection.manufacturer || "N/A"}
-              <br />
-              <strong>Cantitate:</strong> {selection.quantity || 0}
-              <br />
-              <strong>Preț/bucată:</strong>{" "}
-              {selection.pricePerUnit ? `${selection.pricePerUnit} RON` : "0 RON"}
-              <br />
-              <strong>Total:</strong>{" "}
-              {selection.total ? `${selection.total} RON` : "0 RON"}
-            </div>
-          ))}
+          .map((selection, index) => {
+            // Găsește detalii din groupedParts pentru producător
+            const group = groupedParts.find((g) => g.partType === selection.partType);
+            const option = group?.options.find((o) => o.optionId === selection.selectedOption);
+  
+            return (
+              <div key={index} className="mb-2">
+                <strong>Tip piesă:</strong> {selection.partType || "N/A"}
+                <br />
+                <strong>Producător:</strong> {option?.manufacturer || selection.manufacturer || "N/A"}
+                <br />
+                <strong>Cantitate:</strong> {selection.quantity || 0}
+                <br />
+                <strong>Preț/bucată:</strong> {selection.pricePerUnit || 0} RON
+                <br />
+                <strong>Total:</strong> {selection.total || 0} RON
+              </div>
+            );
+          })}
         {selections.filter((selection) => selection.include).length === 0 && (
           <div className="text-danger">Nu există piese selectate.</div>
         )}
         <hr />
         <h5>Total general:</h5>
         <strong>{totalGeneral || 0} RON</strong>
-  
         <hr />
         <h5>Adresa de facturare:</h5>
         {Object.values(billingAddress).filter((field) => field).length > 0 ? (
@@ -537,6 +566,7 @@ const SelectProductsModal = ({
       </div>
     );
   };
+  
   
   
   
