@@ -32,7 +32,7 @@ const OrderSchema = new mongoose.Schema({
   partDetails: { type: String, required: true },
   status: {
     type: String,
-    enum: ["asteptare_oferta", "ofertat", "comanda_spre_finalizare", "oferta_acceptata", "oferta_respinsa", "livrat"],
+    enum: ["asteptare_oferta", "ofertat", "comanda_spre_finalizare", "oferta_acceptata", "oferta_respinsa", "livrare_in_procesare", "livrata", "anulata"],
     default: "asteptare_oferta",
   },
   orderDate: { type: Date, default: Date.now },

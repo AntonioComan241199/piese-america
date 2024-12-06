@@ -258,6 +258,7 @@ export const rejectOffer = async (req, res, next) => {
 };
 
 
+
 // Actualizare status livrare
 export const updateDeliveryStatus = async (req, res, next) => {
   try {
@@ -273,6 +274,7 @@ export const updateDeliveryStatus = async (req, res, next) => {
       return next(errorHandler(404, "Oferta nu a fost găsită."));
     }
 
+    // Verificăm dacă statusul livrării este corect
     if (
       deliveryStatus === "livrata" &&
       offer.status !== "livrare_in_procesare"
@@ -280,9 +282,28 @@ export const updateDeliveryStatus = async (req, res, next) => {
       return next(errorHandler(400, "Livrarea poate fi finalizată doar dacă este în proces."));
     }
 
+    // Actualizez statusul ofertei
     offer.status = deliveryStatus;
     await offer.save();
 
+    // Actualizare status cerere asociată (Order)
+    const order = await Order.findById(offer.orderId);
+    if (!order) {
+      return next(errorHandler(404, "Cererea asociată ofertei nu a fost găsită."));
+    }
+
+    // Schimbăm statusul cererii în funcție de statusul livrării ofertei
+    if (deliveryStatus === "livrata") {
+      order.status = "livrata";  // Dacă oferta este livrată, setăm cererea la "livrata"
+    } else if (deliveryStatus === "anulata") {
+      order.status = "anulata";  // Dacă oferta este anulată, setăm cererea la "anulata"
+    } else if (deliveryStatus === "livrare_in_procesare") {
+      order.status = "comanda_spre_finalizare";  // Dacă livrarea este în proces, cererea devine "comanda_spre_finalizare"
+    }
+
+    await order.save();  // Salvează cererea cu noul status
+
+    // Crearea unui log pentru această actualizare
     await createLog({
       action: "Actualizare status livrare",
       userId: req.user.id,
@@ -299,6 +320,7 @@ export const updateDeliveryStatus = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 export const getUserOffers = async (req, res, next) => {
