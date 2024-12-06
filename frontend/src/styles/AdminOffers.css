@@ -1,0 +1,69 @@
+/* Stiluri generale */
+.container {
+    padding: 20px;
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  .table th, .table td {
+    padding: 8px; /* Micșorăm padding-ul */
+  }
+  
+  table {
+    width: 100%; /* Asigurăm că tabelul ocupă întreaga lățime */
+  }
+  
+  /* Media Queries pentru ecrane mici */
+  @media (max-width: 767px) {
+    .table th, .table td {
+      font-size: 12px; /* Reducem fontul pe ecranele mici */
+    }
+  
+    .form-select, .form-control {
+      font-size: 12px; /* Reducem dimensiunea fontului în input-uri */
+    }
+  
+    /* Aranjarea filtrelor pe verticală pe ecrane mici */
+    .d-flex {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .mb-3, .ms-2 {
+      margin-bottom: 5px !important; /* Reducem gap-urile între filtre */
+    }
+  
+    .btn {
+      font-size: 12px;
+      padding: 8px; /* Reducem dimensiunile butoanelor */
+    }
+  
+    /* Asigurăm că butoanele se aliniază mai bine */
+    .table-responsive .btn {
+      margin: 5px 0;
+      width: 100%;
+    }
+    
+    /* Facem tabelul scrollabil pe orizontală */
+    .table {
+      table-layout: auto;
+    }
+  }
+  
+  /* Media Queries pentru ecrane mari */
+  @media (min-width: 768px) {
+    .table th, .table td {
+      font-size: 14px;
+    }
+  
+    .d-flex {
+      flex-direction: row; /* Restabilim direcția rând pe ecranele mari */
+    }
+  
+    .table-responsive .btn {
+      width: auto;
+    }
+  }
+  

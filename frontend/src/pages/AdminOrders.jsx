@@ -11,6 +11,8 @@ const AdminOrders = () => {
   const [statusFilter, setStatusFilter] = useState("");  // Filtru status cerere
   const [offerNumber, setOfferNumber] = useState("");   // Filtru număr ofertă
   const [selectedDate, setSelectedDate] = useState(""); // Filtru pentru data selectată
+  const [phoneNumber, setPhoneNumber] = useState(""); // Filtru număr de telefon
+
 
   const [currentPage, setCurrentPage] = useState(1);    // Paginare
   const [totalPages, setTotalPages] = useState(1);
@@ -38,6 +40,8 @@ const AdminOrders = () => {
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("offerNumber", offerNumber);
       url.searchParams.append("selectedDate", selectedDate); // Adăugăm filtrul pentru data selectată
+      url.searchParams.append("phoneNumber", phoneNumber); // Adăugăm filtrul pentru numărul de telefon
+
 
       const response = await fetch(url.toString(), { method: "GET", headers });
 
@@ -63,10 +67,13 @@ const AdminOrders = () => {
       setError("Trebuie să fiți autentificat pentru a accesa cererile.");
       setLoading(false);
     }
-  }, [isAuthenticated, currentPage, statusFilter, offerNumber, selectedDate]); // Când se schimbă data selectată
+  }, [isAuthenticated, currentPage, statusFilter, offerNumber, selectedDate, phoneNumber]); // Când se schimbă data selectată
 
   const handleStatusChange = (event) => {
     setStatusFilter(event.target.value);
+  };
+  const handlePhoneNumberChange = (e) => {
+    setPhoneNumber(e.target.value);  // Actualizăm telefonul selectat
   };
 
   const handlePageChange = (direction) => {
@@ -85,6 +92,7 @@ const AdminOrders = () => {
     setStatusFilter("");
     setOfferNumber("");
     setSelectedDate(""); // Resetăm și data
+    setPhoneNumber(""); // Resetăm și telefonul
     setCurrentPage(1); // Resetăm filtrele și pagina
     fetchOrders(); // Apelăm funcția de reîncărcare a datelor după resetarea filtrelor
   };
@@ -163,6 +171,13 @@ const AdminOrders = () => {
             className="form-control w-auto me-2"
             value={selectedDate}
             onChange={handleDateChange}
+          />
+          <input
+            type="text"
+            className="form-control w-auto me-2"
+            placeholder="Număr Telefon"
+            value={phoneNumber}
+            onChange={handlePhoneNumberChange}
           />
           <button className="btn btn-outline-secondary" onClick={handleResetFilters}>
             Resetare Filtre

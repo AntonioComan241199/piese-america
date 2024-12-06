@@ -90,58 +90,41 @@ const handleDateChange = (e) => {
 
 
 // Obținerea cererilor de ofertă cu filtrare corectă pe intervalul de date
+// Obținerea cererilor de ofertă cu filtrare corectă pe intervalul de date
 export const getAllOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, userType, search, selectedDate } = req.query;  // Folosim selectedDate
+    const { page = 1, limit = 10, status, offerNumber, selectedDate, phoneNumber } = req.query;
     const filters = {};
 
     // Filtrare după status
     if (status) filters.status = status;
 
-    // Filtrare după tipul utilizatorului
-    if (userType) filters.userType = userType;
+    // Filtrare după număr ofertă
+    if (offerNumber) filters.offerNumber = offerNumber;
 
-    // Căutare globală (în funcție de tipul de utilizator)
-    if (search) {
-      if (userType === "persoana_fizica") {
-        filters.$or = [
-          { firstName: { $regex: search, $options: "i" } },
-          { lastName: { $regex: search, $options: "i" } },
-        ];
-      } else if (userType === "persoana_juridica") {
-        filters.$or = [
-          { "companyDetails.companyName": { $regex: search, $options: "i" } },
-          { "companyDetails.cui": { $regex: search, $options: "i" } },
-        ];
-      } else {
-        filters.$or = [
-          { email: { $regex: search, $options: "i" } },
-          { phoneNumber: { $regex: search, $options: "i" } },
-          { orderNumber: { $regex: search, $options: "i" } },
-        ];
-      }
+    // Filtrare după numărul de telefon
+    if (phoneNumber) {
+      filters.phoneNumber = { $regex: phoneNumber, $options: "i" };  // Filtrare case-insensitive
     }
 
     // Filtrare pe o singură dată (selectedDate)
     if (selectedDate) {
-      // Crează un obiect Date din selectedDate (care e în format 'yyyy-mm-dd')
       const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0); // Setează ora la 00:00:00 pentru începutul zilei
-
+      startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(startOfDay);
-      endOfDay.setHours(23, 59, 59, 999); // Setează ora la 23:59:59.999 pentru sfârșitul zilei
-
-      // Filtrăm comenzile plasate pe acea dată
+      endOfDay.setHours(23, 59, 59, 999);
       filters.orderDate = { $gte: startOfDay.toISOString(), $lte: endOfDay.toISOString() };
     }
 
+    // Căutare cereri în baza filtrelor aplicate
     const orders = await Order.find(filters)
       .populate("userId", "email firstName lastName")
       .populate("offerId", "offerNumber status total")
       .sort({ orderDate: -1 })  // Ordine descrescătoare pe orderDate
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .skip((page - 1) * limit) // Paginare
+      .limit(parseInt(limit)); // Limitează numărul de cereri returnate
 
+    // Calcularea numărului total de cereri care se potrivesc filtrelor
     const totalOrders = await Order.countDocuments(filters);
 
     res.status(200).json({
@@ -150,13 +133,14 @@ export const getAllOrders = async (req, res, next) => {
       pagination: {
         total: totalOrders,
         page: parseInt(page),
-        pages: Math.ceil(totalOrders / limit),
+        pages: Math.ceil(totalOrders / limit), // Calcularea numărului de pagini
       },
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 
 
@@ -196,10 +180,43 @@ export const exportOrders = async (req, res, next) => {
 // Obținere cererile unui utilizator
 export const getUserOrders = async (req, res, next) => {
   try {
-    // Nu mai verificăm `req.params.userId`
-    const orders = await Order.find({ userId: req.user.id });
+    const { page = 1, limit = 10, status, orderNumber, orderDate } = req.query;
 
-    res.status(200).json({ success: true, data: orders });
+    const filters = { userId: req.user.id };
+
+    // Filtrare după status
+    if (status) filters.status = status;
+
+    // Filtrare după numărul comenzii
+    if (orderNumber) filters.orderNumber = orderNumber;
+
+    // Filtrare pe o singură dată (orderDate)
+    if (orderDate) {
+      const startOfDay = new Date(orderDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setHours(23, 59, 59, 999);
+      filters.orderDate = { $gte: startOfDay.toISOString(), $lte: endOfDay.toISOString() };
+    }
+
+    const orders = await Order.find(filters)
+      .populate("userId", "email firstName lastName")
+      .populate("offerId", "offerNumber status total")
+      .sort({ orderDate: -1 })  // Ordine descrescătoare pe orderDate
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const totalOrders = await Order.countDocuments(filters);
+
+    res.status(200).json({
+      success: true,
+      data: orders,
+      pagination: {
+        total: totalOrders,
+        page: parseInt(page),
+        pages: Math.ceil(totalOrders / limit),
+      },
+    });
   } catch (error) {
     next(error);
   }

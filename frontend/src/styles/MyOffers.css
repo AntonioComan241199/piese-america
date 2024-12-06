@@ -1,0 +1,138 @@
+/* Stiluri pentru a face modalul responsive */
+.modal-dialog {
+    max-width: 88%; /* Modalul va avea o lățime maximă de 90% pe ecranele mici */
+    width: auto;
+    position: fixed; /* Fixăm modalul pe ecran */
+    transform: translate(-50%, -50%); /* Ajustăm modalul pentru a fi exact pe centru */
+    z-index: 1050; /* Asigurăm că modalul se află deasupra altor elemente */
+  }
+  
+  .modal-content {
+    padding: 15px;
+  }
+
+  
+  
+  /* Stiluri pentru a face pagina responsive */
+
+/* Fonturi și lățimi pentru dispozitive mobile */
+@media (max-width: 768px) {
+  /* Reducerea fontului pe dispozitive mici */
+  .modal-body, .modal-header, .modal-footer, .table th, .table td {
+    font-size: 14px; /* Font mai mic pe mobil */
+  }
+
+  /* Ajustarea tabelei pentru a fi complet vizibilă pe mobil */
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .table th, .table td {
+    padding: 3px 8px; /* Micșorăm padding-ul pentru a face tabelul mai compact */
+    font-size: 12px; /* Micșorăm fontul pentru a se încadra mai bine pe ecranul mobil */
+    white-space: nowrap;
+
+    
+  }
+
+  /* Aranjarea filtrelor pe verticală pe mobil */
+  .d-flex {
+    flex-direction: column; /* Schimbăm flex-ul la verticală */
+    align-items: flex-start;
+  }
+
+  /* Mărirea butoanelor pe mobil pentru ușurință în utilizare */
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .table .btn {
+    font-size: 10px; /* Mărim mai mic fontul butoanelor */
+    padding: 4px 8px; /* Mărim mai mic padding-ul */
+  }
+  
+  .form-control {
+    width: 100%; /* Asigură lățimea completă pe mobil pentru input-uri */
+    margin-bottom: 10px; /* Adăugăm margine între butoane și input-uri */
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pagination button {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Ajustarea tabelei pentru a fi complet vizibilă pe mobil */
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  /* Aranjarea filtrelor pe verticală pe mobil */
+  .d-flex {
+    flex-direction: column; /* Schimbăm flex-ul la verticală */
+    align-items: flex-start;
+  }
+
+  /* Mărirea butoanelor pe mobil pentru ușurință în utilizare */
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pagination button {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* Îmbunătățirea stilului tabelei și a filtrării */
+  .table {
+    font-size: 12px;
+  }
+
+  /* Asigură o lățime mai bună pentru tabele și butoane */
+  .table-responsive {
+    overflow-x: scroll;
+  }
+  .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* Îmbunătățirea stilului tabelei și a filtrării */
+  .table {
+    font-size: 12px;
+  }
+
+  .table th, .table td {
+    padding: 2px 5px; /* Micșorăm și mai mult padding-ul pe dispozitive foarte mici */
+    font-size: 10px; /* Micșorăm fontul pentru a îmbunătăți lizibilitatea */
+  }
+
+  /* Asigură o lățime mai bună pentru tabele și butoane */
+  .table-responsive {
+    overflow-x: scroll;
+  }
+
+  .table .btn {
+    font-size: 9px; /* Mărim fontul butoanelor pe dispozitive foarte mici */
+    padding: 3px 6px; /* Micșorăm padding-ul butoanelor */
+}
+
+  

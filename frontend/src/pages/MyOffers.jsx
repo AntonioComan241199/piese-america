@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
 import SelectProductsModal from "./SelectProductsModal";
+import "../styles/MyOffers.css";
+
 
 const MyOffers = () => {
   const { isAuthenticated, authChecked } = useSelector((state) => state.auth);
@@ -14,6 +14,14 @@ const MyOffers = () => {
   const [selectedOffer, setSelectedOffer] = useState({});
   const [isReadOnly, setIsReadOnly] = useState(false); // Stare pentru modul de vizualizare
 
+  // Stările pentru filtre
+  const [statusFilter, setStatusFilter] = useState(""); // Filtru status
+  const [offerNumber, setOfferNumber] = useState(""); // Filtru număr ofertă
+  const [selectedDate, setSelectedDate] = useState(""); // Filtru dată
+  const [currentPage, setCurrentPage] = useState(1); // Paginare
+  const [totalPages, setTotalPages] = useState(1); // Total pagini
+
+  // Funcția de obținere a ofertelor cu filtre și paginare
   const fetchOffers = async () => {
     const token = localStorage.getItem("accessToken");
 
@@ -29,10 +37,16 @@ const MyOffers = () => {
         Authorization: `Bearer ${token}`,
       };
 
-      const response = await fetch("http://localhost:5000/api/offer/client", {
-        method: "GET",
-        headers,
-      });
+      const url = new URL("http://localhost:5000/api/offer/client");
+      url.searchParams.append("page", currentPage);
+      url.searchParams.append("status", statusFilter);
+      url.searchParams.append("offerNumber", offerNumber);
+      if (selectedDate) {
+        const formattedDate = new Date(selectedDate).toISOString().split("T")[0];
+        url.searchParams.append("selectedDate", formattedDate);
+      }
+
+      const response = await fetch(url.toString(), { method: "GET", headers });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -41,7 +55,7 @@ const MyOffers = () => {
 
       const data = await response.json();
       setOffers(data.data || []);
-      setError("");
+      setTotalPages(data.pagination.pages || 1);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -58,7 +72,7 @@ const MyOffers = () => {
         setLoading(false);
       }
     }
-  }, [isAuthenticated, authChecked]);
+  }, [isAuthenticated, authChecked, currentPage, statusFilter, offerNumber, selectedDate]);
 
   const handleViewSelections = (offer) => {
     setSelectedOffer(offer);
@@ -74,44 +88,7 @@ const MyOffers = () => {
 
   const handleCloseModal = () => {
     setSelectedOffer({});
-    setShowSelectModal(false);
-  };
-  
-
-  const handleDownloadPDF = (offer) => {
-    const doc = new jsPDF();
-    const tableColumn = [
-      "Cod Piesa",
-      "Tip",
-      "Producator",
-      "Pret/unitate",
-      "Cantitate",
-      "Total",
-    ];
-    const tableRows = [];
-
-    offer.selectedParts.forEach((part) => {
-      const rowData = [
-        part.partCode,
-        part.partType,
-        part.manufacturer,
-        `${part.pricePerUnit} RON`,
-        part.quantity,
-        `${part.total} RON`,
-      ];
-      tableRows.push(rowData);
-    });
-
-    doc.text(`Detalii oferta #${offer.offerNumber}`, 14, 10);
-    doc.text(`Status: ${offer.status}`, 14, 20);
-    doc.text(`Total oferta: ${offer.total} RON`, 14, 30);
-    doc.autoTable({
-      startY: 40,
-      head: [tableColumn],
-      body: tableRows,
-    });
-
-    doc.save(`Oferta_${offer.offerNumber}.pdf`);
+    setShowSelectModal(false); // Închidem modalul
   };
 
   const saveSelections = async ({
@@ -151,7 +128,7 @@ const MyOffers = () => {
       }
 
       fetchOffers();
-      setShowSelectModal(false);
+      setShowSelectModal(false); // Închidem modalul după salvare
     } catch (error) {
       setError(error.message);
     }
@@ -209,6 +186,23 @@ const MyOffers = () => {
     }
   };
 
+  const handlePageChange = (direction) => {
+    if (direction === "prev" && currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    } else if (direction === "next" && currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  // Funcție pentru resetarea filtrelor
+  const handleResetFilters = () => {
+    setStatusFilter("");
+    setOfferNumber("");
+    setSelectedDate("");
+    setCurrentPage(1);
+    fetchOffers(); // Reîncarcă ofertele după resetarea filtrelor
+  };
+
   if (loading) return <div className="text-center">Se încarcă...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
 
@@ -216,24 +210,51 @@ const MyOffers = () => {
     <div className="container py-5">
       <h2 className="text-center mb-4">Ofertele mele</h2>
 
+      {/* Filtrele */}
+      <div className="d-flex flex-column flex-md-row mb-3">
+        <select
+          className="form-select w-auto me-md-2 mb-2 mb-md-0"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">Toate Statusurile</option>
+          <option value="proiect">Proiect</option>
+          <option value="comanda_spre_finalizare">Comandă spre Finalizare</option>
+          <option value="oferta_acceptata">Ofertă Acceptată</option>
+          <option value="livrare_in_procesare">Livrare în Procesare</option>
+          <option value="livrata">Livrată</option>
+          <option value="anulata">Anulată</option>
+        </select>
+        <input
+          type="number"
+          className="form-control w-auto me-md-2 mb-2 mb-md-0"
+          placeholder="Număr ofertă"
+          value={offerNumber}
+          onChange={(e) => setOfferNumber(e.target.value)}
+        />
+        <input
+          type="date"
+          className="form-control w-auto me-md-2 mb-2 mb-md-0"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+        />
+        <div className="d-flex flex-column flex-md-row">
+          <button className="btn btn-outline-secondary mb-2 mb-md-0" onClick={fetchOffers}>
+            Filtrează
+          </button>
+          <button className="btn btn-outline-danger ms-2" onClick={handleResetFilters}>
+            Resetare Filtre
+          </button>
+        </div>
+      </div>
+
       <SelectProductsModal
         show={showSelectModal}
         onHide={handleCloseModal}
-        offer={
-          selectedOffer.status === "comanda_spre_finalizare" ||
-          selectedOffer.status === "oferta_acceptata" ||
-          selectedOffer.status === "oferta_respinsa"
-            ? { ...selectedOffer, parts: selectedOffer.selectedParts }
-            : selectedOffer
-        }
-        readonlyMode={
-          selectedOffer.status === "comanda_spre_finalizare" ||
-          selectedOffer.status === "oferta_acceptata" ||
-          selectedOffer.status === "oferta_respinsa"
-        }
+        offer={selectedOffer}
+        readonlyMode={isReadOnly}
         onSaveSelection={(data) => saveSelections(data)}
       />
-
 
       {offers.length > 0 ? (
         <div className="table-responsive">
@@ -244,6 +265,7 @@ const MyOffers = () => {
                 <th>Cerere</th>
                 <th>Total</th>
                 <th>Status</th>
+                <th>Dată Creare</th> {/* Coloana pentru Data Creării */}
                 <th>Acțiuni</th>
               </tr>
             </thead>
@@ -262,6 +284,7 @@ const MyOffers = () => {
                   </td>
                   <td>{offer.total ? `${offer.total} RON` : "N/A"}</td>
                   <td>{offer.status}</td>
+                  <td>{new Date(offer.createdAt).toLocaleString("ro-RO")}</td> {/* Data creării */}
                   <td>
                     {offer.status === "proiect" && (
                       <button
@@ -271,6 +294,16 @@ const MyOffers = () => {
                         {offer.selectedParts?.length > 0
                           ? "Editează selecțiile"
                           : "Selectează produse"}
+                      </button>
+                    )}
+                    {offer.status !== "proiect" && (
+                      <button className="btn btn-primary btn-sm me-2">
+                        <Link
+                          to={`/offer/${offer._id}`}
+                          className="btn btn-primary btn-sm me-2"
+                        >
+                          Detalii
+                        </Link>
                       </button>
                     )}
                     {offer.status === "comanda_spre_finalizare" && (
@@ -295,16 +328,6 @@ const MyOffers = () => {
                         </button>
                       </>
                     )}
-                    {(offer.status === "comanda_spre_finalizare" ||
-                      offer.status === "oferta_acceptata" ||
-                      offer.status === "oferta_respinsa") && (
-                      <button
-                        className="btn btn-info btn-sm"
-                        onClick={() => handleDownloadPDF(offer)}
-                      >
-                        Descarcă PDF
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))}
@@ -316,6 +339,27 @@ const MyOffers = () => {
           Nu aveți oferte disponibile.
         </div>
       )}
+
+      {/* Paginare */}
+      <div className="d-flex justify-content-between align-items-center mt-3">
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => handlePageChange("prev")}
+          disabled={currentPage === 1}
+        >
+          Înapoi
+        </button>
+        <span>
+          Pagina {currentPage} din {totalPages}
+        </span>
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => handlePageChange("next")}
+          disabled={currentPage === totalPages}
+        >
+          Înainte
+        </button>
+      </div>
     </div>
   );
 };

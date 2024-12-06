@@ -325,9 +325,20 @@ export const updateDeliveryStatus = async (req, res, next) => {
 
 export const getUserOffers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, startDate, endDate, orderId, offerNumber } = req.query;
+    const { 
+      page = 1, 
+      limit = 10, 
+      status, 
+      startDate, 
+      endDate, 
+      orderId, 
+      offerNumber, 
+      selectedDate  // Adăugăm selectedDate
+    } = req.query;
 
-    // Validare pentru status
+    const filters = {};
+
+    // Filtrare după status
     if (status) {
       const validStatuses = [
         "proiect",
@@ -341,11 +352,20 @@ export const getUserOffers = async (req, res, next) => {
       if (!validStatuses.includes(status)) {
         return next(errorHandler(400, "Status invalid."));
       }
+      filters.status = status;
     }
 
-    // Validare pentru date
-    const dateFilter = {};
-    if (startDate || endDate) {
+    // Filtrare pe o singură dată selectată (selectedDate)
+    if (selectedDate) {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);  // Setăm la 00:00:00 ora de început
+
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);  // Setăm la 23:59:59 ora de sfârșit
+
+      filters.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    } else if (startDate || endDate) {
+      const dateFilter = {};
       if (startDate) {
         const start = new Date(startDate);
         if (isNaN(start.getTime())) {
@@ -360,9 +380,10 @@ export const getUserOffers = async (req, res, next) => {
         }
         dateFilter.$lte = end;
       }
+      filters.createdAt = dateFilter;
     }
 
-    // Validare pentru `offerNumber`
+    // Filtrare după numărul de ofertă
     if (offerNumber && isNaN(Number(offerNumber))) {
       return next(errorHandler(400, "Numărul ofertei trebuie să fie numeric."));
     }
@@ -379,9 +400,7 @@ export const getUserOffers = async (req, res, next) => {
     const orderIds = userOrders.map((order) => order._id);
 
     // Construiește filtrul pentru oferte
-    const filters = { orderId: { $in: orderIds } };
-    if (status) filters.status = status;
-    if (Object.keys(dateFilter).length > 0) filters.createdAt = dateFilter;
+    filters.orderId = { $in: orderIds };
     if (offerNumber) filters.offerNumber = Number(offerNumber);
 
     // Găsește ofertele
@@ -393,7 +412,6 @@ export const getUserOffers = async (req, res, next) => {
 
     const totalOffers = await Offer.countDocuments(filters);
 
-    // Răspunsul JSON
     res.status(200).json({
       success: true,
       data: offers,
@@ -407,6 +425,7 @@ export const getUserOffers = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 // Obținerea tuturor ofertelor
