@@ -7,21 +7,23 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
   const refreshToken = state.auth.refreshToken;
 
   if (!accessToken && refreshToken) {
+    console.log("No access token, attempting refresh...");
     try {
       const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: refreshToken }),
       });
-
+  
       if (!refreshResponse.ok) {
+        console.error("Refresh token invalid:", refreshResponse.status);
         store.dispatch(logout());
         throw new Error("Session expired. Please log in again.");
       }
-
+  
       const refreshData = await refreshResponse.json();
+      console.log("Token refreshed successfully:", refreshData.accessToken);
+  
       store.dispatch(setAccessToken({ accessToken: refreshData.accessToken }));
       accessToken = refreshData.accessToken;
     } catch (err) {
@@ -30,6 +32,7 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
       throw new Error("Failed to refresh token");
     }
   }
+  
 
   if (!accessToken) {
     store.dispatch(logout());

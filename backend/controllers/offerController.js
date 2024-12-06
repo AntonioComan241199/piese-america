@@ -203,9 +203,8 @@ export const acceptOffer = async (req, res, next) => {
       await order.save({ session });
     }
 
-    // Adaugă log-ul
     await createLog({
-      action: "Offer Accepted",
+      action: "Oferta acceptată",
       userId: req.user.id,
       orderId: offer.orderId,
       details: `Oferta cu numărul #${offer.offerNumber} a fost acceptată.`,
@@ -214,11 +213,16 @@ export const acceptOffer = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(200).json({ success: true, message: "Oferta a fost acceptată cu succes.", offer });
+    res.status(200).json({
+      success: true,
+      message: "Oferta a fost acceptată cu succes.",
+      offer,
+    });
   } catch (error) {
     next(error);
   }
 };
+
 
 
 // Respingerea ofertei
@@ -228,72 +232,137 @@ export const rejectOffer = async (req, res, next) => {
     if (!offer) return next(errorHandler(404, "Oferta nu a fost găsită."));
 
     if (offer.status !== "comanda_spre_finalizare") {
-      return next(errorHandler(400, "Oferta nu poate fi respinsă în acest moment."));
+      return next(errorHandler(400, "Oferta nu poate fi anulată în acest moment."));
     }
 
-    offer.status = "oferta_respinsa";
+    offer.status = "anulata";
     await offer.save();
 
     const order = await Order.findById(offer.orderId);
     if (order) {
-      order.status = "oferta_respinsa";
+      order.status = "anulata";
       await order.save();
     }
 
-    // Adaugă log-ul
     await createLog({
-      action: "Offer Rejected",
+      action: "Oferta anulată",
       userId: req.user.id,
       orderId: offer.orderId,
-      details: `Oferta cu numărul #${offer.offerNumber} a fost respinsă.`,
+      details: `Oferta cu numărul #${offer.offerNumber} a fost anulată.`,
     });
 
-    res.status(200).json({ success: true, message: "Oferta a fost respinsă cu succes.", offer });
+    res.status(200).json({ success: true, message: "Oferta a fost anulată cu succes.", offer });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Actualizare status livrare
 export const updateDeliveryStatus = async (req, res, next) => {
   try {
     const { deliveryStatus } = req.body;
 
+    const validStatuses = ["livrare_in_procesare", "livrata", "anulata"];
+    if (!validStatuses.includes(deliveryStatus)) {
+      return next(errorHandler(400, "Statusul de livrare este invalid."));
+    }
+
     const offer = await Offer.findById(req.params.offerId);
-    if (!offer) return next(errorHandler(404, "Oferta nu a fost găsită."));
+    if (!offer) {
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
+    }
+
+    if (
+      deliveryStatus === "livrata" &&
+      offer.status !== "livrare_in_procesare"
+    ) {
+      return next(errorHandler(400, "Livrarea poate fi finalizată doar dacă este în proces."));
+    }
 
     offer.status = deliveryStatus;
     await offer.save();
 
-    const order = await Order.findById(offer.orderId);
-    if (order) {
-      await createLog({
-        action: "Delivery Status Updated",
-        userId: req.user.id,
-        orderId: order._id,
-        details: `Statusul livrării pentru oferta #${offer.offerNumber} a fost actualizat la ${deliveryStatus}.`,
-      });
-    }
+    await createLog({
+      action: "Actualizare status livrare",
+      userId: req.user.id,
+      orderId: offer.orderId,
+      details: `Statusul livrării pentru oferta #${offer.offerNumber} a fost actualizat la ${deliveryStatus}.`,
+    });
 
-    res.status(200).json({ success: true, message: "Statusul livrării a fost actualizat cu succes." });
+    res.status(200).json({
+      success: true,
+      message: "Statusul livrării a fost actualizat cu succes.",
+      offer,
+    });
   } catch (error) {
     next(error);
   }
 };
 
+
 export const getUserOffers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status } = req.query;
+    const { page = 1, limit = 10, status, startDate, endDate, orderId, offerNumber } = req.query;
+
+    // Validare pentru status
+    if (status) {
+      const validStatuses = [
+        "proiect",
+        "trimisa",
+        "comanda_spre_finalizare",
+        "oferta_acceptata",
+        "livrare_in_procesare",
+        "livrata",
+        "anulata",
+      ];
+      if (!validStatuses.includes(status)) {
+        return next(errorHandler(400, "Status invalid."));
+      }
+    }
+
+    // Validare pentru date
+    const dateFilter = {};
+    if (startDate || endDate) {
+      if (startDate) {
+        const start = new Date(startDate);
+        if (isNaN(start.getTime())) {
+          return next(errorHandler(400, "Data de început este invalidă."));
+        }
+        dateFilter.$gte = start;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        if (isNaN(end.getTime())) {
+          return next(errorHandler(400, "Data de sfârșit este invalidă."));
+        }
+        dateFilter.$lte = end;
+      }
+    }
+
+    // Validare pentru `offerNumber`
+    if (offerNumber && isNaN(Number(offerNumber))) {
+      return next(errorHandler(400, "Numărul ofertei trebuie să fie numeric."));
+    }
 
     // Obține cererile utilizatorului logat
-    const userOrders = await Order.find({ userId: req.user.id }, "_id");
-    const orderIds = userOrders.map(order => order._id);
+    let userOrders = await Order.find({ userId: req.user.id }, "_id");
+    if (orderId) {
+      if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return next(errorHandler(400, "ID-ul comenzii este invalid."));
+      }
+      userOrders = userOrders.filter((order) => String(order._id) === String(orderId));
+    }
+
+    const orderIds = userOrders.map((order) => order._id);
 
     // Construiește filtrul pentru oferte
     const filters = { orderId: { $in: orderIds } };
     if (status) filters.status = status;
+    if (Object.keys(dateFilter).length > 0) filters.createdAt = dateFilter;
+    if (offerNumber) filters.offerNumber = Number(offerNumber);
 
-    // Gasește ofertele
+    // Găsește ofertele
     const offers = await Offer.find(filters)
       .populate("orderId", "orderNumber firstName lastName")
       .sort({ createdAt: -1 })
@@ -302,6 +371,7 @@ export const getUserOffers = async (req, res, next) => {
 
     const totalOffers = await Offer.countDocuments(filters);
 
+    // Răspunsul JSON
     res.status(200).json({
       success: true,
       data: offers,
@@ -318,23 +388,72 @@ export const getUserOffers = async (req, res, next) => {
 
 
 
+
+
+
+
 // Obținerea tuturor ofertelor
 export const getAllOffers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, search, sortBy = "createdAt", order = "desc" } = req.query;
+    const { 
+      page = 1, 
+      limit = 10, 
+      status, 
+      offerNumber, 
+      startDate, 
+      endDate, 
+      sortBy = "createdAt", 
+      order = "desc" 
+    } = req.query;
+
     const filters = {};
 
-    // Filtrare după status
-    if (status) filters.status = status;
-
-    // Căutare globală
-    if (search) {
-      filters.$or = [
-        { offerNumber: { $regex: search, $options: "i" } },
-        { "orderId.orderNumber": { $regex: search, $options: "i" } },
+    // Validare pentru status
+    if (status) {
+      const validStatuses = [
+        "proiect",
+        "trimisa",
+        "comanda_spre_finalizare",
+        "oferta_acceptata",
+        "livrare_in_procesare",
+        "livrata",
+        "anulata",
       ];
+      if (!validStatuses.includes(status)) {
+        return next(errorHandler(400, "Status invalid."));
+      }
+      filters.status = status;
     }
 
+    // Validare pentru `offerNumber`
+    if (offerNumber) {
+      if (isNaN(Number(offerNumber))) {
+        return next(errorHandler(400, "Numărul ofertei trebuie să fie numeric."));
+      }
+      filters.offerNumber = Number(offerNumber);
+    }
+
+    // Validare pentru date
+    const dateFilter = {};
+    if (startDate || endDate) {
+      if (startDate) {
+        const start = new Date(startDate);
+        if (isNaN(start.getTime())) {
+          return next(errorHandler(400, "Data de început este invalidă."));
+        }
+        dateFilter.$gte = start;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        if (isNaN(end.getTime())) {
+          return next(errorHandler(400, "Data de sfârșit este invalidă."));
+        }
+        dateFilter.$lte = end;
+      }
+      filters.createdAt = dateFilter;
+    }
+
+    // Interogare MongoDB
     const offers = await Offer.find(filters)
       .populate("orderId", "orderNumber firstName lastName")
       .sort({ [sortBy]: order === "asc" ? 1 : -1 })
@@ -358,18 +477,35 @@ export const getAllOffers = async (req, res, next) => {
 };
 
 
+
+
+
+
+
 // Obținere oferta dupa ID
 export const getOfferById = async (req, res, next) => {
   try {
-    const offer = await Offer.findById(req.params.offerId).populate("orderId", "orderNumber firstName lastName");
+    const offer = await Offer.findById(req.params.offerId)
+      .populate({
+        path: "orderId",
+        select: "orderNumber userId userType firstName lastName companyDetails email phoneNumber carMake carModel carYear fuelType enginePower engineSize transmission vin partDetails status",
+        populate: {
+          path: "userId",
+          select: "email firstName lastName", // Detalii adiționale dacă sunt relevante
+        },
+      });
 
-    if (!offer) return next(errorHandler(404, "Oferta nu a fost gasita."));
+    if (!offer) {
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
+    }
 
     res.status(200).json({ success: true, offer });
   } catch (error) {
     next(error);
   }
 };
+
+
 
 // Obținere oferta pentru o comanda specifica (orderId)
 export const getOfferByOrderId = async (req, res, next) => {

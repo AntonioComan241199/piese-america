@@ -61,7 +61,16 @@ const OfferSchema = new mongoose.Schema({
   total: { type: Number, default: 0 },
   status: {
     type: String,
-    enum: ["proiect", "trimisa", "comanda_spre_finalizare", "oferta_acceptata", "oferta_respinsa"],
+    enum: [
+      "proiect", // Oferta creată, dar netrimisă
+      "trimisa", // Oferta trimisă clientului
+      "comanda_spre_finalizare", // Clientul a selectat piesele
+      "oferta_acceptata", // Oferta acceptată
+      "oferta_respinsa", // Oferta respinsă
+      "livrare_in_procesare", // Oferta este în proces de livrare
+      "livrata", // Oferta livrată cu succes
+      "anulata", // Oferta anulată
+    ],
     default: "proiect",
   },
   billingAddress: {
@@ -82,12 +91,20 @@ const OfferSchema = new mongoose.Schema({
     county: { type: String },
     city: { type: String },
   },
-  pickupAtCentral: { type: Boolean, default: false },
+  pickupAtCentral: { type: Boolean, default: false }, // Ridicare de la sediu central
+  logs: [
+    {
+      timestamp: { type: Date, default: Date.now },
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      action: { type: String },
+      details: { type: String },
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
-
+// Middleware pentru actualizarea `updatedAt`
 OfferSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();

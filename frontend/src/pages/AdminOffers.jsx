@@ -8,10 +8,12 @@ const AdminOffers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [offerNumber, setOfferNumber] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch offers from the server
   const fetchOffers = async () => {
     const token = localStorage.getItem("accessToken");
 
@@ -27,10 +29,14 @@ const AdminOffers = () => {
         Authorization: `Bearer ${token}`,
       };
 
-      const response = await fetch(
-        `http://localhost:5000/api/offer/admin/?page=${currentPage}&status=${statusFilter}`,
-        { method: "GET", headers }
-      );
+      const url = new URL("http://localhost:5000/api/offer/admin");
+      url.searchParams.append("page", currentPage);
+      url.searchParams.append("status", statusFilter);
+      url.searchParams.append("offerNumber", offerNumber);
+      url.searchParams.append("startDate", startDate);
+      url.searchParams.append("endDate", endDate);
+
+      const response = await fetch(url.toString(), { method: "GET", headers });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -47,7 +53,66 @@ const AdminOffers = () => {
     }
   };
 
-  // Effect for fetching offers
+  const updateOfferStatus = async (offerId, status) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      const response = await fetch(
+        `http://localhost:5000/api/offer/admin/${offerId}/delivery`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ deliveryStatus: status }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Eroare la actualizarea statusului ofertei.");
+      }
+
+      await fetchOffers(); // Reîncarcă ofertele după actualizare
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const exportCSV = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      const url = new URL("http://localhost:5000/api/offer/admin/export");
+      url.searchParams.append("status", statusFilter);
+      url.searchParams.append("offerNumber", offerNumber);
+      url.searchParams.append("startDate", startDate);
+      url.searchParams.append("endDate", endDate);
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Eroare la exportul ofertelor.");
+      }
+
+      const blob = await response.blob();
+      const urlBlob = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = urlBlob;
+      link.download = "offers" + new Date().toISOString() + ".csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchOffers();
@@ -55,15 +120,21 @@ const AdminOffers = () => {
       setError("Trebuie să fiți autentificat pentru a accesa ofertele.");
       setLoading(false);
     }
-  }, [isAuthenticated, currentPage, statusFilter]);
+  }, [isAuthenticated, currentPage, statusFilter, offerNumber, startDate, endDate]);
 
-  // Handle status filter change
-  const handleStatusChange = (event) => {
-    setStatusFilter(event.target.value);
-    setCurrentPage(1); // Reset to first page
+  const handleResetFilters = () => {
+    setStatusFilter("");
+    setOfferNumber("");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(1);
   };
 
-  // Handle pagination
+  const handleStatusChange = (event) => {
+    setStatusFilter(event.target.value);
+    setCurrentPage(1);
+  };
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage((prev) => prev - 1);
@@ -72,36 +143,9 @@ const AdminOffers = () => {
     }
   };
 
-  // Handle export actions
-  const handleExport = async (format) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-
-      const response = await fetch(
-        `http://localhost:5000/api/offer/admin/export?format=${format}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Eroare la exportul ofertelor.");
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `offers.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      setError(error.message);
-    }
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" });
   };
 
   if (loading) return <div className="text-center">Se încarcă...</div>;
@@ -111,31 +155,50 @@ const AdminOffers = () => {
     <div className="container py-5">
       <h2 className="text-center mb-4">Gestionare Oferte</h2>
 
-      {/* Filters and Export Actions */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <select
-          className="form-select w-auto"
-          value={statusFilter}
-          onChange={handleStatusChange}
-        >
-          <option value="">Toate Statusurile</option>
-          <option value="proiect">Proiect</option>
-          <option value="comanda_spre_finalizare">Comandă spre Finalizare</option>
-          <option value="oferta_acceptata">Ofertă Acceptată</option>
-          <option value="oferta_respinsa">Ofertă Respinsă</option>
-        </select>
-        <div>
-          <button
-            className="btn btn-outline-primary me-2"
-            onClick={() => handleExport("csv")}
+      {/* Filters */}
+      <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <div className="d-flex flex-wrap">
+          <select
+            className="form-select w-auto me-2"
+            value={statusFilter}
+            onChange={handleStatusChange}
           >
-            Export CSV
+            <option value="">Toate Statusurile</option>
+            <option value="proiect">Proiect</option>
+            <option value="comanda_spre_finalizare">Comandă spre Finalizare</option>
+            <option value="oferta_acceptata">Ofertă Acceptată</option>
+            <option value="livrare_in_procesare">Livrare în Procesare</option>
+            <option value="livrata">Livrată</option>
+            <option value="anulata">Anulată</option>
+          </select>
+          <input
+            type="number"
+            className="form-control w-auto me-2"
+            placeholder="Număr ofertă"
+            value={offerNumber}
+            onChange={(e) => setOfferNumber(e.target.value)}
+          />
+          <input
+            type="date"
+            className="form-control w-auto me-2"
+            placeholder="Data start filtrare"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <input
+            type="date"
+            className="form-control w-auto me-2"
+            placeholder="Data sfârșit filtrare"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+          <button className="btn btn-outline-secondary" onClick={handleResetFilters}>
+            Resetare Filtre
           </button>
-          <button
-            className="btn btn-outline-primary"
-            onClick={() => handleExport("pdf")}
-          >
-            Export PDF
+        </div>
+        <div>
+          <button className="btn btn-outline-primary" onClick={exportCSV}>
+            Export CSV
           </button>
         </div>
       </div>
@@ -151,6 +214,8 @@ const AdminOffers = () => {
                   <th>Număr Cerere</th>
                   <th>Total</th>
                   <th>Status</th>
+                  <th>Creată La</th>
+                  <th>Ultima Modificare</th>
                   <th>Acțiuni</th>
                 </tr>
               </thead>
@@ -165,13 +230,33 @@ const AdminOffers = () => {
                     </td>
                     <td>{offer.total ? `${offer.total} RON` : "N/A"}</td>
                     <td>{offer.status}</td>
+                    <td>{formatDateTime(offer.createdAt)}</td>
+                    <td>{formatDateTime(offer.updatedAt)}</td>
                     <td>
                       <Link
                         to={`/offer/${offer._id}`}
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-sm me-2"
                       >
                         Detalii
                       </Link>
+                      <button
+                        className="btn btn-warning btn-sm me-2"
+                        onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
+                      >
+                        Procesare Livrare
+                      </button>
+                      <button
+                        className="btn btn-success btn-sm me-2"
+                        onClick={() => updateOfferStatus(offer._id, "livrata")}
+                      >
+                        Marcare Livrată
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => updateOfferStatus(offer._id, "anulata")}
+                      >
+                        Anulare
+                      </button>
                     </td>
                   </tr>
                 ))}
