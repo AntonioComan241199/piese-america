@@ -83,11 +83,9 @@ const MyProfile = () => {
             currentPassword: state.passwordData.currentPassword,
             newPassword: state.passwordData.newPassword,
           }),
-        },
-        true // Returnează răspunsul brut
+        }
       );
   
-      // Procesează răspunsul brut
       const data = await response.json();
   
       if (!response.ok) {
@@ -102,6 +100,8 @@ const MyProfile = () => {
       alert("Eroare la schimbarea parolei: " + err.message);
     }
   };
+  
+  
 
   const handleDeleteAccount = async () => {
     if (!window.confirm("Ești sigur că vrei să ștergi contul?")) return;

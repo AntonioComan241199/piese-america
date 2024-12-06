@@ -9,6 +9,9 @@ import Home from "./pages/Home";
 import Contact from "./pages/Contact";
 import Signin from "./pages/Signin";
 import Register from "./pages/Register";
+import ResetPasswordRequest from "./pages/ResetPasswordRequest";
+import ResetPassword from './pages/ResetPassword'; // Asigură-te că importi corect componenta
+
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
 import MyOrders from "./pages/MyOrders";
@@ -56,6 +59,23 @@ const AppWrapper = () => {
           element={
             <PublicRoute>
               <Register />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/reset-password"
+          element={
+            <PublicRoute>
+              <ResetPasswordRequest />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={
+            <PublicRoute>
+              <ResetPassword />
             </PublicRoute>
           }
         />

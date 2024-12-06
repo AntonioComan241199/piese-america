@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { body, validationResult } from "express-validator";
+import nodemailer from "nodemailer";
 
 // Funcții auxiliare pentru generarea token-urilor
 const generateAccessToken = (user) => {
@@ -158,7 +159,7 @@ export const refreshToken = async (req, res, next) => {
 
 // Deconectare utilizator
 export const signOut = async (req, res, next) => {
-  const { email } = req.body; // Presupunem că email-ul este trimis din frontend
+  const { email } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -176,6 +177,8 @@ export const signOut = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 
 // Middleware pentru validarea datelor din cereri
@@ -201,3 +204,80 @@ export const validateSignin = [
     next();
   },
 ];
+
+// Funcție pentru trimiterea email-ului de resetare a parolei folosind SMTP
+const sendResetPasswordEmail = async (email, token) => {
+  try {
+    // Creează un transportor SMTP folosind SendGrid
+    const transporter = nodemailer.createTransport({
+      service: "SendGrid", // SendGrid SMTP service
+      auth: {
+        user: "apikey", // Folosește "apikey" ca user
+        pass: process.env.SENDGRID_API_KEY, // Folosește cheia ta API SendGrid ca parolă
+      },
+    });
+
+    // Setează detaliile email-ului
+    const mailOptions = {
+      from: "antonio.coman99@gmail.com", // Înlocuiește cu adresa ta de email validă
+      to: email, // Adresa destinatarului
+      subject: "Resetare Parolă",
+      html: `<p>Click <a href="http://localhost:5173/reset-password/${token}">aici</a> pentru a-ți reseta parola.</p>`,
+    };
+
+    // Trimite email-ul
+    const info = await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Eroare la trimiterea email-ului:", err);
+    throw new Error("Eroare la trimiterea email-ului.");
+  }
+};
+
+// Cerere pentru resetarea parolei
+export const requestPasswordReset = async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    // Verificăm dacă utilizatorul există
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    }
+
+    // Generăm token-ul de resetare a parolei
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Trimiterea email-ului de resetare a parolei folosind SMTP
+    await sendResetPasswordEmail(email, token);
+
+    res.status(200).json({ message: "Un email a fost trimis pentru resetarea parolei." });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Resetarea parolei
+export const resetPassword = async (req, res, next) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    // Verificăm token-ul
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Găsește utilizatorul asociat token-ului
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    }
+
+    // Actualizăm parola utilizatorului
+    user.password = newPassword
+    await user.save();
+
+    res.status(200).json({ message: "Parola a fost resetată cu succes!" });
+  } catch (error) {
+    next(error);
+  }
+};

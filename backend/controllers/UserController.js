@@ -60,7 +60,7 @@ export const changePassword = async (req, res, next) => {
     }
 
     // Hash-uim și setăm parola nouă
-    user.password = bcrypt.hashSync(newPassword, 10);
+    user.password = newPassword
     await user.save();
 
     res.status(200).json({ message: "Parola a fost schimbată cu succes!" });

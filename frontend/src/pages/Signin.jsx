@@ -134,6 +134,12 @@ export default function Signin() {
               Creează unul aici
             </a>
           </p>
+          {/* Butonul pentru resetarea parolei */}
+          <p className="text-center">
+            <a href="/reset-password" className="text-decoration-none text-primary">
+              Ai uitat parola?
+            </a>
+          </p>
         </div>
       </div>
     </div>
