@@ -7,14 +7,14 @@ const AdminOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [offerNumber, setOfferNumber] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("");  // Filtru status ofertă
+  const [offerNumber, setOfferNumber] = useState("");   // Filtru număr ofertă
+  const [selectedDate, setSelectedDate] = useState("");   // Filtru dată selectată
+  const [currentPage, setCurrentPage] = useState(1);    // Paginare
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchOffers = async () => {
+  // Funcția de obținere a ofertelor
+  const fetchOffers = async (selectedDate) => {
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
@@ -33,8 +33,9 @@ const AdminOffers = () => {
       url.searchParams.append("page", currentPage);
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("offerNumber", offerNumber);
-      url.searchParams.append("startDate", startDate);
-      url.searchParams.append("endDate", endDate);
+      if (selectedDate) {
+        url.searchParams.append("selectedDate", selectedDate); // Folosim selectedDate
+      }
 
       const response = await fetch(url.toString(), { method: "GET", headers });
 
@@ -51,6 +52,23 @@ const AdminOffers = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Funcția de filtrare
+  const handleFilter = () => {
+    setCurrentPage(1); // Resetăm pagina la prima
+    // Convertește selectedDate într-un format corespunzător (fără ora)
+    const formattedDate = selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : ''; 
+    fetchOffers(formattedDate); // Apelăm funcția pentru a aplica filtrele
+  };
+
+  // Resetarea filtrelor
+  const handleResetFilters = () => {
+    setStatusFilter("");
+    setOfferNumber("");
+    setSelectedDate("");  // Resetăm și selectedDate
+    setCurrentPage(1); // Resetăm pagina
+    fetchOffers(""); // Reîncarcă ofertele după resetarea filtrelor
   };
 
   const updateOfferStatus = async (offerId, status) => {
@@ -73,7 +91,7 @@ const AdminOffers = () => {
         throw new Error("Eroare la actualizarea statusului ofertei.");
       }
 
-      await fetchOffers(); // Reîncarcă ofertele după actualizare
+      await fetchOffers(""); // Reîncarcă ofertele după actualizare
     } catch (error) {
       setError(error.message);
     }
@@ -86,8 +104,9 @@ const AdminOffers = () => {
       const url = new URL("http://localhost:5000/api/offer/admin/export");
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("offerNumber", offerNumber);
-      url.searchParams.append("startDate", startDate);
-      url.searchParams.append("endDate", endDate);
+      if (selectedDate) {
+        url.searchParams.append("selectedDate", selectedDate); // Folosim selectedDate pentru export
+      }
 
       const response = await fetch(url.toString(), {
         method: "GET",
@@ -115,24 +134,15 @@ const AdminOffers = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchOffers();
+      fetchOffers(""); // Asigură-te că se încarcă ofertele la început
     } else {
       setError("Trebuie să fiți autentificat pentru a accesa ofertele.");
       setLoading(false);
     }
-  }, [isAuthenticated, currentPage, statusFilter, offerNumber, startDate, endDate]);
-
-  const handleResetFilters = () => {
-    setStatusFilter("");
-    setOfferNumber("");
-    setStartDate("");
-    setEndDate("");
-    setCurrentPage(1);
-  };
+  }, [isAuthenticated, currentPage, statusFilter, offerNumber, selectedDate]);  // Eliminăm phoneNumber din dependințe
 
   const handleStatusChange = (event) => {
     setStatusFilter(event.target.value);
-    setCurrentPage(1);
   };
 
   const handlePageChange = (direction) => {
@@ -181,18 +191,14 @@ const AdminOffers = () => {
           <input
             type="date"
             className="form-control w-auto me-2"
-            placeholder="Data start filtrare"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            placeholder="Selectează dată"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
           />
-          <input
-            type="date"
-            className="form-control w-auto me-2"
-            placeholder="Data sfârșit filtrare"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-          <button className="btn btn-outline-secondary" onClick={handleResetFilters}>
+          <button className="btn btn-outline-secondary" onClick={handleFilter}>
+            Filtrează
+          </button>
+          <button className="btn btn-outline-danger ms-2" onClick={handleResetFilters}>
             Resetare Filtre
           </button>
         </div>
@@ -205,91 +211,94 @@ const AdminOffers = () => {
 
       {/* Offers Table */}
       {offers.length > 0 ? (
-        <>
-          <div className="table-responsive">
-            <table className="table table-striped">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Număr Cerere</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Creată La</th>
-                  <th>Ultima Modificare</th>
-                  <th>Acțiuni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {offers.map((offer, index) => (
-                  <tr key={offer._id}>
-                    <td>{(currentPage - 1) * 10 + index + 1}</td>
-                    <td>
-                      <Link to={`/orders/${offer.orderId._id}`}>
-                        #{offer.orderId.orderNumber}
-                      </Link>
-                    </td>
-                    <td>{offer.total ? `${offer.total} RON` : "N/A"}</td>
-                    <td>{offer.status}</td>
-                    <td>{formatDateTime(offer.createdAt)}</td>
-                    <td>{formatDateTime(offer.updatedAt)}</td>
-                    <td>
+        <div className="table-responsive">
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Număr Cerere</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Creată La</th>
+                <th>Ultima Modificare</th>
+                <th>Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {offers.map((offer, index) => (
+                <tr key={offer._id}>
+                  <td>{(currentPage - 1) * 10 + index + 1}</td>
+                  <td>
+                    <Link to={`/orders/${offer.orderId._id}`}>
+                      #{offer.orderId.orderNumber}
+                    </Link>
+                  </td>
+                  <td>{offer.total ? `${offer.total} RON` : "N/A"}</td>
+                  <td>{offer.status}</td>
+                  <td>{formatDateTime(offer.createdAt)}</td>
+                  <td>{formatDateTime(offer.updatedAt)}</td>
+                  <td>
+                    <button className="btn btn-primary btn-sm me-2">
                       <Link
                         to={`/offer/${offer._id}`}
                         className="btn btn-primary btn-sm me-2"
                       >
                         Detalii
                       </Link>
-                      <button
-                        className="btn btn-warning btn-sm me-2"
-                        onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
-                      >
-                        Procesare Livrare
-                      </button>
-                      <button
-                        className="btn btn-success btn-sm me-2"
-                        onClick={() => updateOfferStatus(offer._id, "livrata")}
-                      >
-                        Marcare Livrată
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => updateOfferStatus(offer._id, "anulata")}
-                      >
-                        Anulare
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="d-flex justify-content-between align-items-center mt-3">
-            <button
-              className="btn btn-outline-secondary"
-              onClick={() => handlePageChange("prev")}
-              disabled={currentPage === 1}
-            >
-              Înapoi
-            </button>
-            <span>
-              Pagina {currentPage} din {totalPages}
-            </span>
-            <button
-              className="btn btn-outline-secondary"
-              onClick={() => handlePageChange("next")}
-              disabled={currentPage === totalPages}
-            >
-              Înainte
-            </button>
-          </div>
-        </>
+                    </button>
+                    <button
+                      className="btn btn-warning btn-sm me-2"
+                      onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
+                      disabled={offer.status !== "oferta_acceptata"}
+                    >
+                      Livrare în Procesare
+                    </button>
+                    <button
+                      className="btn btn-success btn-sm me-2"
+                      onClick={() => updateOfferStatus(offer._id, "livrata")}
+                      disabled={offer.status !== "livrare_in_procesare"}
+                    >
+                      Livrată
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => updateOfferStatus(offer._id, "anulata")}
+                      disabled={offer.status === "anulata"}
+                    >
+                      Anulată
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className="alert alert-info text-center">
           Nu există oferte disponibile.
         </div>
       )}
+
+      {/* Pagination */}
+      <div className="d-flex justify-content-between align-items-center mt-3">
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => handlePageChange("prev")}
+          disabled={currentPage === 1}
+        >
+          Înapoi
+        </button>
+        <span>
+          Pagina {currentPage} din {totalPages}
+        </span>
+        <button
+          className="btn btn-outline-secondary"
+          onClick={() => handlePageChange("next")}
+          disabled={currentPage === totalPages}
+        >
+          Înainte
+        </button>
+      </div>
     </div>
   );
 };

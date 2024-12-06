@@ -82,12 +82,17 @@ export const createOrder = async (req, res, next) => {
   }
 };
 
+const handleDateChange = (e) => {
+  const localDate = new Date(e.target.value); // Data locală selectată
+  const utcDate = new Date(localDate.toISOString()); // Convertim la UTC
+  setStartDate(utcDate.toISOString()); // Salvăm data în UTC
+};
 
 
-// Obținere toate cererile de ofertă
+// Obținerea cererilor de ofertă cu filtrare corectă pe intervalul de date
 export const getAllOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, userType, search } = req.query;
+    const { page = 1, limit = 10, status, userType, search, selectedDate } = req.query;  // Folosim selectedDate
     const filters = {};
 
     // Filtrare după status
@@ -117,10 +122,23 @@ export const getAllOrders = async (req, res, next) => {
       }
     }
 
+    // Filtrare pe o singură dată (selectedDate)
+    if (selectedDate) {
+      // Crează un obiect Date din selectedDate (care e în format 'yyyy-mm-dd')
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0); // Setează ora la 00:00:00 pentru începutul zilei
+
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setHours(23, 59, 59, 999); // Setează ora la 23:59:59.999 pentru sfârșitul zilei
+
+      // Filtrăm comenzile plasate pe acea dată
+      filters.orderDate = { $gte: startOfDay.toISOString(), $lte: endOfDay.toISOString() };
+    }
+
     const orders = await Order.find(filters)
       .populate("userId", "email firstName lastName")
       .populate("offerId", "offerNumber status total")
-      .sort({ createdAt: -1 })
+      .sort({ orderDate: -1 })  // Ordine descrescătoare pe orderDate
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 

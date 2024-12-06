@@ -34,40 +34,29 @@ const OfferDetail = () => {
     const doc = new jsPDF();
   
     // Detalii companie
-    const companyDetails = `
-    FURNIZOR:
-  GLOBAL QUALITY SOLUTIONS SRL
-  Bdul. Marasti 25 E, Bucuresti, Sector 1
-  CUI: 17426176
-  Nr reg comertului: J40/6018/2005`;
+    const companyDetails = `FURNIZOR:\nGLOBAL QUALITY SOLUTIONS SRL\nBdul. Marasti 25 E, Bucuresti, Sector 1\nCUI: 17426176\nNr reg comertului: J40/6018/2005`;
   
     // Detalii cumpărător
     const buyerDetails =
       offer.orderId?.userType === "persoana_fizica"
-        ? `Nume Client: ${offer.orderId.firstName || "N/A"} ${offer.orderId.lastName || "N/A"}
-  Telefon: ${offer.orderId.phoneNumber || "N/A"}
-  Email: ${offer.orderId.email || "N/A"}`
-        : `Firma: ${offer.orderId?.companyDetails?.companyName || "N/A"}
-  CUI: ${offer.orderId?.companyDetails?.cui || "N/A"}
-  Nr. Reg. Com: ${offer.orderId?.companyDetails?.nrRegCom || "N/A"}
-  Telefon: ${offer.orderId.phoneNumber || "N/A"}
-  Email: ${offer.orderId.email || "N/A"}`;
+        ? `Nume Client: ${offer.orderId.firstName || "N/A"} ${offer.orderId.lastName || "N/A"}\nTelefon: ${offer.orderId.phoneNumber || "N/A"}\nEmail: ${offer.orderId.email || "N/A"}`
+        : `Firma: ${offer.orderId?.companyDetails?.companyName || "N/A"}\nCUI: ${offer.orderId?.companyDetails?.cui || "N/A"}\nNr. Reg. Com: ${offer.orderId?.companyDetails?.nrRegCom || "N/A"}\nTelefon: ${offer.orderId.phoneNumber || "N/A"}\nEmail: ${offer.orderId.email || "N/A"}`;
   
     // Adresa de facturare
     const billingAddress = `
-  Adresa Facturare:
-  ${offer.billingAddress?.street || "N/A"} ${offer.billingAddress?.number || ""}
-  Bloc: ${offer.billingAddress?.block || "-"}, Scara: ${offer.billingAddress?.entrance || "-"}, Ap: ${offer.billingAddress?.apartment || "-"}
-  ${offer.billingAddress?.city || "N/A"}, ${offer.billingAddress?.county || "N/A"}`;
+Adresa Facturare:
+${offer.billingAddress?.street || "N/A"} ${offer.billingAddress?.number || ""}
+Bloc: ${offer.billingAddress?.block || "-"}, Scara: ${offer.billingAddress?.entrance || "-"}, Ap: ${offer.billingAddress?.apartment || "-"}
+${offer.billingAddress?.city || "N/A"}, ${offer.billingAddress?.county || "N/A"}`;
   
     // Adresa de livrare
     const deliveryAddress = offer.pickupAtCentral
       ? "Adresa Livrare: Ridicare de la sediul central"
       : `
-  Adresa Livrare:
-  ${offer.deliveryAddress?.street || "N/A"} ${offer.deliveryAddress?.number || ""}
-  Bloc: ${offer.deliveryAddress?.block || "-"}, Scara: ${offer.deliveryAddress?.entrance || "-"}, Ap: ${offer.deliveryAddress?.apartment || "-"}
-  ${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`;
+Adresa Livrare:
+${offer.deliveryAddress?.street || "N/A"} ${offer.deliveryAddress?.number || ""}
+Bloc: ${offer.deliveryAddress?.block || "-"}, Scara: ${offer.deliveryAddress?.entrance || "-"}, Ap: ${offer.deliveryAddress?.apartment || "-"}
+${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`;
   
     // Generare PDF
     doc.setFontSize(10);
@@ -170,15 +159,18 @@ const OfferDetail = () => {
 
         <h5>Adresa Facturare:</h5>
         <p>
-          {offer.billingAddress.street} {offer.billingAddress.number}, {offer.billingAddress.city},{" "}
-          {offer.billingAddress.county}
+          {offer.billingAddress ? (
+            `${offer.billingAddress.street} ${offer.billingAddress.number}, ${offer.billingAddress.city}, ${offer.billingAddress.county}`
+          ) : "Adresa nu este disponibilă"}
         </p>
 
         <h5>Adresa Livrare:</h5>
         <p>
           {offer.pickupAtCentral
             ? "Ridicare de la sediul central"
-            : `${offer.deliveryAddress.street} ${offer.deliveryAddress.number}, ${offer.deliveryAddress.city}, ${offer.deliveryAddress.county}`}
+            : offer.deliveryAddress ? (
+                `${offer.deliveryAddress.street} ${offer.deliveryAddress.number}, ${offer.deliveryAddress.city}, ${offer.deliveryAddress.county}`
+              ) : "Adresa livrare nu este disponibilă"}
         </p>
       </div>
 

@@ -409,11 +409,6 @@ export const getUserOffers = async (req, res, next) => {
 };
 
 
-
-
-
-
-
 // Obținerea tuturor ofertelor
 export const getAllOffers = async (req, res, next) => {
   try {
@@ -424,22 +419,19 @@ export const getAllOffers = async (req, res, next) => {
       offerNumber, 
       startDate, 
       endDate, 
+      phoneNumber, 
+      selectedDate, // Adăugăm selectedDate pentru filtrare pe o singură dată
       sortBy = "createdAt", 
       order = "desc" 
     } = req.query;
 
     const filters = {};
 
-    // Validare pentru status
+    // Filtrare după status
     if (status) {
       const validStatuses = [
-        "proiect",
-        "trimisa",
-        "comanda_spre_finalizare",
-        "oferta_acceptata",
-        "livrare_in_procesare",
-        "livrata",
-        "anulata",
+        "proiect", "trimisa", "comanda_spre_finalizare", "oferta_acceptata", 
+        "livrare_in_procesare", "livrata", "anulata"
       ];
       if (!validStatuses.includes(status)) {
         return next(errorHandler(400, "Status invalid."));
@@ -447,7 +439,7 @@ export const getAllOffers = async (req, res, next) => {
       filters.status = status;
     }
 
-    // Validare pentru `offerNumber`
+    // Filtrare după numărul ofertei
     if (offerNumber) {
       if (isNaN(Number(offerNumber))) {
         return next(errorHandler(400, "Numărul ofertei trebuie să fie numeric."));
@@ -455,9 +447,18 @@ export const getAllOffers = async (req, res, next) => {
       filters.offerNumber = Number(offerNumber);
     }
 
-    // Validare pentru date
-    const dateFilter = {};
-    if (startDate || endDate) {
+    // Filtrare pe o singură dată selectată pentru `createdAt`
+    if (selectedDate) {
+      // Convertim selectedDate într-un format ISO 8601 (fără ora)
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0); // Setăm la 00:00:00 ora de început
+    
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999); // Setăm la 23:59:59 ora de sfârșit
+    
+      filters.createdAt = { $gte: startOfDay, $lte: endOfDay };
+    } else if (startDate || endDate) {
+      const dateFilter = {};
       if (startDate) {
         const start = new Date(startDate);
         if (isNaN(start.getTime())) {
@@ -475,9 +476,17 @@ export const getAllOffers = async (req, res, next) => {
       filters.createdAt = dateFilter;
     }
 
-    // Interogare MongoDB
+    // Filtrare după numărul de telefon (dacă e necesar)
+    if (phoneNumber) {
+      filters["orderId.phoneNumber"] = phoneNumber;
+    }
+
+    // Interogare pentru a găsi ofertele care corespund filtrului
     const offers = await Offer.find(filters)
-      .populate("orderId", "orderNumber firstName lastName")
+      .populate({
+        path: "orderId", 
+        select: "phoneNumber orderNumber firstName lastName", // selectăm phoneNumber din Order
+      })
       .sort({ [sortBy]: order === "asc" ? 1 : -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
@@ -493,12 +502,25 @@ export const getAllOffers = async (req, res, next) => {
         pages: Math.ceil(totalOffers / limit),
       },
     });
+
   } catch (error) {
     next(error);
   }
 };
 
 
+
+
+
+const getOffersByPhoneNumber = async (phoneNumber) => {
+  try {
+    const offers = await db.collection("offersWithPhoneNumber").find({ "orderDetails.phoneNumber": phoneNumber }).toArray();
+    return offers;
+  } catch (error) {
+    console.error("Eroare la obținerea ofertelor:", error);
+    throw error;
+  }
+};
 
 
 

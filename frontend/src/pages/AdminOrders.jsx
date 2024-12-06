@@ -10,8 +10,8 @@ const AdminOrders = () => {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");  // Filtru status cerere
   const [offerNumber, setOfferNumber] = useState("");   // Filtru număr ofertă
-  const [startDate, setStartDate] = useState("");       // Filtru dată start
-  const [endDate, setEndDate] = useState("");           // Filtru dată sfârșit
+  const [selectedDate, setSelectedDate] = useState(""); // Filtru pentru data selectată
+
   const [currentPage, setCurrentPage] = useState(1);    // Paginare
   const [totalPages, setTotalPages] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);  // Orderul selectat pentru crearea ofertei
@@ -37,8 +37,7 @@ const AdminOrders = () => {
       url.searchParams.append("page", currentPage);
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("offerNumber", offerNumber);
-      url.searchParams.append("startDate", startDate);
-      url.searchParams.append("endDate", endDate);
+      url.searchParams.append("selectedDate", selectedDate); // Adăugăm filtrul pentru data selectată
 
       const response = await fetch(url.toString(), { method: "GET", headers });
 
@@ -64,11 +63,10 @@ const AdminOrders = () => {
       setError("Trebuie să fiți autentificat pentru a accesa cererile.");
       setLoading(false);
     }
-  }, [isAuthenticated, currentPage, statusFilter, offerNumber, startDate, endDate]);
+  }, [isAuthenticated, currentPage, statusFilter, offerNumber, selectedDate]); // Când se schimbă data selectată
 
   const handleStatusChange = (event) => {
     setStatusFilter(event.target.value);
-    setCurrentPage(1);  // Resetăm la prima pagină
   };
 
   const handlePageChange = (direction) => {
@@ -79,12 +77,20 @@ const AdminOrders = () => {
     }
   };
 
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value); // Actualizăm data selectată
+  };
+
   const handleResetFilters = () => {
     setStatusFilter("");
     setOfferNumber("");
-    setStartDate("");
-    setEndDate("");
-    setCurrentPage(1);  // Resetăm filtrele și pagina
+    setSelectedDate(""); // Resetăm și data
+    setCurrentPage(1); // Resetăm filtrele și pagina
+    fetchOrders(); // Apelăm funcția de reîncărcare a datelor după resetarea filtrelor
+  };
+
+  const handleApplyFilters = () => {
+    fetchOrders(); // Apelăm funcția de filtrare doar când utilizatorul apasă butonul de aplicare
   };
 
   const openCreateOfferModal = (order) => {
@@ -98,7 +104,6 @@ const AdminOrders = () => {
   };
 
   const handleOfferCreated = (createdOffer) => {
-    // Actualizează lista de comenzi după crearea ofertei
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
         order._id === createdOffer.orderId
@@ -107,6 +112,20 @@ const AdminOrders = () => {
       )
     );
     closeCreateOfferModal();
+  };
+
+  // Funcție de formatare a datei
+  const formatDate = (date) => {
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    };
+    return new Date(date).toLocaleString('ro-RO', options);
   };
 
   if (loading) return <div className="text-center">Se încarcă...</div>;
@@ -142,19 +161,14 @@ const AdminOrders = () => {
           <input
             type="date"
             className="form-control w-auto me-2"
-            placeholder="Data Start"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <input
-            type="date"
-            className="form-control w-auto me-2"
-            placeholder="Data Sfârșit"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            value={selectedDate}
+            onChange={handleDateChange}
           />
           <button className="btn btn-outline-secondary" onClick={handleResetFilters}>
             Resetare Filtre
+          </button>
+          <button className="btn btn-primary ms-2" onClick={handleApplyFilters}>
+            Aplică Filtre
           </button>
         </div>
       </div>
@@ -168,6 +182,7 @@ const AdminOrders = () => {
               <th>Număr Cerere</th>
               <th>Client</th>
               <th>Status</th>
+              <th>Creata La</th>
               <th>Acțiuni</th>
             </tr>
           </thead>
@@ -184,11 +199,11 @@ const AdminOrders = () => {
                     : order.companyDetails?.companyName}
                 </td>
                 <td>{order.status}</td>
+                <td>{formatDate(order.orderDate)}</td>
                 <td>
                   <Link to={`/orders/${order._id}`} className="btn btn-primary btn-sm">
                     Detalii
                   </Link>
-                  {/* Butonul de creare ofertă se afișează doar dacă statusul este "asteptare_oferta" */}
                   {order.status === "asteptare_oferta" && (
                     <button
                       className="btn btn-success btn-sm"
@@ -229,7 +244,7 @@ const AdminOrders = () => {
       <CreateOfferModal
         show={showCreateOfferModal}
         onHide={closeCreateOfferModal}
-        onCreateOffer={handleOfferCreated} // Callback pentru actualizare
+        onCreateOffer={handleOfferCreated}
         order={selectedOrder}
       />
     </div>
