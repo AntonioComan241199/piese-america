@@ -101,7 +101,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
   };
 
   return (
-    <Modal show={show} onHide={onHide} size="lg" centered>
+    <Modal show={show} onHide={onHide} size="lg" centered scrollable fullscreen="sm-down" >
       <Modal.Header closeButton>
         <Modal.Title>Creare ofertă pentru comanda #{order?.orderNumber}</Modal.Title>
       </Modal.Header>

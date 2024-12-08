@@ -11,6 +11,7 @@ import orderRoute from "./routes/orderRoute.js";
 import carRoutes from "./routes/carRoutes.js";
 import offerRoute from "./routes/offerRoute.js";
 import notificationRoute from "./routes/notificationRoute.js";
+import contactRoute from "./routes/contactRoute.js";
 
 
 // Configurare variabile de mediu
@@ -46,6 +47,7 @@ app.use("/api/orders", orderRoute); // Rute pentru cereri de ofertă
 app.use("/api/cars", carRoutes); // Rute pentru date despre mașini
 app.use("/api/offer", offerRoute); // Rute pentru oferte
 app.use("/api/notifications", notificationRoute);
+app.use("/api/contact", contactRoute); // Rute pentru formularul de contact
 
 
 // Middleware pentru gestionarea erorilor

@@ -15,7 +15,7 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case "SET_PROFILE":
-      return { ...state, profile: action.payload, updatedData: action.payload, loading: false };
+      return { ...state, profile: action.payload, updatedData: action.payload, loading: false };    
     case "SET_LOADING":
       return { ...state, loading: action.payload };
     case "SET_ERROR":
@@ -34,14 +34,30 @@ const reducer = (state, action) => {
 const MyProfile = () => {
   const dispatch = useDispatch();
   const reduxDispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const { user, authChecked } = useSelector((state) => state.auth);  // Asigură-te că authChecked este inclus în state
   const [state, localDispatch] = useReducer(reducer, initialState);
+
+  // Loguri pentru a verifica fluxul
+  useEffect(() => {
+    console.log("authChecked:", authChecked);
+    console.log("user:", user);
+    if (!authChecked) {
+      return; // Dacă autentificarea nu a fost verificată, nu continua încărcarea profilului
+    }
+
+    if (authChecked && user && !state.profile) {
+      console.log("Incarc profilul...");
+      fetchProfile();
+    }
+  }, [authChecked, user, state.profile]);
 
   const fetchProfile = async () => {
     try {
       const response = await fetchWithAuth("http://localhost:5000/api/user/me");
+      console.log("Profile fetched:", response);  // Log pentru a verifica răspunsul
       localDispatch({ type: "SET_PROFILE", payload: response });
     } catch (err) {
+      console.error("Error fetching profile:", err);
       localDispatch({
         type: "SET_ERROR",
         payload: err.message || "Nu s-au putut prelua informațiile utilizatorului.",
@@ -64,6 +80,7 @@ const MyProfile = () => {
 
       localDispatch({ type: "SET_PROFILE", payload: response });
       localDispatch({ type: "SET_ACTIVE_SECTION", payload: "" });
+  
       alert("Profil actualizat cu succes!");
     } catch (err) {
       alert("Eroare la actualizarea profilului: " + err.message);
@@ -83,7 +100,8 @@ const MyProfile = () => {
             currentPassword: state.passwordData.currentPassword,
             newPassword: state.passwordData.newPassword,
           }),
-        }
+        },
+        true // Returnează răspunsul brut
       );
   
       const data = await response.json();
@@ -100,8 +118,6 @@ const MyProfile = () => {
       alert("Eroare la schimbarea parolei: " + err.message);
     }
   };
-  
-  
 
   const handleDeleteAccount = async () => {
     if (!window.confirm("Ești sigur că vrei să ștergi contul?")) return;
@@ -118,9 +134,9 @@ const MyProfile = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  if (!authChecked) {
+    return <div>Verificăm autentificarea...</div>; // Afișează un mesaj de loading până când autentificarea este verificată
+  }
 
   if (state.loading) return <div className="alert alert-info">Se încarcă datele...</div>;
   if (state.error) return <div className="alert alert-danger">{state.error}</div>;

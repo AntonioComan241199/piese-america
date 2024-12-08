@@ -221,8 +221,12 @@ const sendResetPasswordEmail = async (email, token) => {
     const mailOptions = {
       from: "antonio.coman99@gmail.com", // Înlocuiește cu adresa ta de email validă
       to: email, // Adresa destinatarului
-      subject: "Resetare Parolă",
-      html: `<p>Click <a href="http://localhost:5173/reset-password/${token}">aici</a> pentru a-ți reseta parola.</p>`,
+      subject: "Piese Auto America - Resetare Parolă",
+      html: `
+      <h1>Resetare Parolă</h1>
+      <p>Ai primit acest email deoarece ai solicitat resetarea parolei pentru contul tău.</p>
+      <p>Dacă nu ai solicitat resetarea parolei, te rugăm să ignori acest email.</p>
+      <p>Click <a href="http://localhost:5173/reset-password/${token}">aici</a> pentru a-ți reseta parola.</p>`,
     };
 
     // Trimite email-ul

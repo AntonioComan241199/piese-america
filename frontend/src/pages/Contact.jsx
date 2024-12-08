@@ -16,22 +16,41 @@ const Contact = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-
-    // Simulăm trimiterea mesajului
-    setTimeout(() => {
-      setMessage("Mesajul a fost trimis cu succes!");
+  
+    try {
+      const response = await fetch("http://localhost:5000/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        setMessage("Mesajul a fost trimis cu succes!");
+      } else {
+        setMessage(data.message || "Eroare la trimiterea mesajului.");
+      }
+  
       setLoading(false);
       setFormData({
         name: "",
         email: "",
         message: "",
       });
-    }, 2000); // Simulare întârziere de trimitere
+    } catch (err) {
+      console.error("Eroare:", err);
+      setMessage("Eroare la trimiterea mesajului.");
+      setLoading(false);
+    }
   };
+  
 
   return (
     <div>
@@ -50,6 +69,12 @@ const Contact = () => {
                 <strong>Email:</strong>{" "}
                 <a href="mailto:costel.barbu@artri.ro" className="text-decoration-none">
                   costel.barbu@artri.ro
+                </a>
+              </li>
+              <li>
+                <strong>Email secundar:</strong>{" "}
+                <a href="mailto:automed.piese@gmail.com" className="text-decoration-none">
+                  automed.piese@gmail.com
                 </a>
               </li>
               <li><strong>Program:</strong> Luni - Vineri, 09:00 - 17:00</li>

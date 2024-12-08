@@ -138,7 +138,11 @@ const AppWrapper = () => {
         <Route path="/my-offers" element={<MyOffers />} />
 
 
-        <Route path="/request-order" element={<RequestOrder />} />
+        <Route path="/request-order" element={
+            <ProtectedRoute>
+              <RequestOrder />
+            </ProtectedRoute>
+          } />
       </Routes>
       <Footer />
     </ErrorBoundary>
