@@ -5,6 +5,10 @@ import { errorHandler } from "../utils/error.js";
 import {createLog} from "../utils/createLog.js";
 import PDFDocument from "pdfkit";
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
+import nodemailer from "nodemailer";
+
 
 // Creare oferta noua
 export const createOffer = async (req, res, next) => {
@@ -793,61 +797,51 @@ export const getOfferStats = async (req, res, next) => {
   }
 };
 
+export const sendOfferEmail = async (req, res, next) => {
+  const { offerNumber } = req.body; // Nu mai trebuie email-ul în body
 
-export const generateOfferPDF = async (req, res, next) => {
+  if (!offerNumber) {
+    return next(errorHandler(400, "Numărul ofertei nu este furnizat."));
+  }
+
   try {
-    const offer = await Offer.findById(req.params.offerId).populate("orderId");
+    // Căutăm oferta folosind offerNumber și populăm orderId pentru a obține email-ul
+    const offer = await Offer.findOne({ offerNumber }).populate("orderId", "email");
 
-    if (!offer) {
-      return next(errorHandler(404, "Oferta nu a fost gasita."));
+    if (!offer || !offer.orderId) {
+      return next(errorHandler(404, "Oferta sau comanda asociată nu a fost găsită."));
     }
 
-    if (!offer.selectedParts || offer.selectedParts.length === 0) {
-      doc.fontSize(14).text("Nu există produse selectate pentru această ofertă.", {
-        align: "center",
-      });
-      doc.end();
-      return doc.pipe(res);
+    const orderEmail = offer.orderId.email;
+
+    if (!orderEmail) {
+      return next(errorHandler(400, "Adresa de email nu a fost găsită în comanda asociată."));
     }
 
-    const doc = new PDFDocument();
+    // Construim link-ul către oferta online, utilizând offerId
+    const offerLink = `http://localhost:5173/offer/${offer._id}`; // Modifică acest link conform aplicației tale
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=offer_${offer.offerNumber}.pdf`
-    );
-
-    // Titlul PDF-ului
-    doc.fontSize(20).text(`Oferta #${offer.offerNumber}`, { align: "center" });
-    doc.moveDown();
-
-    // Detalii comanda
-    doc.fontSize(12).text(`Numar comanda: ${offer.orderId.orderNumber}`);
-    doc.text(`Data: ${new Date().toLocaleDateString("ro-RO")}`);
-    doc.moveDown();
-
-    // Tabel produse selectate
-    doc.fontSize(14).text("Produse selectate:");
-    doc.moveDown();
-    offer.selectedParts.forEach((part, index) => {
-      doc
-        .fontSize(12)
-        .text(
-          `${index + 1}. ${part.partType} - ${part.manufacturer} - ${part.quantity} buc. - ${part.pricePerUnit} RON/buc. - Total: ${part.total} RON`
-        );
+    const transporter = nodemailer.createTransport({
+      service: "SendGrid", // Folosim serviciul SendGrid pentru trimiterea email-urilor
+      auth: {
+        user: "apikey", // Folosește "apikey" ca user
+        pass: process.env.SENDGRID_API_KEY, // Cheia API de la SendGrid
+      },
     });
 
-    // Total general
-    doc.moveDown();
-    doc.fontSize(14).text(`Total oferta: ${offer.total} RON`, {
-      align: "right",
-    });
+    const mailOptions = {
+      from: "antonio.coman99@gmail.com", // Asigură-te că folosești o adresă validă
+      to: orderEmail, // Adresa destinatarului
+      subject: `Oferta #${offerNumber} pentru comanda ta`,
+      text: `Aceasta este oferta #${offerNumber} trimisă pentru comanda ta. Detalii sunt disponibile la acest link: ${offerLink}.`,
+      html: `<h1>Oferta #${offerNumber}</h1><p>Ai primit această ofertă pentru comanda ta. Detalii sunt disponibile la acest link:</p><a href="${offerLink}">${offerLink}</a>`,
+    };
 
-    doc.end();
-    doc.pipe(res);
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Email-ul cu link-ul ofertei a fost trimis cu succes." });
   } catch (error) {
-    next(error);
+    console.error("Eroare la trimiterea email-ului:", error);
+    return next(errorHandler(500, "Eroare la trimiterea email-ului: " + error.message));
   }
 };
 
