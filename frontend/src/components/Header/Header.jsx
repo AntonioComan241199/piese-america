@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, checkAuth } from "../../slices/authSlice";
 import { Link, NavLink } from "react-router-dom";
@@ -22,10 +22,37 @@ const navLinks = [
 ];
 
 const Header = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { isAuthenticated, user, authChecked } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    const checkIfMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      // Verifică dacă este un dispozitiv mobil (iPhone, Android etc.)
+      if (/android/i.test(userAgent) || /iphone|ipod/i.test(userAgent)) {
+        setIsMobile(true);
+      } else {
+        setIsMobile(false);
+      }
+    };
+
+    checkIfMobile(); // Verifică imediat la încărcarea paginii
+    window.addEventListener("resize", checkIfMobile); // Ascultă pentru schimbări de dimensiune
+
+    return () => window.removeEventListener("resize", checkIfMobile); // Curăță evenimentul la dezmembrarea componentelor
+  }, []);
+
+  const handleContactClick = () => {
+    if (isMobile) {
+      window.location.href = "tel:+0740121689"; // Dacă este mobil, sună la număr
+    } else {
+      navigate("/contact"); // Dacă nu este mobil, navighează către pagina de contact
+    }
+  };
 
   useEffect(() => {
     if (!authChecked) {
@@ -102,9 +129,12 @@ const Header = () => {
               </div>
             </Col>
             <Col lg={4} md={4} className="text-end">
-              <Link to="/contact" className="btn btn-primary">
+              <Button
+                onClick={handleContactClick}
+                className="btn btn-primary"
+              >
                 <i className="ri-phone-line me-1"></i> Te pot ajuta?
-              </Link>
+              </Button>
             </Col>
           </Row>
         </Container>
