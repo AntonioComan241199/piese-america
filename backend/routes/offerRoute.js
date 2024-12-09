@@ -14,8 +14,8 @@ import {
   getUserOffers,
   getOfferStats,
   updateQuantities,
-  generateOfferPDF,
-  finalizeOffer
+  finalizeOffer,
+  sendOfferEmail
 } from "../controllers/offerController.js";
 import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
@@ -46,7 +46,6 @@ router.patch("/admin/:offerId/delivery", verifyToken, checkRole("admin"), update
 // Obținere statistici oferte (admin)
 router.get("/admin/stats", verifyToken, checkRole("admin"), getOfferStats);
 
-
 /**
  * Rute pentru utilizatori autentificați
  */
@@ -72,9 +71,11 @@ router.patch("/:offerId/selected-parts", verifyToken, updateSelectedParts);
 // Actualizare cantități piese (client)
 router.patch("/:offerId/update-quantities", verifyToken, updateQuantities);
 
-router.get("/:offerId/pdf", verifyToken, generateOfferPDF);
-
 router.patch("/:offerId/finalize", verifyToken, finalizeOffer);
+
+
+
+router.post("/send-email", verifyToken, sendOfferEmail);
 
 
 

@@ -59,12 +59,10 @@ export default function Signin() {
         })
       );
 
-      // Navigare către pagina principală sau rol specific
-      if (data.user.role === "admin") {
-        navigate("/admin-dashboard", { replace: true });
-      } else {
-        navigate("/home", { replace: true });
-      }
+      // Redirecționare către URL-ul salvat sau /home dacă nu există un URL salvat
+      const redirectTo = localStorage.getItem('redirectTo') || '/home';
+      localStorage.removeItem('redirectTo'); // Curățăm URL-ul salvat după redirecționare
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

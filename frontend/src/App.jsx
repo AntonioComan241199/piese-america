@@ -44,16 +44,10 @@ const AppWrapper = () => {
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/signin" element={<Signin />} />
 
         {/* Rute publice */}
-        <Route
-          path="/signin"
-          element={
-            <PublicRoute>
-              <Signin />
-            </PublicRoute>
-          }
-        />
+        
         <Route
           path="/register"
           element={

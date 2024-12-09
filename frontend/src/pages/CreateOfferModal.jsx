@@ -51,29 +51,29 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
 
   const handleSubmit = async () => {
     if (isSubmitting) return; // Evită apelurile duplicate
-
+  
     if (!order || !parts.length) {
       setError("Trebuie să selectați o comandă și să adăugați cel puțin o piesă.");
       return;
     }
-
+  
     const token = localStorage.getItem("accessToken");
-
+  
     if (!token) {
       setError("Nu sunt autentificat sau token-ul este lipsă.");
       return;
     }
-
+  
     try {
       setIsSubmitting(true); // Blocare pentru apeluri duplicate
-
+  
       const payload = {
         orderId: order._id,
         parts,
       };
-
+  
       console.log("Payload trimis:", payload); // Debugging
-
+  
       const response = await fetch("http://localhost:5000/api/offer/admin", {
         method: "POST",
         headers: {
@@ -82,13 +82,34 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
         },
         body: JSON.stringify(payload),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         onCreateOffer(data.offer); // Callback pentru actualizare
-        setParts([]);
-        setError("");
-        onHide();
+        setParts([]); // Resetăm piesele
+        setError(""); // Resetăm erorile
+  
+        // Apelăm API-ul backend pentru a trimite email-ul
+        const emailResponse = await fetch("http://localhost:5000/api/offer/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,  // Asigură-te că trimiteți tokenul corect aici
+          },
+          body: JSON.stringify({
+            offerNumber: data.offer.offerNumber, // Trimitem numărul ofertei
+            email: data.offer.orderId.email, // Email-ul destinatarului
+          }),
+        });
+  
+        if (emailResponse.ok) {
+          alert("Oferta a fost trimisă pe email cu succes!");
+        } else {
+          const errorData = await emailResponse.json();
+          alert("Eroare la trimiterea email-ului: " + errorData.message);
+        }
+  
+        onHide(); // Închidem modalul
       } else {
         const errorData = await response.json();
         setError(errorData.message || "Eroare la crearea ofertei.");
@@ -99,7 +120,8 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
       setIsSubmitting(false);
     }
   };
-
+  
+  
   return (
     <Modal show={show} onHide={onHide} size="lg" centered scrollable fullscreen="sm-down" >
       <Modal.Header closeButton>

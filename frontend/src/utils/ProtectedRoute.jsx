@@ -1,12 +1,17 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 export const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, authChecked } = useSelector((state) => state.auth);
+  const location = useLocation();
 
   if (!authChecked) return null; // Așteaptă verificarea autentificării
-  if (!isAuthenticated) return <Navigate to="/signin" replace />;
+
+  // Dacă nu este autentificat, salvează URL-ul curent pentru a redirecționa ulterior
+  if (!isAuthenticated) {
+    localStorage.setItem('redirectTo', location.pathname + location.search);
+    return <Navigate to="/signin" replace />;
+  }
 
   return children;
 };
