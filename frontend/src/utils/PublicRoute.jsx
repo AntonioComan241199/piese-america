@@ -3,15 +3,23 @@ import { useSelector } from "react-redux";
 
 export const PublicRoute = ({ children }) => {
   const { isAuthenticated, authChecked } = useSelector((state) => state.auth);
-  const location = useLocation(); // Obținem locația curentă
+  const location = useLocation();
 
-  if (!authChecked) return null; // Așteaptă verificarea autentificării
-  if (isAuthenticated) return <Navigate to="/home" replace />; // Redirecționează către home dacă utilizatorul este deja autentificat
+  if (!authChecked) return <div>Loading...</div>; // Așteaptă completarea verificării autentificării
 
-  // Salvăm URL-ul curent în localStorage sau într-un alt stat global (dacă vrei să-l folosești ulterior)
-  if (!isAuthenticated) {
-    localStorage.setItem('redirectTo', location.pathname + location.search); // Salvăm URL-ul curent
+  // Dacă utilizatorul este deja autentificat
+  if (isAuthenticated) {
+    // Verificăm dacă există un URL salvat în localStorage pentru redirecționare
+    const redirectTo = localStorage.getItem('redirectTo') || '/home'; // Folosește /home ca fallback
+    localStorage.removeItem('redirectTo'); // Curăță URL-ul salvat după redirecționare
+    console.log("Redirecting to:", redirectTo); // Verificare debug
+    return <Navigate to={redirectTo} replace />; // Redirecționează utilizatorul
   }
 
-  return children; // Dacă nu este autentificat, lasă să continue accesul la ruta publică (ex. /signin)
+  // Dacă utilizatorul nu este autentificat, salvăm URL-ul curent în localStorage pentru a-l redirecționa ulterior
+  if (location.pathname !== '/signin') {
+    localStorage.setItem('redirectTo', location.pathname + location.search); 
+  }
+
+  return children; // Permite accesul la ruta publică (de exemplu, /signin)
 };

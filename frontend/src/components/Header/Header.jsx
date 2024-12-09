@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, checkAuth } from "../../slices/authSlice";
 import { Link, NavLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Navbar,
   Nav,
@@ -22,6 +23,8 @@ const navLinks = [
 
 const Header = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const { isAuthenticated, user, authChecked } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -31,7 +34,8 @@ const Header = () => {
   }, [dispatch, authChecked]);
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logout()); // Se face logout-ul
+    navigate("/signin"); // Redirecționează utilizatorul către pagina de login
   };
 
   return (

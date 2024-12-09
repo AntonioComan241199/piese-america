@@ -13,6 +13,8 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: refreshToken }),
+        Authorization: `Bearer ${accessToken}`, // Asigură-te că token-ul este inclus în cerere
+        ...(options.headers || {}),
       });
   
       if (!refreshResponse.ok) {

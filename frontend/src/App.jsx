@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider, useDispatch } from "react-redux";
 import { useEffect } from "react";
-import store from "./store";
+import store from "../src/redux/store/store"
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -44,9 +44,9 @@ const AppWrapper = () => {
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/signin" element={<Signin />} />
 
         {/* Rute publice */}
+        <Route path="/signin" element={<Signin />} />
         
         <Route
           path="/register"

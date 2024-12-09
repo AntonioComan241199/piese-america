@@ -3,16 +3,35 @@ import { useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
+import { useSelector } from "react-redux";
 
 const OfferDetail = () => {
   const { offerId } = useParams();
   const [offer, setOffer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { isAuthenticated, authChecked } = useSelector((state) => state.auth); // Folosim Redux pentru starea autentificării
 
   useEffect(() => {
     const fetchOffer = async () => {
+      if (!authChecked) {
+        setError("Se verifică autentificarea...");
+        return;
+      }
+
+      if (!isAuthenticated) {
+        setError("Nu ești autentificat. Te rog să te loghezi.");
+        setLoading(false);
+        return;
+      }
+
       try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+          console.log("Access token missing");
+          setError("Nu ai permisiunea de a accesa oferta.");
+          return;
+        }
         const response = await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}`);
         setOffer(response.offer);
       } catch (err) {
@@ -22,8 +41,10 @@ const OfferDetail = () => {
       }
     };
 
-    fetchOffer();
-  }, [offerId]);
+    if (authChecked) {
+      fetchOffer();
+    }
+  }, [offerId, isAuthenticated, authChecked]);
 
   const exportSelectedToPDF = () => {
     if (!offer) {
@@ -43,20 +64,12 @@ const OfferDetail = () => {
         : `Firma: ${offer.orderId?.companyDetails?.companyName || "N/A"}\nCUI: ${offer.orderId?.companyDetails?.cui || "N/A"}\nNr. Reg. Com: ${offer.orderId?.companyDetails?.nrRegCom || "N/A"}\nTelefon: ${offer.orderId.phoneNumber || "N/A"}\nEmail: ${offer.orderId.email || "N/A"}`;
   
     // Adresa de facturare
-    const billingAddress = `
-Adresa Facturare:
-${offer.billingAddress?.street || "N/A"} ${offer.billingAddress?.number || ""}
-Bloc: ${offer.billingAddress?.block || "-"}, Scara: ${offer.billingAddress?.entrance || "-"}, Ap: ${offer.billingAddress?.apartment || "-"}
-${offer.billingAddress?.city || "N/A"}, ${offer.billingAddress?.county || "N/A"}`;
+    const billingAddress = `Adresa Facturare:\n${offer.billingAddress?.street || "N/A"} ${offer.billingAddress?.number || ""}\nBloc: ${offer.billingAddress?.block || "-"}, Scara: ${offer.billingAddress?.entrance || "-"}, Ap: ${offer.billingAddress?.apartment || "-"}\n${offer.billingAddress?.city || "N/A"}, ${offer.billingAddress?.county || "N/A"}`;
   
     // Adresa de livrare
     const deliveryAddress = offer.pickupAtCentral
       ? "Adresa Livrare: Ridicare de la sediul central"
-      : `
-Adresa Livrare:
-${offer.deliveryAddress?.street || "N/A"} ${offer.deliveryAddress?.number || ""}
-Bloc: ${offer.deliveryAddress?.block || "-"}, Scara: ${offer.deliveryAddress?.entrance || "-"}, Ap: ${offer.deliveryAddress?.apartment || "-"}
-${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`;
+      : `Adresa Livrare:\n${offer.deliveryAddress?.street || "N/A"} ${offer.deliveryAddress?.number || ""}\nBloc: ${offer.deliveryAddress?.block || "-"}, Scara: ${offer.deliveryAddress?.entrance || "-"}, Ap: ${offer.deliveryAddress?.apartment || "-"}\n${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`;
   
     // Generare PDF
     doc.setFontSize(10);
@@ -138,7 +151,6 @@ ${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A
     // Salvare PDF
     doc.save(`Oferta_${offer.offerNumber}.pdf`);
   };
-  
 
   if (loading) return <div className="alert alert-info">Se încarcă oferta...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;

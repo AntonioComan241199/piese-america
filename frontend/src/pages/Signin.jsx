@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../slices/authSlice";
 
-export default function Signin() {
+const Signin = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -45,27 +45,29 @@ export default function Signin() {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
 
-      // Actualizare stare utilizator în Redux
-      dispatch(
-        login({
-          user: {
-            id: data.user.id,
-            email: data.user.email,
-            role: data.user.role,
-            userType: data.user.userType,
-          },
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-        })
-      );
+      // Actualizarea stării autentificării în Redux
+      dispatch(login({
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          role: data.user.role,
+        },
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      }));
 
-      // Redirecționare către URL-ul salvat sau /home dacă nu există un URL salvat
-      const redirectTo = localStorage.getItem('redirectTo') || '/home';
-      localStorage.removeItem('redirectTo'); // Curățăm URL-ul salvat după redirecționare
+      // Verifică dacă există un URL salvat în localStorage
+      const redirectTo = localStorage.getItem('redirectTo') || '/home'; // Folosește /home ca fallback
+      console.log("Redirecting to:", redirectTo); // Verificare debug
+
+      // **Curăță URL-ul salvat** după ce redirecționezi utilizatorul
+      localStorage.removeItem('redirectTo'); // Asigură-te că ștergi redirectTo după redirecționare
+
+      // Redirecționează utilizatorul
+      setLoading(false); // Asigură-te că redirecționarea se face după setarea stării
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -143,3 +145,6 @@ export default function Signin() {
     </div>
   );
 }
+
+export default Signin;
+

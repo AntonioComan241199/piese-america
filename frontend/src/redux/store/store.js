@@ -9,3 +9,5 @@ export const store = configureStore({
 
 // Initializează autentificarea din localStorage la încărcare
 store.dispatch(checkAuth());
+
+export default store;

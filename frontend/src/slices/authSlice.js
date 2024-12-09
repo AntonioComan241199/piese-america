@@ -89,6 +89,7 @@ const authSlice = createSlice({
 
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("redirectTo"); // Șterge redirectTo la logout
     },
     setAccessToken: (state, action) => {
       state.accessToken = action.payload.accessToken;
@@ -110,7 +111,6 @@ const authSlice = createSlice({
         state.authChecked = true;
       })
       .addCase(checkAuth.rejected, (state, action) => {
-        console.error("checkAuth rejected:", action.payload);
         state.isAuthenticated = false;
         state.user = null;
         state.accessToken = null;
