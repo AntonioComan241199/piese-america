@@ -50,7 +50,7 @@ const ResetPassword = () => {
       setLoading(false);
 
       // Navigăm către login după succes
-      setTimeout(() => navigate("/login"), 5000); // După 5 secunde, redirecționăm utilizatorul spre login
+      setTimeout(() => navigate("/signin"), 5000); // După 5 secunde, redirecționăm utilizatorul spre login
     } catch (err) {
       setError(err.message);
       setLoading(false);
