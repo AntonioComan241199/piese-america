@@ -7,12 +7,16 @@ const SelectProductsModal = ({
   onHide,
   offer,
   onSaveSelection,
+  onAcceptOffer,
+  onRejectOffer,
   readonlyMode = false, // Prop pentru a bloca navigarea
 }) => {
   const [groupedParts, setGroupedParts] = useState([]);
   const [selections, setSelections] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [totalSelectie, setTotalSelectie] = useState(0);
+  const [showDecisionButtons, setShowDecisionButtons] = useState(false);
+
   const [billingAddress, setBillingAddress] = useState({
     street: "",
     number: "",
@@ -44,6 +48,14 @@ const SelectProductsModal = ({
   useEffect(() => {
     if (!show) {
       setCurrentStep(1); // Resetează modalul la pasul 1 când este închis
+      setShowDecisionButtons(false); // Resetează butoanele de decizie
+
+    }
+  }, [show]);
+  
+  useEffect(() => {
+    if (!show) {
+      setShowDecisionButtons(false); // Resetează butoanele de decizie
     }
   }, [show]);
   
@@ -58,24 +70,56 @@ const SelectProductsModal = ({
 
   // useEffect pentru readonlyMode = true
   useEffect(() => {
-    if (readonlyMode && offer) {
-      setBillingAddress(offer.billingAddress || {});
-      setDeliveryAddress(offer.deliveryAddress || {});
-      setPickupAtCentral(offer.pickupAtCentral || false);
+    if (show) {
+      if (readonlyMode && offer) {
+        setBillingAddress(offer.billingAddress || {});
+        setDeliveryAddress(offer.deliveryAddress || {});
+        setPickupAtCentral(offer.pickupAtCentral || false);
+        setSelections(
+          offer.selectedParts?.map((part) => ({
+            partType: part.partType || "Tip necunoscut",
+            selectedOption: part.selectedOption || null,
+            include: true,
+            manufacturer: part.manufacturer || "N/A",
+            pricePerUnit: part.pricePerUnit || 0,
+            quantity: part.quantity || 0,
+            total: part.total || 0,
+          })) || []
+        );
+      } else if (!readonlyMode && offer?.parts) {
+        const grouped = {};
+        offer.parts.forEach((part) => {
+          if (!grouped[part.partType]) {
+            grouped[part.partType] = { partType: part.partType, options: [] };
+          }
+          part.options.forEach((option) => {
+            grouped[part.partType].options.push({
+              optionId: option._id,
+              manufacturer: option.manufacturer,
+              price: option.price,
+              quantity: part.quantity,
+            });
+          });
+        });
   
-      setSelections(
-        offer.selectedParts?.map((part) => ({
-          partType: part.partType || "Tip necunoscut",
-          selectedOption: part.selectedOption || null,
-          include: true,
-          manufacturer: part.manufacturer || "N/A",
-          pricePerUnit: part.pricePerUnit || 0,
-          quantity: part.quantity || 0,
-          total: part.total || 0,
-        })) || []
-      );
+        setGroupedParts(Object.values(grouped));
+        setSelections(
+          Object.values(grouped).flatMap((group) =>
+            group.options.map((option) => ({
+              partType: group.partType,
+              selectedOption: option.optionId,
+              include: false,
+              manufacturer: option.manufacturer,
+              pricePerUnit: option.price,
+              quantity: option.quantity,
+              total: 0,
+            }))
+          )
+        );
+      }
     }
-  }, [readonlyMode, offer]);
+  }, [show, readonlyMode, offer]);
+  
   
 
   useEffect(() => {
@@ -128,6 +172,8 @@ const SelectProductsModal = ({
       setDeliveryAddress(billingAddress);
     }
   }, [isDeliverySame, billingAddress]);
+
+  
 
 
   useEffect(() => {
@@ -241,6 +287,39 @@ const SelectProductsModal = ({
     const address = addressType === "billing" ? billingAddress : deliveryAddress;
     setAddress({ ...address, [field]: value });
   };
+
+  const handleFinalizeSelections = () => {
+    onSaveSelection({
+      selectedParts: selections.filter(
+        (selection) => selection.include && selection.selectedOption
+      ),
+      billingAddress,
+      deliveryAddress: pickupAtCentral ? null : deliveryAddress,
+      pickupAtCentral,
+    });
+    setShowDecisionButtons(true); // Afișează butoanele "Acceptă" și "Respinge"
+  };
+  
+
+  const handleAcceptOffer = () => {
+    onAcceptOffer(offer._id);
+    setShowDecisionButtons(false); // Ascunde butoanele după acceptare
+  };
+  
+  const handleRejectOffer = () => {
+    onRejectOffer(offer._id);
+    setShowDecisionButtons(false); // Ascunde butoanele după respingere
+  };
+
+  useEffect(() => {
+  if (offer && offer.status === "comanda_spre_finalizare") {
+    setShowDecisionButtons(true);
+  } else {
+    setShowDecisionButtons(false);
+  }
+}, [offer]);
+
+  
 
   
   
@@ -400,23 +479,40 @@ const SelectProductsModal = ({
   
       <h5>Opțiuni de livrare</h5>
       <Form.Group>
-        <Form.Check
-          type="radio"
-          label="Ridicare produse de la sediu central"
-          name="deliveryOption"
-          checked={pickupAtCentral}
-          onChange={() => setPickupAtCentral(true)}
-        />
+      <Form.Check
+        type="radio"
+        label="Ridicare produse de la sediu central"
+        name="deliveryOption"
+        checked={pickupAtCentral}
+        onChange={() => {
+          setPickupAtCentral(true);
+          setIsDeliverySame(false); // Resetează opțiunea de copiere
+        }}
+      />
         <Form.Check
           type="radio"
           label="Livrare la adresa specificată"
           name="deliveryOption"
-          checked={!pickupAtCentral}
-          onChange={() => setPickupAtCentral(false)}
+          checked={!pickupAtCentral && !isDeliverySame}
+          onChange={() => {
+            setPickupAtCentral(false);
+            setIsDeliverySame(false); // Dezactivează opțiunea de copiere
+          }}
+        />
+      <Form.Check
+          type="radio"
+          label="Adresa de livrare este aceeași cu adresa de facturare"
+          name="deliveryOption"
+          checked={isDeliverySame}
+          onChange={() => {
+            setPickupAtCentral(false);
+            setIsDeliverySame(true);
+            setDeliveryAddress(billingAddress); // Copiază datele de facturare în livrare
+          }}
         />
       </Form.Group>
   
-      {!pickupAtCentral && (
+      {!pickupAtCentral && !isDeliverySame && (
         <>
           <h5>Adresa de livrare</h5>
           <Form.Group controlId="deliveryCounty">
@@ -503,69 +599,108 @@ const SelectProductsModal = ({
   
     return (
       <div>
-        <h5>Piese selectate:</h5>
+        <h5 className="mb-3">Rezumat selecții:</h5>
+  
+        {/* Listare piese selectate */}
         {selections
           .filter((selection) => selection.include && selection.selectedOption)
-          .map((selection, index) => {
-            // Găsește detalii din groupedParts pentru producător
-            const group = groupedParts.find((g) => g.partType === selection.partType);
-            const option = group?.options.find((o) => o.optionId === selection.selectedOption);
-  
-            return (
-              <div key={index} className="mb-2">
+          .map((selection, index) => (
+            <div key={index} className="mb-3">
+              <p>
                 <strong>Tip piesă:</strong> {selection.partType || "N/A"}
-                <br />
-                <strong>Producător:</strong> {option?.manufacturer || selection.manufacturer || "N/A"}
-                <br />
+              </p>
+              <p>
+                <strong>Producător:</strong>{" "}
+                {selection.manufacturer || "N/A"}
+              </p>
+              <p>
                 <strong>Cantitate:</strong> {selection.quantity || 0}
-                <br />
-                <strong>Preț/bucată:</strong> {selection.pricePerUnit || 0} RON
-                <br />
+              </p>
+              <p>
+                <strong>Preț/bucată:</strong>{" "}
+                {selection.pricePerUnit || 0} RON
+              </p>
+              <p>
                 <strong>Total:</strong> {selection.total || 0} RON
-              </div>
-            );
-          })}
+              </p>
+              <hr />
+            </div>
+          ))}
+  
+        {/* Mesaj dacă nu există selecții */}
         {selections.filter((selection) => selection.include).length === 0 && (
-          <div className="text-danger">Nu există piese selectate.</div>
-        )}
-        <hr />
-        <h5>Total general:</h5>
-        <strong>{totalGeneral || 0} RON</strong>
-        <hr />
-        <h5>Adresa de facturare:</h5>
-        {Object.values(billingAddress).filter((field) => field).length > 0 ? (
-          <div>
-            {billingAddress.street && <div>Stradă: {billingAddress.street}</div>}
-            {billingAddress.number && <div>Număr: {billingAddress.number}</div>}
-            {billingAddress.block && <div>Bloc: {billingAddress.block}</div>}
-            {billingAddress.entrance && <div>Scară: {billingAddress.entrance}</div>}
-            {billingAddress.apartment && <div>Apartament: {billingAddress.apartment}</div>}
-            {billingAddress.city && <div>Oraș: {billingAddress.city}</div>}
-            {billingAddress.county && <div>Județ: {billingAddress.county}</div>}
+          <div className="text-danger mb-3">
+            Nu există piese selectate.
           </div>
-        ) : (
-          <div>Adresa de facturare nu a fost specificată.</div>
         )}
-        <hr />
-        <h5>Adresa de livrare:</h5>
-        {pickupAtCentral ? (
-          <div>Ridicare de la sediu central</div>
-        ) : Object.values(deliveryAddress).filter((field) => field).length > 0 ? (
-          <div>
-            {deliveryAddress.street && <div>Stradă: {deliveryAddress.street}</div>}
-            {deliveryAddress.number && <div>Număr: {deliveryAddress.number}</div>}
-            {deliveryAddress.block && <div>Bloc: {deliveryAddress.block}</div>}
-            {deliveryAddress.entrance && <div>Scară: {deliveryAddress.entrance}</div>}
-            {deliveryAddress.apartment && <div>Apartament: {deliveryAddress.apartment}</div>}
-            {deliveryAddress.city && <div>Oraș: {deliveryAddress.city}</div>}
-            {deliveryAddress.county && <div>Județ: {deliveryAddress.county}</div>}
+  
+        {/* Total general */}
+        <div className="mb-4">
+          <h5 className="text-primary">Total general:</h5>
+          <p><strong>{totalGeneral || 0} RON</strong></p>
+        </div>
+  
+        {/* Adresa de facturare */}
+        <div className="mb-4">
+          <h5 className="text-primary">Adresa de facturare:</h5>
+          {Object.values(billingAddress).filter((field) => field).length > 0 ? (
+            <div>
+              {billingAddress.street && <p>Stradă: {billingAddress.street}</p>}
+              {billingAddress.number && <p>Număr: {billingAddress.number}</p>}
+              {billingAddress.block && <p>Bloc: {billingAddress.block}</p>}
+              {billingAddress.entrance && <p>Scară: {billingAddress.entrance}</p>}
+              {billingAddress.apartment && <p>Apartament: {billingAddress.apartment}</p>}
+              {billingAddress.city && <p>Oraș: {billingAddress.city}</p>}
+              {billingAddress.county && <p>Județ: {billingAddress.county}</p>}
+            </div>
+          ) : (
+            <p className="text-danger">Adresa de facturare nu a fost specificată.</p>
+          )}
+        </div>
+  
+        {/* Adresa de livrare */}
+        <div className="mb-4">
+          <h5 className="text-primary">Adresa de livrare:</h5>
+          {pickupAtCentral ? (
+            <p>Ridicare de la sediu central</p>
+          ) : Object.values(deliveryAddress).filter((field) => field).length > 0 ? (
+            <div>
+              {deliveryAddress.street && <p>Stradă: {deliveryAddress.street}</p>}
+              {deliveryAddress.number && <p>Număr: {deliveryAddress.number}</p>}
+              {deliveryAddress.block && <p>Bloc: {deliveryAddress.block}</p>}
+              {deliveryAddress.entrance && <p>Scară: {deliveryAddress.entrance}</p>}
+              {deliveryAddress.apartment && <p>Apartament: {deliveryAddress.apartment}</p>}
+              {deliveryAddress.city && <p>Oraș: {deliveryAddress.city}</p>}
+              {deliveryAddress.county && <p>Județ: {deliveryAddress.county}</p>}
+            </div>
+          ) : (
+            <p className="text-danger">Adresa de livrare nu a fost specificată.</p>
+          )}
+        </div>
+  
+        {/* Butoane pentru Acceptare/Respingere */}
+        {showDecisionButtons && (
+          <div className="d-flex justify-content-end">
+            <Button
+              variant="success"
+              onClick={handleAcceptOffer}
+              className="me-2"
+            >
+              Acceptă
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleRejectOffer}
+            >
+              Respinge
+            </Button>
           </div>
-        ) : (
-          <div>Adresa de livrare nu a fost specificată.</div>
         )}
       </div>
     );
   };
+
+  
   
   
   
@@ -601,23 +736,12 @@ const SelectProductsModal = ({
             Închide
           </Button>
         )}
-        {currentStep === 3 && !readonlyMode && (
-          <Button
-            variant="success"
-            onClick={() =>
-              onSaveSelection({
-                selectedParts: selections.filter(
-                  (selection) => selection.include && selection.selectedOption
-                ),
-                billingAddress,
-                deliveryAddress: pickupAtCentral ? null : deliveryAddress,
-                pickupAtCentral,
-              })
-            }
-          >
+        {currentStep === 3 && !readonlyMode && !showDecisionButtons && (
+          <Button variant="success" onClick={handleFinalizeSelections}>
             Finalizează
           </Button>
-        )}
+)}
+
       </Modal.Footer>
     </Modal>
   );

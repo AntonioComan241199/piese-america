@@ -234,41 +234,64 @@ const AdminOffers = () => {
                       #{offer.orderId.orderNumber}
                     </Link>
                   </td>
-                  <td>{offer.total ? `${offer.total} RON` : "N/A"}</td>
+                  <td>
+                  {offer.selectedParts && offer.selectedParts.length > 0
+                    ? `${offer.total} RON`
+                    : "Produse Neselectate"}
+                  </td>
                   <td>{offer.status}</td>
                   <td>{formatDateTime(offer.createdAt)}</td>
                   <td>{formatDateTime(offer.updatedAt)}</td>
                   <td>
-                    <button className="btn btn-primary btn-sm me-2">
-                      <Link
-                        to={`/offer/${offer._id}`}
-                        className="btn btn-primary btn-sm me-2"
-                      >
-                        Detalii
-                      </Link>
-                    </button>
-                    <button
-                      className="btn btn-warning btn-sm me-2"
-                      onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
-                      disabled={offer.status !== "oferta_acceptata"}
-                    >
-                      Livrare în Procesare
-                    </button>
-                    <button
-                      className="btn btn-success btn-sm me-2"
-                      onClick={() => updateOfferStatus(offer._id, "livrata")}
-                      disabled={offer.status !== "livrare_in_procesare"}
-                    >
-                      Livrată
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => updateOfferStatus(offer._id, "anulata")}
-                      disabled={offer.status === "anulata"}
-                    >
-                      Anulată
-                    </button>
-                  </td>
+  <div className="dropdown">
+    <button
+      className="btn btn-primary btn-sm dropdown-toggle"
+      type="button"
+      id={`dropdown-${offer._id}`}
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      Acțiuni
+    </button>
+    <ul className="dropdown-menu" aria-labelledby={`dropdown-${offer._id}`}>
+      <li>
+        <Link
+          to={`/offer/${offer._id}`}
+          className="dropdown-item"
+        >
+          Detalii
+        </Link>
+      </li>
+      <li>
+        <button
+          className="dropdown-item"
+          onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
+          disabled={offer.status !== "oferta_acceptata"}
+        >
+          Livrare în Procesare
+        </button>
+      </li>
+      <li>
+        <button
+          className="dropdown-item"
+          onClick={() => updateOfferStatus(offer._id, "livrata")}
+          disabled={offer.status !== "livrare_in_procesare"}
+        >
+          Livrată
+        </button>
+      </li>
+      <li>
+        <button
+          className="dropdown-item text-danger"
+          onClick={() => updateOfferStatus(offer._id, "anulata")}
+          disabled={offer.status === "anulata"}
+        >
+          Anulată
+        </button>
+      </li>
+    </ul>
+  </div>
+</td>
                 </tr>
               ))}
             </tbody>

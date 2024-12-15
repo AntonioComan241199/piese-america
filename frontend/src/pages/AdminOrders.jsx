@@ -216,23 +216,29 @@ const AdminOrders = () => {
                 <td>{order.status}</td>
                 <td>{formatDate(order.orderDate)}</td>
                 <td>
-                  <Link to={`/orders/${order._id}`} className="btn btn-primary btn-sm">
-                    Detalii
-                  </Link>
-                  {order.status === "asteptare_oferta" && (
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() => openCreateOfferModal(order)}
+                  <div className="d-flex flex-wrap gap-2">
+                    <Link
+                      to={`/orders/${order._id}`}
+                      className="btn btn-primary btn-sm"
                     >
-                      Creează Ofertă
-                    </button>
-                  )}
+                      Detalii
+                    </Link>
+                    {order.status === "asteptare_oferta" && (
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={() => openCreateOfferModal(order)}
+                      >
+                        Creează Ofertă
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
 
       {/* Paginare */}
       <div className="d-flex justify-content-between align-items-center mt-3">

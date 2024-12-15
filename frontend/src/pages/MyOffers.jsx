@@ -75,10 +75,13 @@ const MyOffers = () => {
   }, [isAuthenticated, authChecked, currentPage, statusFilter, offerNumber, selectedDate]);
 
   const handleViewSelections = (offer) => {
-    setSelectedOffer(offer);
+    const updatedOffer = offers.find((o) => o._id === offer._id) || offer;
+    setSelectedOffer(updatedOffer);
     setShowSelectModal(true);
-    setIsReadOnly(true); // Setăm modalul în modul read-only
+    setIsReadOnly(true);
   };
+  
+  
 
   const handleSelectProducts = (offer) => {
     setSelectedOffer(offer);
@@ -88,7 +91,8 @@ const MyOffers = () => {
 
   const handleCloseModal = () => {
     setSelectedOffer({});
-    setShowSelectModal(false); // Închidem modalul
+    setIsReadOnly(false);
+    setShowSelectModal(false);
   };
 
   const saveSelections = async ({
@@ -128,7 +132,6 @@ const MyOffers = () => {
       }
 
       fetchOffers();
-      setShowSelectModal(false); // Închidem modalul după salvare
     } catch (error) {
       setError(error.message);
     }
@@ -137,7 +140,7 @@ const MyOffers = () => {
   const handleAcceptOffer = async (offerId) => {
     try {
       const token = localStorage.getItem("accessToken");
-
+  
       const response = await fetch(
         `http://localhost:5000/api/offer/${offerId}/accept`,
         {
@@ -148,22 +151,24 @@ const MyOffers = () => {
           },
         }
       );
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Eroare la acceptarea ofertei.");
       }
-
-      fetchOffers();
+  
+      await fetchOffers();
+      setSelectedOffer({});
+      setShowSelectModal(false);
     } catch (error) {
       setError(error.message);
     }
   };
-
+  
   const handleRejectOffer = async (offerId) => {
     try {
       const token = localStorage.getItem("accessToken");
-
+  
       const response = await fetch(
         `http://localhost:5000/api/offer/${offerId}/reject`,
         {
@@ -174,17 +179,24 @@ const MyOffers = () => {
           },
         }
       );
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Eroare la respingerea ofertei.");
       }
-
-      fetchOffers();
+  
+      await fetchOffers();
+      setSelectedOffer({});
+      setShowSelectModal(false);
     } catch (error) {
       setError(error.message);
     }
   };
+  
+  
+  
+  
+
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -254,41 +266,49 @@ const MyOffers = () => {
         offer={selectedOffer}
         readonlyMode={isReadOnly}
         onSaveSelection={(data) => saveSelections(data)}
+        onAcceptOffer={handleAcceptOffer}
+        onRejectOffer={handleRejectOffer}
       />
+
 
       {offers.length > 0 ? (
         <div className="table-responsive">
-          <table className="table table-striped">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Cerere</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Dată Creare</th> {/* Coloana pentru Data Creării */}
-                <th>Acțiuni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {offers.map((offer, index) => (
-                <tr key={offer._id}>
-                  <td>{index + 1}</td>
-                  <td>
-                    {offer.orderId ? (
-                      <Link to={`/orders/${offer.orderId._id}`}>
-                        #{offer.orderId.orderNumber}
-                      </Link>
-                    ) : (
-                      "Cerere indisponibilă"
-                    )}
-                  </td>
-                  <td>{offer.total ? `${offer.total} RON` : "N/A"}</td>
-                  <td>{offer.status}</td>
-                  <td>{new Date(offer.createdAt).toLocaleString("ro-RO")}</td> {/* Data creării */}
-                  <td>
+        <table className="table table-striped">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cerere</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Dată Creare</th>
+              <th>Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody>
+            {offers.map((offer, index) => (
+              <tr key={offer._id}>
+                <td>{index + 1}</td>
+                <td>
+                  {offer.orderId ? (
+                    <Link to={`/orders/${offer.orderId._id}`}>
+                      #{offer.orderId.orderNumber}
+                    </Link>
+                  ) : (
+                    "Cerere indisponibilă"
+                  )}
+                </td>
+                <td>
+                  {offer.selectedParts && offer.selectedParts.length > 0
+                    ? `${offer.total} RON`
+                    : "Produse Neselectate"}
+                </td>
+                <td>{offer.status}</td>
+                <td>{new Date(offer.createdAt).toLocaleString("ro-RO")}</td>
+                <td>
+                  <div className="d-flex flex-wrap gap-2">
                     {offer.status === "proiect" && (
                       <button
-                        className="btn btn-primary btn-sm me-2"
+                        className="btn btn-primary btn-sm"
                         onClick={() => handleSelectProducts(offer)}
                       >
                         {offer.selectedParts?.length > 0
@@ -297,43 +317,30 @@ const MyOffers = () => {
                       </button>
                     )}
                     {offer.status !== "proiect" && (
-                      <button className="btn btn-primary btn-sm me-2">
-                        <Link
-                          to={`/offer/${offer._id}`}
-                          className="btn btn-primary btn-sm me-2"
-                        >
-                          Detalii
-                        </Link>
-                      </button>
+                      <Link
+                        to={`/offer/${offer._id}`}
+                        className="btn btn-primary btn-sm"
+                      >
+                        Detalii
+                      </Link>
                     )}
                     {offer.status === "comanda_spre_finalizare" && (
-                      <>
-                        <button
-                          className="btn btn-secondary btn-sm me-2"
-                          onClick={() => handleViewSelections(offer)}
-                        >
-                          Vizualizează selecțiile
-                        </button>
-                        <button
-                          className="btn btn-success btn-sm me-2"
-                          onClick={() => handleAcceptOffer(offer._id)}
-                        >
-                          Acceptă
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm me-2"
-                          onClick={() => handleRejectOffer(offer._id)}
-                        >
-                          Respinge
-                        </button>
-                      </>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleViewSelections(offer)}
+                      >
+                        Vizualizează selecțiile
+                      </button>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+
+        </table>
+      </div>
+      
       ) : (
         <div className="alert alert-info text-center">
           Nu aveți oferte disponibile.

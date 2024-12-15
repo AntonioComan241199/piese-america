@@ -4,6 +4,8 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { useSelector } from "react-redux";
+import SelectProductsModal from "./SelectProductsModal"; // Asigură-te că este importat corect
+
 
 const OfferDetail = () => {
   const { offerId } = useParams();
@@ -11,49 +13,53 @@ const OfferDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { isAuthenticated, authChecked } = useSelector((state) => state.auth); // Folosim Redux pentru starea autentificării
+  const [showSelectModal, setShowSelectModal] = useState(false); // Stare pentru a controla vizibilitatea modalului
+  const [isReadOnly, setIsReadOnly] = useState(false); // Stare pentru a controla dacă modalul este în mod "readonly" sau editabil
+  const [showAcceptRejectButtons, setShowAcceptRejectButtons] = useState(false); // Nouă stare
 
-  useEffect(() => {
-    const fetchOffer = async () => {
-      if (!authChecked) {
-        setError("Se verifică autentificarea...");
-        return;
-      }
 
-      if (!isAuthenticated) {
-        setError("Nu ești autentificat. Te rog să te loghezi.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const accessToken = localStorage.getItem("accessToken");
-        if (!accessToken) {
-          console.log("Access token missing");
-          setError("Nu ai permisiunea de a accesa oferta.");
-          return;
-        }
-        const response = await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}`);
-        setOffer(response.offer);
-      } catch (err) {
-        setError("Nu s-a putut încărca oferta.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (authChecked) {
-      fetchOffer();
-    }
-  }, [offerId, isAuthenticated, authChecked]);
-
-  const exportSelectedToPDF = () => {
-    if (!offer) {
-      setError("Oferta nu este încărcată complet. Reîncercați.");
+  const fetchOffer = async () => {
+    if (!authChecked) {
+      setError("Se verifică autentificarea...");
       return;
     }
   
-    const doc = new jsPDF();
+    if (!isAuthenticated) {
+      setError("Nu ești autentificat. Te rog să te loghezi.");
+      setLoading(false);
+      return;
+    }
   
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        console.log("Access token missing");
+        setError("Nu ai permisiunea de a accesa oferta.");
+        return;
+      }
+      const response = await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}`);
+      setOffer(response.offer);
+    } catch (err) {
+      setError("Nu s-a putut încărca oferta.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (authChecked) {
+      fetchOffer();
+    }
+  }, [authChecked, isAuthenticated, offerId]);
+  
+  
+  const exportSelectedToPDF = () => {
+    if (!offer || !offer.selectedParts?.length) {
+      setError("Oferta nu conține produse selectate pentru export.");
+      return;
+    }
+
+    const doc = new jsPDF(); // Asigură-te că este definit aici
     // Detalii companie
     const companyDetails = `FURNIZOR:\nGLOBAL QUALITY SOLUTIONS SRL\nBdul. Marasti 25 E, Bucuresti, Sector 1\nCUI: 17426176\nNr reg comertului: J40/6018/2005`;
   
@@ -100,7 +106,8 @@ const OfferDetail = () => {
     deliveryLines.forEach((line, index) => {
       doc.text(line, rightStartX, startY + (clientLines.length + billingLines.length) * 5 + index * 5);
     });
-  
+    
+
     // Titlu oferta
     doc.setFontSize(14);
     const pageWidth = doc.internal.pageSize.width;
@@ -155,12 +162,168 @@ const OfferDetail = () => {
   if (loading) return <div className="alert alert-info">Se încarcă oferta...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
 
+   // Gestionarea modalului
+   const handleViewSelections = () => {
+    setShowSelectModal(true);
+    setIsReadOnly(true);
+  };
+
+  const handleSelectProducts = () => {
+    setShowSelectModal(true);
+    setIsReadOnly(false); // Setăm modalul în modul de editare
+  };
+
+  const handleCloseModal = async (updatedOffer, showButtons = false) => {
+    setShowSelectModal(false);
+  
+    // Actualizează oferta dacă există o ofertă nouă sau reîmprospătează datele
+    if (updatedOffer) {
+      setOffer(updatedOffer);
+    } else {
+      await fetchOffer(); // Reîmprospătează datele dacă nu este transmisă o ofertă actualizată
+    }
+  
+    setShowAcceptRejectButtons(showButtons); // Controlează afișarea butoanelor Accept/Reject
+  };
+  
+
+  const saveSelections = async ({
+    selectedParts,
+    billingAddress,
+    deliveryAddress,
+    pickupAtCentral,
+  }) => {
+    try {
+      const response = await fetchWithAuth(
+        `http://localhost:5000/api/offer/${offerId}/selected-parts`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            selectedParts,
+            billingAddress,
+            deliveryAddress,
+            pickupAtCentral,
+          }),
+        }
+      );
+  
+      if (!response.success) throw new Error("Eroare la salvarea selecțiilor.");
+  
+      // Fetch the updated offer data
+      await fetchOffer();
+  
+      // Arată butoanele de Accept/Reject
+      setShowAcceptRejectButtons(true);
+      setShowSelectModal(false);
+    } catch (err) {
+      setError(err.message || "Eroare de rețea.");
+    }
+  };
+  
+
+  const handleAcceptOffer = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `http://localhost:5000/api/offer/${offerId}/accept`,
+        { method: "PATCH" }
+      );
+  
+      if (!response.success) throw new Error("Eroare la acceptarea ofertei.");
+  
+      // Reîmprospătează oferta pentru a reflecta statusul actualizat
+      await fetchOffer();
+      setShowAcceptRejectButtons(false); // Ascunde butoanele după acceptare
+    } catch (err) {
+      setError(err.message || "Eroare de rețea.");
+    }
+  };
+  
+
+  const handleRejectOffer = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `http://localhost:5000/api/offer/${offerId}/reject`,
+        { method: "PATCH" }
+      );
+  
+      if (!response.success) throw new Error("Eroare la respingerea ofertei.");
+  
+      // Reîmprospătează oferta pentru a reflecta statusul actualizat
+      await fetchOffer();
+      setShowAcceptRejectButtons(false); // Ascunde butoanele după respingere
+    } catch (err) {
+      setError(err.message || "Eroare de rețea.");
+    }
+  };
+  
+  
+  const calculateTotal = () => {
+    if (offer?.selectedParts?.length > 0) {
+      return offer.selectedParts.reduce((sum, part) => sum + part.total, 0);
+    }
+    return null;
+  };
+
+  const renderProductTable = () => (
+    <div className="table-responsive">
+      <table className="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Cod Piesă</th>
+            <th>Tip</th>
+            <th>Producător</th>
+            <th>Preț/unitate</th>
+            <th>Cantitate</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {offer.parts.map((part, index) => {
+            const selectedPart = offer.selectedParts.find((sp) => sp.partCode === part.partCode);
+            const isSelected = !!selectedPart;
+
+            return (
+              <tr
+                key={part.partCode}
+                style={{
+                  backgroundColor: isSelected ? "#d4edda" : "transparent",
+                  fontWeight: isSelected ? "bold" : "normal",
+                }}
+              >
+                <td>{index + 1}</td>
+                <td>{part.partCode}</td>
+                <td>{part.partType}</td>
+                <td>{part.manufacturer}</td>
+                <td>{part.pricePerUnit} RON</td>
+                <td>{part.quantity}</td>
+                <td>{isSelected ? `${selectedPart.total} RON` : `${part.pricePerUnit * part.quantity} RON`}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  if (loading) return <div className="alert alert-info">Se încarcă oferta...</div>;
+  if (error) return <div className="alert alert-danger">{error}</div>;
+
+  const total = calculateTotal();
+
+
   return (
     <div className="container my-4">
-      <h2 className="text-center">Detalii ofertă #{offer.offerNumber}</h2>
-      <h4>Total ofertă: {offer.total} RON</h4>
+      <h2 className="text-center">Detalii ofertă #{offer?.offerNumber}</h2>  {/* Folosim `offer?.offerNumber` pentru a preveni eroarea */}
+      {/* Status și Total */}
       <h5>Status: {offer.status}</h5>
+      {total !== null ? (
+        <h4>Total ofertă: {total.toFixed(2)} RON</h4>
+      ) : (
+        <h4 className="text-danger">Total ofertă: Selectează produsele</h4>
+      )}
 
+	  {/* Detalii Client */}
       <div className="mb-4">
         <h5>Detalii Client:</h5>
         <p>
@@ -189,66 +352,55 @@ const OfferDetail = () => {
       {/* Tabel cu piese */}
       <div className="mb-4">
         <h5>Piese incluse în ofertă:</h5>
-        <div className="table-responsive">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Cod Piesă</th>
-                <th>Tip</th>
-                <th>Producător</th>
-                <th>Preț/unitate</th>
-                <th>Cantitate</th>
-                <th>Total</th>
-                <th>Opțiuni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {offer.parts.map((part, index) => {
-                const selectedPart = offer.selectedParts.find(
-                  (sp) => sp.partCode === part.partCode
-                );
-                const isSelected = !!selectedPart;
+        {renderProductTable()}
+        {(!offer.selectedParts || offer.selectedParts.length === 0) && (
+          <button
+            className="btn btn-primary mt-3"
+            onClick={handleSelectProducts}
+          >
+            Selectează produse
+          </button>
+        )}
 
-                return (
-                  <tr
-                    key={part.partCode}
-                    style={{
-                      backgroundColor: isSelected ? "#d4edda" : "transparent",
-                      fontWeight: isSelected ? "bold" : "normal",
-                    }}
-                  >
-                    <td>{index + 1}</td>
-                    <td>{part.partCode}</td>
-                    <td>{part.partType}</td>
-                    <td>{part.manufacturer}</td>
-                    <td>{part.pricePerUnit} RON</td>
-                    <td>{part.quantity}</td>
-                    <td>{part.total} RON</td>
-                    <td>
-                      {part.options.map((option) => (
-                        <div key={option._id}>
-                          {option.manufacturer} - {option.price} RON
-                        </div>
-                      ))}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+          {offer.status === "comanda_spre_finalizare" && (
+          <>
+            <button
+              className="btn btn-success"
+              onClick={handleAcceptOffer}
+            >
+              Acceptă oferta
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={handleRejectOffer}
+            >
+              Respinge oferta
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Acțiuni suplimentare */}
+
+      {/* Export PDF */}
       <button
         className="btn btn-outline-primary"
         onClick={exportSelectedToPDF}
+        disabled={!offer.selectedParts?.length}
       >
         Exportă selecțiile ca PDF
       </button>
+
+      {/* Modal pentru selectarea pieselor */}
+      <SelectProductsModal
+        show={showSelectModal}
+        onHide={() => handleCloseModal(null, false)}
+        offer={offer}
+        readonlyMode={isReadOnly}
+        onSaveSelection={saveSelections}
+      />
     </div>
   );
 };
 
 export default OfferDetail;
+

@@ -27,10 +27,6 @@ const Home = () => {
               style={{ maxHeight: "600px", objectFit: "cover", cursor: "pointer" }}
             />
           </Link>
-          <Carousel.Caption>
-            <h3>Produse de Calitate</h3>
-            <p>Comandă piesele tale preferate, livrate direct din SUA.</p>
-          </Carousel.Caption>
         </Carousel.Item>
         
         <Carousel.Item>

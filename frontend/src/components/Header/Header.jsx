@@ -48,7 +48,7 @@ const Header = () => {
 
   const handleContactClick = () => {
     if (isMobile) {
-      window.location.href = "tel:+0740121689"; // Dacă este mobil, sună la număr
+      window.location.href = "tel:+40740121689"; // Dacă este mobil, sună la număr
     } else {
       navigate("/contact"); // Dacă nu este mobil, navighează către pagina de contact
     }
