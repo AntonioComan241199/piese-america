@@ -1,7 +1,6 @@
-// eslint-disable-next-line no-unused-vars
 import React from "react";
 import { Container, Row, Col } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../../styles/footer.css";
 
 const quickLinks = [
@@ -10,18 +9,24 @@ const quickLinks = [
     display: "Home",
   },
   {
-    path: "/about",
-    display: "About",
-  },
-  {
     path: "/contact",
     display: "Contact",
+  },
+  {
+    path: "/request-order",
+    display: "Cere ofertă",
   },
 ];
 
 const Footer = () => {
   const date = new Date();
   const year = date.getFullYear();
+  const navigate = useNavigate();
+
+  const handleLinkClick = (path) => {
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <footer className="bg-dark text-light py-5">
@@ -30,20 +35,30 @@ const Footer = () => {
           {/* Logo și descriere */}
           <Col lg="4" md="6" className="mb-4">
             <div className="text-center text-md-start">
-              <h1 className="text-uppercase text-white">
-                <Link
-                  to="/home"
-                  className="text-decoration-none text-white d-flex align-items-center gap-3"
-                >
-                  <i className="ri-car-line"></i>
-                  Piese Auto <br /> America
-                </Link>
-              </h1>
+            <h1 className="text-uppercase text-white">
+              <Link
+                to="/home"
+                className="text-decoration-none text-white d-flex align-items-center gap-3"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              >
+                <i className="ri-car-line"></i>
+                Piese Auto <br /> America
+              </Link>
+            </h1>
               <p className="mt-3">
                 Piese auto America este un magazin online de piese auto importate
                 din America. Oferim produse de cea mai bună calitate, livrate în
                 cel mai scurt timp posibil.
               </p>
+              <p className="text-white-50">
+                <a
+                  href="https://automed.ro/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-light text-decoration-none"
+                >Fostul AutoMed.ro
+                </a>
+                </p>
             </div>
           </Col>
 
@@ -53,12 +68,12 @@ const Footer = () => {
             <ul className="list-unstyled">
               {quickLinks.map((item, index) => (
                 <li key={index} className="mb-2">
-                  <Link
-                    to={item.path}
-                    className="text-light text-decoration-none"
+                  <button
+                    className="btn btn-link text-light text-decoration-none p-0"
+                    onClick={() => handleLinkClick(item.path)}
                   >
                     {item.display}
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -92,20 +107,21 @@ const Footer = () => {
             </ul>
           </Col>
 
-          {/* Newsletter */}
+          {/* Facebook */}
           <Col lg="3" md="6" className="mb-4">
-            <h5 className="text-uppercase mb-3">Newsletter</h5>
-            <p>Abonați-vă la noutățile și actualizările noastre.</p>
-            <div className="d-flex">
-              <input
-                type="email"
-                placeholder="Email"
-                className="form-control me-2"
-              />
-              <button className="btn btn-primary">
-                <i className="ri-send-plane-line"></i>
-              </button>
-            </div>
+            <h5 className="text-uppercase mb-3">Găsiți-ne pe Facebook</h5>
+            <a
+              href="https://www.facebook.com/automedici/?locale=ro_RO"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-light text-decoration-none d-flex align-items-center gap-3"
+            >
+              <i className="ri-facebook-circle-line display-5 text-primary"></i>
+              <div>
+                <p className="mb-1">AutoMed.ro - Pagina oficială</p>
+                <p className="mb-0">Vizitați pagina noastră</p>
+              </div>
+            </a>
           </Col>
         </Row>
 
