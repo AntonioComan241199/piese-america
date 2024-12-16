@@ -186,17 +186,6 @@ const Header = () => {
                 </Nav.Link>
               )}
             </Nav>
-            <Form className="d-flex">
-              <FormControl
-                type="search"
-                placeholder="Search"
-                className="me-2"
-                size="sm"
-              />
-              <Button variant="outline-secondary" size="sm">
-                <i className="ri-search-line"></i>
-              </Button>
-            </Form>
           </Navbar.Collapse>
         </Container>
       </Navbar>

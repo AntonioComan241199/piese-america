@@ -302,7 +302,7 @@ export const updateDeliveryStatus = async (req, res, next) => {
     } else if (deliveryStatus === "anulata") {
       order.status = "anulata";  // Dacă oferta este anulată, setăm cererea la "anulata"
     } else if (deliveryStatus === "livrare_in_procesare") {
-      order.status = "comanda_spre_finalizare";  // Dacă livrarea este în proces, cererea devine "comanda_spre_finalizare"
+      order.status = "livrare_in_procesare";  // Dacă livrarea este în proces, cererea devine "comanda_spre_finalizare"
     }
 
     await order.save();  // Salvează cererea cu noul status

@@ -93,14 +93,14 @@ const handleDateChange = (e) => {
 // Obținerea cererilor de ofertă cu filtrare corectă pe intervalul de date
 export const getAllOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, offerNumber, selectedDate, phoneNumber } = req.query;
+    const { page = 1, limit = 10, status, orderNumber, selectedDate, phoneNumber } = req.query;
     const filters = {};
 
     // Filtrare după status
     if (status) filters.status = status;
 
     // Filtrare după număr ofertă
-    if (offerNumber) filters.offerNumber = offerNumber;
+    if (orderNumber) filters.orderNumber = orderNumber;
 
     // Filtrare după numărul de telefon
     if (phoneNumber) {

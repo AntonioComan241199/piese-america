@@ -9,7 +9,7 @@ const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");  // Filtru status cerere
-  const [offerNumber, setOfferNumber] = useState("");   // Filtru număr ofertă
+  const [orderNumber, setOrderNumber] = useState("");   // Filtru număr ofertă
   const [selectedDate, setSelectedDate] = useState(""); // Filtru pentru data selectată
   const [phoneNumber, setPhoneNumber] = useState(""); // Filtru număr de telefon
 
@@ -38,7 +38,7 @@ const AdminOrders = () => {
       const url = new URL("http://localhost:5000/api/orders/admin");
       url.searchParams.append("page", currentPage);
       url.searchParams.append("status", statusFilter);
-      url.searchParams.append("offerNumber", offerNumber);
+      url.searchParams.append("orderNumber", orderNumber);
       url.searchParams.append("selectedDate", selectedDate); // Adăugăm filtrul pentru data selectată
       url.searchParams.append("phoneNumber", phoneNumber); // Adăugăm filtrul pentru numărul de telefon
 
@@ -67,7 +67,7 @@ const AdminOrders = () => {
       setError("Trebuie să fiți autentificat pentru a accesa cererile.");
       setLoading(false);
     }
-  }, [isAuthenticated, currentPage, statusFilter, offerNumber, selectedDate, phoneNumber]); // Când se schimbă data selectată
+  }, [isAuthenticated, currentPage, statusFilter, orderNumber, selectedDate, phoneNumber]); // Când se schimbă data selectată
 
   const handleStatusChange = (event) => {
     setStatusFilter(event.target.value);
@@ -90,7 +90,7 @@ const AdminOrders = () => {
 
   const handleResetFilters = () => {
     setStatusFilter("");
-    setOfferNumber("");
+    setOrderNumber("");
     setSelectedDate(""); // Resetăm și data
     setPhoneNumber(""); // Resetăm și telefonul
     setCurrentPage(1); // Resetăm filtrele și pagina
@@ -163,8 +163,8 @@ const AdminOrders = () => {
             type="number"
             className="form-control w-auto me-2"
             placeholder="Număr ofertă"
-            value={offerNumber}
-            onChange={(e) => setOfferNumber(e.target.value)}
+            value={orderNumber}
+            onChange={(e) => setOrderNumber(e.target.value)}
           />
           <input
             type="date"
