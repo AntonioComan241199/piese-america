@@ -11,6 +11,8 @@ import Signin from "./pages/Signin";
 import Register from "./pages/Register";
 import ResetPasswordRequest from "./pages/ResetPasswordRequest";
 import ResetPassword from './pages/ResetPassword'; // Asigură-te că importi corect componenta
+import TermsAndConditions from "./pages/TermsAndConditions";
+
 
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
@@ -71,6 +73,13 @@ const AppWrapper = () => {
             <PublicRoute>
               <ResetPassword />
             </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/terms"
+          element={
+              <TermsAndConditions  />
           }
         />
 

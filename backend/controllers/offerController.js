@@ -832,7 +832,7 @@ export const sendOfferEmail = async (req, res, next) => {
     const mailOptions = {
       from: "antonio.coman99@gmail.com", // Asigură-te că folosești o adresă validă
       to: orderEmail, // Adresa destinatarului
-      subject: `Oferta #${offerNumber} pentru comanda ta`,
+      subject: `Piese Auto America - Oferta #${offerNumber} pentru comanda ta`,
       text: `Aceasta este oferta #${offerNumber} trimisă pentru comanda ta. Detalii sunt disponibile la acest link: ${offerLink}.`,
       html: `<h1>Oferta #${offerNumber}</h1><p>Ai primit această ofertă pentru comanda ta. Detalii sunt disponibile la acest link:</p><a href="${offerLink}">${offerLink}</a>`,
     };

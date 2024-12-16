@@ -6,16 +6,18 @@ const sendContactEmail = async (req, res) => {
     try {
       // Configurarea transportorului pentru SendGrid
       const transporter = nodemailer.createTransport({
-        service: "SendGrid", // SendGrid SMTP service
+        host: "mail.antoniocoman.ro", // Serverul SMTP
+        port: 465, // Portul SMTP
+        secure: true, // true pentru SSL (465), false pentru TLS (587)
         auth: {
-          user: "apikey", // Folosește "apikey" ca user
-          pass: process.env.SENDGRID_API_KEY, // Folosește cheia API SendGrid ca parolă
+          user: "no-reply@antoniocoman.ro", // Adresa ta de email
+          pass: "Alexandra99.", // Parola SMTP
         },
       });
   
       // Setează detaliile email-ului
       const mailOptions = {
-        from: "antonio.coman99@gmail.com", // Schimbă cu o adresă verificată din SendGrid
+        from: "no-reply@antoniocoman.ro", // Schimbă cu o adresă verificată din SendGrid
         to: "antonio.coman99@gmail.com", // Adresa destinatarului
         subject: `Mesaj de la ${name} - Formular de contact`,
         text: `Mesajul de la ${name} (${email}):\n\n${message}`,

@@ -3,6 +3,7 @@ import Logo from "../assets/all-images/Logo.webp";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../slices/authSlice";
+import { Link } from "react-router-dom";
 
 const Signin = () => {
   const [formData, setFormData] = useState({
@@ -139,6 +140,12 @@ const Signin = () => {
             <a href="/reset-password" className="text-decoration-none text-primary">
               Ai uitat parola?
             </a>
+          </p>
+          <p className="mt-3 text-center">
+            Prin conectare, confirm că sunt de acord cu{" "}
+            <Link to="/terms" className="text-primary">
+              Termenii și Condițiile
+            </Link>.
           </p>
         </div>
       </div>

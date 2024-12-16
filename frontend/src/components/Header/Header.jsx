@@ -135,10 +135,34 @@ const Header = () => {
               >
                 <i className="ri-phone-line me-1"></i> Te pot ajuta?
               </Button>
+
+              {/* Buton WhatsApp */}
+              <Button
+                as="a"
+                href="https://wa.me/40740121689" // Numărul trebuie să fie în format internațional
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success"
+              >
+                <i className="ri-whatsapp-line me-1"></i> WhatsApp
+              </Button>
             </Col>
           </Row>
         </Container>
       </div>
+
+      {/* Mesaj sugestiv */}
+      <div className="bg-warning">
+        <Container>
+          <p className="text-center m-0 text-dark fs-6">
+            <i className="ri-information-line me-1"></i>
+            Acest site este destinat solicitării ofertelor pentru piese auto. Nu avem un catalog de produse, dar suntem aici să te ajutăm!
+          </p>
+        </Container>
+      </div>
+
+
+
 
       {/* Main Navbar */}
       <Navbar bg="white" expand="lg" className="shadow-sm">

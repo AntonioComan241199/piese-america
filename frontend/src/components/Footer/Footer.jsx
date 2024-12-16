@@ -16,6 +16,10 @@ const quickLinks = [
     path: "/request-order",
     display: "Cere ofertă",
   },
+  {
+    path: "/terms",
+    display: "Termeni și Condiții",
+  },
 ];
 
 const Footer = () => {

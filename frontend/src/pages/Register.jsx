@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { login } from "../slices/authSlice";
 import Logo from "../assets/all-images/Logo.webp";
@@ -284,7 +285,22 @@ export default function Register() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+            <Form.Group controlId="termsAndConditions">
+            <Form.Check
+              type="checkbox"
+              label={
+                <>
+                  Sunt de acord cu{" "}
+                  <Link to="/terms" className="text-primary">
+                    Termenii și Condițiile
+                  </Link>
+                </>
+              }
+              required
+            />
+          </Form.Group>
+
+            <button type="submit" className="btn btn-primary w-100 mt-2" disabled={loading}>
               {loading ? "Se înregistrează..." : "Înregistrează-te"}
             </button>
           </form>
@@ -294,6 +310,7 @@ export default function Register() {
               Conectează-te aici
             </Link>
           </p>
+          
         </div>
       </div>
     </div>
