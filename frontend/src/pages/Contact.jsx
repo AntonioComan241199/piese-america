@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Form, FormGroup, Label, Input, Button } from "reactstrap";
 import { Link } from "react-router-dom";
+import Helmet from "../components/Helmet/Helmet";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -53,6 +54,7 @@ const Contact = () => {
   
 
   return (
+    <Helmet title="Contact">
     <div>
       <Container className="py-5">
         <h2 className="text-center mb-4">Contactează-ne</h2>
@@ -125,6 +127,7 @@ const Contact = () => {
         </Row>
       </Container>
     </div>
+    </Helmet>
   );
 };
 

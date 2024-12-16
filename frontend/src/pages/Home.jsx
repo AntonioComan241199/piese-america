@@ -3,7 +3,6 @@ import React from "react";
 import Helmet from "../components/Helmet/Helmet";
 import { Carousel, Button, Row, Col, Container } from "react-bootstrap";
 import slider1 from "../assets/all-images/slider-img/BannerCarParts1.png";
-import slider2 from "../assets/all-images/slider-img/slider-2.jpg";
 import slider21 from "../assets/all-images/slider-img/slider-2(1).jpg";
 import slider3 from "../assets/all-images/slider-img/slider-3(1).jpg";
 import engineImg from "../assets/all-images/home-images/engine.jpg";

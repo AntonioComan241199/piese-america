@@ -19,4 +19,15 @@ export default defineConfig({
     },
   },
   base: "/", // Calea de bază pentru proiect
+  build: {
+    assetsInlineLimit: 4096, // Limita pentru includerea fișierelor inline (4KB)
+    manifest: true, // Manifest.json pentru identificarea hash-urilor fișierelor
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"], // Împarte pachetele externe în chunk-uri separate
+        },
+      },
+    },
+  },
 });

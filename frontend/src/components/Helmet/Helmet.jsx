@@ -1,8 +1,17 @@
-import React from 'react'
+import React, { useEffect } from "react";
+import PropTypes from "prop-types";
 
-const Helmet = (props) => {
-    document.title = 'Piese Auto Americaa -' + props.title;
-  return <div className='w-100'>{props.children}</div>
-}
+const Helmet = ({ title, children }) => {
+  useEffect(() => {
+    document.title = `Piese Auto America - ${title}`;
+  }, [title]); // Se va actualiza titlul doar când `title` se schimbă
 
-export default Helmet
+  return <div className="w-100">{children}</div>;
+};
+
+Helmet.propTypes = {
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node,
+};
+
+export default Helmet;
