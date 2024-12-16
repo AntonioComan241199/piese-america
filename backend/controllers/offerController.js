@@ -444,6 +444,7 @@ export const getAllOffers = async (req, res, next) => {
       endDate, 
       phoneNumber, 
       selectedDate, // Adăugăm selectedDate pentru filtrare pe o singură dată
+      partCode,
       sortBy = "createdAt", 
       order = "desc" 
     } = req.query;
@@ -502,6 +503,10 @@ export const getAllOffers = async (req, res, next) => {
     // Filtrare după numărul de telefon (dacă e necesar)
     if (phoneNumber) {
       filters["orderId.phoneNumber"] = phoneNumber;
+    }
+
+    if (partCode) {
+      filters["selectedParts.partCode"] = partCode; // Căutare în subdocumente
     }
 
     // Interogare pentru a găsi ofertele care corespund filtrului

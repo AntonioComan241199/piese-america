@@ -11,6 +11,7 @@ const AdminOffers = () => {
   const [statusFilter, setStatusFilter] = useState("");  // Filtru status ofertă
   const [offerNumber, setOfferNumber] = useState("");   // Filtru număr ofertă
   const [selectedDate, setSelectedDate] = useState("");   // Filtru dată selectată
+  const [partCode, setPartCode] = useState(""); // Filtru pentru codul de produs
   const [currentPage, setCurrentPage] = useState(1);    // Paginare
   const [totalPages, setTotalPages] = useState(1);
 
@@ -36,6 +37,9 @@ const AdminOffers = () => {
       url.searchParams.append("offerNumber", offerNumber);
       if (selectedDate) {
         url.searchParams.append("selectedDate", selectedDate); // Folosim selectedDate
+      }
+      if (partCode) {
+        url.searchParams.append("partCode", partCode); // Adaugă codul de produs la cerere
       }
 
       const response = await fetch(url.toString(), { method: "GET", headers });
@@ -195,6 +199,13 @@ const AdminOffers = () => {
             placeholder="Selectează dată"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
+          />
+          <input
+            type="text"
+            className="form-control w-auto me-2"
+            placeholder="Cod produs"
+            value={partCode}
+            onChange={(e) => setPartCode(e.target.value)}
           />
           <button className="btn btn-outline-secondary" onClick={handleFilter}>
             Filtrează
