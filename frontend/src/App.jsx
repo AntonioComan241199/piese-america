@@ -12,6 +12,8 @@ import Register from "./pages/Register";
 import ResetPasswordRequest from "./pages/ResetPasswordRequest";
 import ResetPassword from './pages/ResetPassword'; // Asigură-te că importi corect componenta
 import TermsAndConditions from "./pages/TermsAndConditions";
+import OilProducts from "./pages/OilProducts";
+
 
 
 import Header from "./components/Header/Header";
@@ -80,6 +82,13 @@ const AppWrapper = () => {
           path="/terms"
           element={
               <TermsAndConditions  />
+          }
+        />
+
+        <Route
+          path="/oil-products"
+          element={
+              <OilProducts   />
           }
         />
 
