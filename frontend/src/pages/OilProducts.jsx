@@ -145,7 +145,7 @@ const OilProducts = () => {
         
 
         {/* Produse */}
-        <h1 className="text-center mb-4">Produse si Lubrifianti Auto</h1>
+        <h1 className="text-center mb-4">Uleiuri si Lubrifianti Auto</h1>
 
         {/* Căutare și butoane */}
         <Form.Group className="mb-4 d-flex">
