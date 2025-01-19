@@ -18,7 +18,8 @@ import "../../styles/Header.css";
 const navLinks = [
   { path: "/home", display: "Home" },
   { path: "/contact", display: "Contact" },
-  { path: "/request-order", display: "Cere ofertă" },
+  { path: "/request-order", display: "Cere oferta" },
+  { path: "/oil-products", display: "Uleiuri si Lubrifianti" },
 ];
 
 const Header = () => {

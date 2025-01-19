@@ -210,18 +210,47 @@ const RequestOrder = () => {
       )}
       <form onSubmit={handleSubmit} className="shadow p-4 rounded bg-light">
         {/* User Type */}
+        {/* User Type */}
         <div className="mb-3">
-          <label htmlFor="userType" className="form-label">Tip utilizator</label>
-          <select
-            id="userType"
-            className="form-select"
-            value={formData.userType}
-            onChange={handleUserTypeChange}
-          >
-            <option value="persoana_fizica">Persoană Fizică</option>
-            <option value="persoana_juridica">Persoană Juridică</option>
-          </select>
+          <label className="form-label">Tip utilizator</label>
+          <div>
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="radio"
+                id="userTypePersoanaFizica"
+                name="userType"
+                value="persoana_fizica"
+                checked={formData.userType === "persoana_fizica"}
+                onChange={handleUserTypeChange}
+              />
+              <label
+                className="form-check-label"
+                htmlFor="userTypePersoanaFizica"
+              >
+                Persoană Fizică
+              </label>
+            </div>
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="radio"
+                id="userTypePersoanaJuridica"
+                name="userType"
+                value="persoana_juridica"
+                checked={formData.userType === "persoana_juridica"}
+                onChange={handleUserTypeChange}
+              />
+              <label
+                className="form-check-label"
+                htmlFor="userTypePersoanaJuridica"
+              >
+                Persoană Juridică
+              </label>
+            </div>
+          </div>
         </div>
+
 
         {/* Email */}
         <div className="mb-3">

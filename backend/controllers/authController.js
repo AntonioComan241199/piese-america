@@ -205,37 +205,41 @@ export const validateSignin = [
   },
 ];
 
-// Funcție pentru trimiterea email-ului de resetare a parolei folosind SMTP
+// Funcție pentru trimiterea email-ului de resetare a parolei folosind configurația corectă SMTP
 const sendResetPasswordEmail = async (email, token) => {
   try {
-    // Creează un transportor SMTP folosind SendGrid
     const transporter = nodemailer.createTransport({
-      service: "SendGrid", // SendGrid SMTP service
+      host: "mail.pieseautoamerica.ro", // Serverul SMTP
+      port: 587, // Portul SMTP pentru SSL
+      secure: true, // Folosește SSL
       auth: {
-        user: "apikey", // Folosește "apikey" ca user
-        pass: process.env.SENDGRID_API_KEY, // Folosește cheia ta API SendGrid ca parolă
+        user: "no-reply@pieseautoamerica.ro", // Adresa de email utilizată pentru trimitere
+        pass: "Automed14!@", // Parola asociată
       },
     });
 
-    // Setează detaliile email-ului
+    const resetLink = `http://pieseautoamerica.ro/reset-password/${token}`; // Modifică URL-ul cu domeniul tău
+
     const mailOptions = {
-      from: "antonio.coman99@gmail.com", // Înlocuiește cu adresa ta de email validă
+      from: "no-reply@pieseautoamerica.ro", // Adresa expeditorului
       to: email, // Adresa destinatarului
       subject: "Piese Auto America - Resetare Parolă",
+      text: `Ai solicitat resetarea parolei pentru contul tău. Accesează link-ul pentru a-ți reseta parola: ${resetLink}`,
       html: `
-      <h1>Resetare Parolă</h1>
-      <p>Ai primit acest email deoarece ai solicitat resetarea parolei pentru contul tău.</p>
-      <p>Dacă nu ai solicitat resetarea parolei, te rugăm să ignori acest email.</p>
-      <p>Click <a href="http://localhost:5173/reset-password/${token}">aici</a> pentru a-ți reseta parola.</p>`,
+        <h1>Resetare Parolă</h1>
+        <p>Ai primit acest email deoarece ai solicitat resetarea parolei pentru contul tău.</p>
+        <p>Dacă nu ai solicitat resetarea parolei, te rugăm să ignori acest email.</p>
+        <p>Click <a href="${resetLink}">aici</a> pentru a-ți reseta parola.</p>`,
     };
 
-    // Trimite email-ul
     const info = await transporter.sendMail(mailOptions);
-  } catch (err) {
-    console.error("Eroare la trimiterea email-ului:", err);
-    throw new Error("Eroare la trimiterea email-ului.");
+    console.log("Email trimis cu succes:", info.messageId);
+  } catch (error) {
+    console.error("Eroare la trimiterea email-ului de resetare a parolei:", error.message);
+    throw new Error("Eroare la trimiterea email-ului de resetare a parolei.");
   }
 };
+
 
 // Cerere pentru resetarea parolei
 export const requestPasswordReset = async (req, res, next) => {

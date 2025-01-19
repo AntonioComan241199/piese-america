@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button, Modal, Image, Form, Pagination } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Modal, Image, Form } from "react-bootstrap";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import "../styles/OilProducts.css";
 
@@ -65,65 +65,98 @@ const OilProducts = () => {
 
   const renderPagination = () => {
     const pages = [];
-    const maxPagesToShow = 3;
+    const maxPagesToShow = 5; // Numărul maxim de pagini afișate complet
 
-    // Prev button
-    pages.push(
-      <Pagination.Prev
-        key="prev"
-        onClick={() => handlePageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-      />
-    );
-
-    // First Page
-    if (currentPage > 2) {
-      pages.push(
-        <Pagination.Item key={1} onClick={() => handlePageChange(1)}>
-          1
-        </Pagination.Item>
-      );
-
-      if (currentPage > 3) {
-        pages.push(<Pagination.Ellipsis key="start-ellipsis" disabled />);
+    if (totalPages <= maxPagesToShow) {
+      // Afișăm toate paginile dacă sunt mai puține decât maxPagesToShow
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(
+          <button
+            key={i}
+            className={`pagination-button ${i === currentPage ? "active" : ""}`}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </button>
+        );
       }
-    }
-
-    // Current and Neighboring Pages
-    for (let i = Math.max(1, currentPage - 1); i <= Math.min(currentPage + 1, totalPages); i++) {
+    } else {
+      // Prima pagină
       pages.push(
-        <Pagination.Item
-          key={i}
-          active={i === currentPage}
-          onClick={() => handlePageChange(i)}
+        <button
+          key={1}
+          className={`pagination-button ${currentPage === 1 ? "active" : ""}`}
+          onClick={() => handlePageChange(1)}
         >
-          {i}
-        </Pagination.Item>
+          1
+        </button>
       );
-    }
 
-    // Last Page
-    if (currentPage < totalPages - 1) {
-      if (currentPage < totalPages - 2) {
-        pages.push(<Pagination.Ellipsis key="end-ellipsis" disabled />);
+      // Punctele de la început
+      if (currentPage > 3) {
+        pages.push(
+          <span key="start-ellipsis" className="pagination-ellipsis">
+            ...
+          </span>
+        );
       }
+
+      // Paginile curente
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(
+          <button
+            key={i}
+            className={`pagination-button ${i === currentPage ? "active" : ""}`}
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </button>
+        );
+      }
+
+      // Punctele de la sfârșit
+      if (currentPage < totalPages - 2) {
+        pages.push(
+          <span key="end-ellipsis" className="pagination-ellipsis">
+            ...
+          </span>
+        );
+      }
+
+      // Ultima pagină
       pages.push(
-        <Pagination.Item key={totalPages} onClick={() => handlePageChange(totalPages)}>
+        <button
+          key={totalPages}
+          className={`pagination-button ${currentPage === totalPages ? "active" : ""}`}
+          onClick={() => handlePageChange(totalPages)}
+        >
           {totalPages}
-        </Pagination.Item>
+        </button>
       );
     }
 
-    // Next button
-    pages.push(
-      <Pagination.Next
-        key="next"
-        onClick={() => handlePageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-      />
+    return (
+      <div className="pagination-container">
+        <button
+          className="pagination-button"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          &lt;
+        </button>
+        {pages}
+        <button
+          className="pagination-button"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          &gt;
+        </button>
+      </div>
     );
-
-    return pages;
   };
 
   const handleShowDetails = (product) => {
@@ -142,12 +175,8 @@ const OilProducts = () => {
           />
         </Helmet>
 
-        
-
-        {/* Produse */}
         <h1 className="text-center mb-4">Uleiuri si Lubrifianti Auto</h1>
 
-        {/* Căutare și butoane */}
         <Form.Group className="mb-4 d-flex">
           <Form.Control
             type="text"
@@ -208,86 +237,74 @@ const OilProducts = () => {
           </Row>
         )}
 
-        {/* Paginare */}
-        <Pagination className="justify-content-center mt-4">{renderPagination()}</Pagination>
+        {renderPagination()}
       </Container>
+
       {selectedProduct && (
-  <Modal
-    show={showModal}
-    onHide={() => {
-      setShowModal(false);
-      setSelectedProduct(null); // Resetează selectedProduct la închidere
-    }}
-    centered
-    size="lg"
-  >
-    <Helmet>
-      <title>{selectedProduct["SEO Title"] || selectedProduct["Title"]}</title>
-      <meta
-        name="description"
-        content={selectedProduct["SEO Description"] || ""}
-      />
-    </Helmet>
-    <Modal.Header closeButton>
-      <Modal.Title>
-        {selectedProduct["SEO Title"] || selectedProduct["Title"]}
-      </Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      <div
-        className="modal-body-content mb-3"
-        dangerouslySetInnerHTML={{
-          __html: selectedProduct?.["Body (HTML)"] || "",
-        }}
-      />
-      <Row>
-        <Col md={6}>
-          <p>
-            <strong>Tip:</strong>{" "}
-            {selectedProduct?.["Type"] || "Nespecificat"}
-          </p>
-          <p>
-            <strong>Ambalaj:</strong>{" "}
-            {selectedProduct?.["Option1 Value"] || "Nespecificat"}
-          </p>
-          <p>
-            <strong>Preț:</strong>{" "}
-            {selectedProduct?.["Variant Price"]
-              ? `${parseFloat(selectedProduct["Variant Price"]).toFixed(2)} RON`
-              : "Nespecificat"}
-          </p>
-          <p>
-            <strong>Utilizare:</strong>{" "}
-            {selectedProduct?.["Utilizare (product.metafields.custom.utilizare)"] ||
-              "Nespecificat"}
-          </p>
-        </Col>
-        <Col md={6} className="text-center">
-          {selectedProduct?.["Variant Image"] && (
-            <Image
-              src={selectedProduct["Variant Image"]}
-              alt={selectedProduct["Title"]}
-              fluid
-              style={{ maxHeight: "200px" }}
+        <Modal
+          show={showModal}
+          onHide={() => {
+            setShowModal(false);
+            setSelectedProduct(null);
+          }}
+          centered
+          size="lg"
+        >
+          <Helmet>
+            <title>{selectedProduct["SEO Title"] || selectedProduct["Title"]}</title>
+            <meta
+              name="description"
+              content={selectedProduct["SEO Description"] || ""}
             />
-          )}
-        </Col>
-      </Row>
-    </Modal.Body>
-    <Modal.Footer>
-      <Button variant="secondary" onClick={() => setShowModal(false)}>
-        Închide
-      </Button>
-    </Modal.Footer>
-  </Modal>
-)}
-
+          </Helmet>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {selectedProduct["SEO Title"] || selectedProduct["Title"]}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div
+              className="modal-body-content mb-3"
+              dangerouslySetInnerHTML={{
+                __html: selectedProduct?.["Body (HTML)"] || "",
+              }}
+            />
+            <Row>
+              <Col md={6}>
+                <p>
+                  <strong>Tip:</strong> {selectedProduct?.["Type"] || "Nespecificat"}
+                </p>
+                <p>
+                  <strong>Ambalaj:</strong> {selectedProduct?.["Option1 Value"] || "Nespecificat"}
+                </p>
+                <p>
+                  <strong>Preț:</strong> {selectedProduct?.["Variant Price"] ? `${parseFloat(selectedProduct["Variant Price"]).toFixed(2)} RON` : "Nespecificat"}
+                </p>
+                <p>
+                  <strong>Utilizare:</strong> {selectedProduct?.["Utilizare (product.metafields.custom.utilizare)"] || "Nespecificat"}
+                </p>
+              </Col>
+              <Col md={6} className="text-center">
+                {selectedProduct?.["Variant Image"] && (
+                  <Image
+                    src={selectedProduct["Variant Image"]}
+                    alt={selectedProduct["Title"]}
+                    fluid
+                    style={{ maxHeight: "200px" }}
+                  />
+                )}
+              </Col>
+            </Row>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Închide
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
     </HelmetProvider>
-    
-    
   );
-
-  
 };
 
 export default OilProducts;

@@ -51,113 +51,141 @@ const OfferDetail = () => {
       fetchOffer();
     }
   }, [authChecked, isAuthenticated, offerId]);
+
+  const normalizeText = (text) => {
+    if (!text) return "";
+    return text
+        .normalize("NFD") // Normalizează textul în formă decompusă
+        .replace(/[\u0300-\u036f]/g, ""); // Elimină accentele diacritice
+};
   
   
-  const exportSelectedToPDF = () => {
-    if (!offer || !offer.selectedParts?.length) {
+const exportSelectedToPDF = () => {
+  if (!offer || !offer.selectedParts?.length) {
       setError("Oferta nu conține produse selectate pentru export.");
       return;
-    }
+  }
 
-    const doc = new jsPDF(); // Asigură-te că este definit aici
-    // Detalii companie
-    const companyDetails = `FURNIZOR:\nGLOBAL QUALITY SOLUTIONS SRL\nBdul. Marasti 25 E, Bucuresti, Sector 1\nCUI: 17426176\nNr reg comertului: J40/6018/2005`;
-  
-    // Detalii cumpărător
-    const buyerDetails =
+  const doc = new jsPDF(); // Creează un document PDF
+  doc.setFont("helvetica", "normal");
+
+  // Detalii companie
+  const companyDetails = normalizeText(`FURNIZOR:
+GLOBAL QUALITY SOLUTIONS SRL
+Bdul. Mărăști 25 E, București, Sector 1
+CUI: 17426176
+Nr reg comertului: J40/6018/2005`);
+
+  // Detalii cumpărător
+  const buyerDetails = normalizeText(
       offer.orderId?.userType === "persoana_fizica"
-        ? `Nume Client: ${offer.orderId.firstName || "N/A"} ${offer.orderId.lastName || "N/A"}\nTelefon: ${offer.orderId.phoneNumber || "N/A"}\nEmail: ${offer.orderId.email || "N/A"}`
-        : `Firma: ${offer.orderId?.companyDetails?.companyName || "N/A"}\nCUI: ${offer.orderId?.companyDetails?.cui || "N/A"}\nNr. Reg. Com: ${offer.orderId?.companyDetails?.nrRegCom || "N/A"}\nTelefon: ${offer.orderId.phoneNumber || "N/A"}\nEmail: ${offer.orderId.email || "N/A"}`;
-  
-    // Adresa de facturare
-    const billingAddress = `Adresa Facturare:\n${offer.billingAddress?.street || "N/A"} ${offer.billingAddress?.number || ""}\nBloc: ${offer.billingAddress?.block || "-"}, Scara: ${offer.billingAddress?.entrance || "-"}, Ap: ${offer.billingAddress?.apartment || "-"}\n${offer.billingAddress?.city || "N/A"}, ${offer.billingAddress?.county || "N/A"}`;
-  
-    // Adresa de livrare
-    const deliveryAddress = offer.pickupAtCentral
-      ? "Adresa Livrare: Ridicare de la sediul central"
-      : `Adresa Livrare:\n${offer.deliveryAddress?.street || "N/A"} ${offer.deliveryAddress?.number || ""}\nBloc: ${offer.deliveryAddress?.block || "-"}, Scara: ${offer.deliveryAddress?.entrance || "-"}, Ap: ${offer.deliveryAddress?.apartment || "-"}\n${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`;
-  
-    // Generare PDF
-    doc.setFontSize(10);
-    const leftStartX = 10;
-    const rightStartX = 110;
-    const startY = 10;
-  
-    // Companie (stânga)
-    const companyLines = doc.splitTextToSize(companyDetails, 90);
-    companyLines.forEach((line, index) => {
-      doc.text(line, leftStartX, startY + index * 5);
-    });
-  
-    // Detalii cumpărător (dreapta)
-    const clientLines = doc.splitTextToSize(buyerDetails, 90);
-    clientLines.forEach((line, index) => {
-      doc.text(line, rightStartX, startY + index * 5);
-    });
-  
-    // Adresa facturare (dreapta, sub detalii cumpărător)
-    const billingLines = doc.splitTextToSize(billingAddress, 90);
-    billingLines.forEach((line, index) => {
-      doc.text(line, rightStartX, startY + clientLines.length * 5 + index * 5);
-    });
-  
-    // Adresa livrare (dreapta, sub adresa facturare)
-    const deliveryLines = doc.splitTextToSize(deliveryAddress, 90);
-    deliveryLines.forEach((line, index) => {
-      doc.text(line, rightStartX, startY + (clientLines.length + billingLines.length) * 5 + index * 5);
-    });
-    
+          ? `Nume Client: ${offer.orderId.firstName || "N/A"} ${offer.orderId.lastName || "N/A"}
+Telefon: ${offer.orderId.phoneNumber || "N/A"}
+Email: ${offer.orderId.email || "N/A"}`
+          : `Firma: ${offer.orderId?.companyDetails?.companyName || "N/A"}
+CUI: ${offer.orderId?.companyDetails?.cui || "N/A"}
+Nr. Reg. Com: ${offer.orderId?.companyDetails?.nrRegCom || "N/A"}
+Telefon: ${offer.orderId.phoneNumber || "N/A"}
+Email: ${offer.orderId.email || "N/A"}`
+  );
 
-    // Titlu oferta
-    doc.setFontSize(14);
-    const pageWidth = doc.internal.pageSize.width;
-    const titleText = `Oferta #${offer.offerNumber}`;
-    const statusText = `Status: ${offer.status}`;
-    const titleX = (pageWidth - doc.getTextWidth(titleText)) / 2;
-    const statusX = (pageWidth - doc.getTextWidth(statusText)) / 2;
-    const contentStartY =
+  // Adresa de facturare
+  const billingAddress = normalizeText(`Adresa Facturare:
+${offer.billingAddress?.street || "N/A"} ${offer.billingAddress?.number || ""}
+Bloc: ${offer.billingAddress?.block || "-"}, Scara: ${offer.billingAddress?.entrance || "-"}, Ap: ${offer.billingAddress?.apartment || "-"}
+${offer.billingAddress?.city || "N/A"}, ${offer.billingAddress?.county || "N/A"}`);
+
+  // Adresa de livrare
+  const deliveryAddress = normalizeText(
+      offer.pickupAtCentral
+          ? "Adresa Livrare: Ridicare de la sediul central"
+          : `Adresa Livrare:
+${offer.deliveryAddress?.street || "N/A"} ${offer.deliveryAddress?.number || ""}
+Bloc: ${offer.deliveryAddress?.block || "-"}, Scara: ${offer.deliveryAddress?.entrance || "-"}, Ap: ${offer.deliveryAddress?.apartment || "-"}
+${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`
+  );
+
+  // Generare PDF
+  doc.setFontSize(10);
+
+  const leftStartX = 10;
+  const rightStartX = 110;
+  const startY = 10;
+
+  // Companie (stânga)
+  const companyLines = doc.splitTextToSize(companyDetails, 90);
+  companyLines.forEach((line, index) => {
+      doc.text(line, leftStartX, startY + index * 5);
+  });
+
+  // Detalii cumpărător (dreapta)
+  const clientLines = doc.splitTextToSize(buyerDetails, 90);
+  clientLines.forEach((line, index) => {
+      doc.text(line, rightStartX, startY + index * 5);
+  });
+
+  // Adresa facturare
+  const billingLines = doc.splitTextToSize(billingAddress, 90);
+  billingLines.forEach((line, index) => {
+      doc.text(line, rightStartX, startY + clientLines.length * 5 + index * 5);
+  });
+
+  // Adresa livrare
+  const deliveryLines = doc.splitTextToSize(deliveryAddress, 90);
+  deliveryLines.forEach((line, index) => {
+      doc.text(line, rightStartX, startY + (clientLines.length + billingLines.length) * 5 + index * 5);
+  });
+
+  // Titlu ofertă
+  const titleText = normalizeText(`Oferta #${offer.offerNumber}`);
+  const statusText = normalizeText(`Status: ${offer.status}`);
+  const titleX = (doc.internal.pageSize.width - doc.getTextWidth(titleText)) / 2;
+  const statusX = (doc.internal.pageSize.width - doc.getTextWidth(statusText)) / 2;
+  const contentStartY =
       startY +
       Math.max(companyLines.length, clientLines.length + billingLines.length + deliveryLines.length) * 5 +
       10;
-  
-    doc.text(titleText, titleX, contentStartY);
-    doc.text(statusText, statusX, contentStartY + 10);
-  
-    // Tabel piese selectate
-    const tableColumn = ["Cod Piesa", "Tip", "Producator", "Pret/unitate", "Cantitate", "Total"];
-    const tableRows = [];
-  
-    let totalSelectedParts = 0;
-  
-    (offer.selectedParts || []).forEach((part) => {
+
+  doc.text(titleText, titleX, contentStartY);
+  doc.text(statusText, statusX, contentStartY + 10);
+
+  // Tabel piese selectate
+  const tableColumn = ["Cod Piesă", "Tip", "Producător", "Preț/unitate", "Cantitate", "Total"];
+  const tableRows = [];
+
+  let totalSelectedParts = 0;
+
+  (offer.selectedParts || []).forEach((part) => {
       const rowData = [
-        part.partCode || "N/A",
-        part.partType || "N/A",
-        part.manufacturer || "N/A",
-        `${part.pricePerUnit} RON`,
-        part.quantity || 0,
-        `${part.total} RON`,
+          normalizeText(part.partCode || "N/A"),
+          normalizeText(part.partType || "N/A"),
+          normalizeText(part.manufacturer || "N/A"),
+          `${part.pricePerUnit} RON`,
+          part.quantity || 0,
+          `${part.total} RON`,
       ];
       totalSelectedParts += part.total || 0;
       tableRows.push(rowData);
-    });
-  
-    doc.autoTable({
+  });
+
+  doc.autoTable({
       startY: contentStartY + 20,
       head: [tableColumn],
       body: tableRows,
-    });
-  
-    // Total selectii (dreapta)
-    const totalText = `Total selectii: ${totalSelectedParts.toFixed(2)} RON`;
-    const totalTextWidth = doc.getTextWidth(totalText);
-    const totalX = pageWidth - totalTextWidth - 10;
-  
-    doc.text(totalText, totalX, doc.previousAutoTable.finalY + 10);
-  
-    // Salvare PDF
-    doc.save(`Oferta_${offer.offerNumber}.pdf`);
-  };
+  });
+
+  // Total selectii
+  const totalText = normalizeText(`Total selectii: ${totalSelectedParts.toFixed(2)} RON`);
+  const totalTextWidth = doc.getTextWidth(totalText);
+  const totalX = doc.internal.pageSize.width - totalTextWidth - 10;
+
+  doc.text(totalText, totalX, doc.previousAutoTable.finalY + 10);
+
+  // Salvare PDF
+  doc.save(`Oferta_${offer.offerNumber}.pdf`);
+};
+
+
 
   if (loading) return <div className="alert alert-info">Se încarcă oferta...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
