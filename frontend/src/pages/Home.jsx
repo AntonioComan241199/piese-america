@@ -10,56 +10,60 @@ import brakingImg from "../assets/all-images/home-images/Braking.jpg";
 import electricalImg from "../assets/all-images/home-images/electricals.jpg";
 import homeimg from "../assets/all-images/home-images/homeimg.jpg";
 import { Link } from "react-router-dom";
+import "../styles/RequestOrder.css";
+
 
 const Home = () => {
   return (
     <Helmet title="Home">
       {/* Hero Section */}
       <section className="p-0 hero__slider-section">
-      <Carousel>
-        <Carousel.Item>
-          <Link to="/request-order">
-            <img
-              className="d-block w-100"
-              src={slider1}
-              alt="First slide"
-              style={{ maxHeight: "600px", objectFit: "cover", cursor: "pointer" }}
-            />
-          </Link>
-        </Carousel.Item>
-        
-        <Carousel.Item>
-          <Link to="/request-order">
-            <img
-              className="d-block w-100"
-              src={slider21}
-              alt="Second slide"
-              style={{ maxHeight: "600px", objectFit: "cover", cursor: "pointer" }}
-            />
-          </Link>
-          <Carousel.Caption>
-            <h3>Calitate superioară</h3>
-            <p>Produse testate și garantate.</p>
-          </Carousel.Caption>
-        </Carousel.Item>
-        
-        <Carousel.Item>
-          <Link to="/request-order">
-            <img
-              className="d-block w-100"
-              src={slider3}
-              alt="Third slide"
-              style={{ maxHeight: "600px", objectFit: "cover", cursor: "pointer" }}
-            />
-          </Link>
-          <Carousel.Caption>
-            <h3>Livrare rapidă</h3>
-            <p>Piese auto importate din SUA la ușa ta.</p>
-          </Carousel.Caption>
-        </Carousel.Item>
-      </Carousel>
+        <Container>
+          <Carousel>
+            <Carousel.Item>
+              <Link to="/request-order">
+                <img
+                  className="d-block w-100"
+                  src={slider1}
+                  alt="First slide"
+                  style={{ maxHeight: "600px", objectFit: "cover", cursor: "pointer" }}
+                />
+              </Link>
+            </Carousel.Item>
 
+            <Carousel.Item>
+              <Link to="/request-order">
+                <img
+                  className="d-block w-100"
+                  src={slider21}
+                  alt="Second slide"
+                  style={{ maxHeight: "600px", objectFit: "cover", cursor: "pointer" }}
+                />
+              </Link>
+              <Carousel.Caption>
+                <h3>Calitate superioară</h3>
+                <p>Produse testate și garantate.</p>
+              </Carousel.Caption>
+            </Carousel.Item>
+
+            <Carousel.Item>
+              <Link to="/request-order">
+                <img
+                  className="d-block w-100"
+                  src={slider3}
+                  alt="Third slide"
+                  style={{ maxHeight: "600px", objectFit: "cover", cursor: "pointer" }}
+                />
+              </Link>
+              <Carousel.Caption>
+                <h3>Livrare rapidă</h3>
+                <p>Piese auto importate din SUA la ușa ta.</p>
+              </Carousel.Caption>
+            </Carousel.Item>
+          </Carousel>
+        </Container>
       </section>
+
 
       {/* About Us Section */}
       <Container className="my-5">
@@ -127,7 +131,7 @@ const Home = () => {
         <h3>Vrei să găsești piesele potrivite pentru mașina ta?</h3>
         <p>Explorează oferta noastră și cere o ofertă acum!</p>
         <Button href="/request-order" variant="light">
-          Cere Oferte
+          Cere Oferta
         </Button>
       </section>
     </Helmet>

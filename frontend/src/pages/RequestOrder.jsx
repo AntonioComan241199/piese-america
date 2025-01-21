@@ -211,45 +211,22 @@ const RequestOrder = () => {
       <form onSubmit={handleSubmit} className="shadow p-4 rounded bg-light">
         {/* User Type */}
         {/* User Type */}
-        <div className="mb-3">
-          <label className="form-label">Tip utilizator</label>
-          <div>
-            <div className="form-check">
-              <input
-                className="form-check-input"
-                type="radio"
-                id="userTypePersoanaFizica"
-                name="userType"
-                value="persoana_fizica"
-                checked={formData.userType === "persoana_fizica"}
-                onChange={handleUserTypeChange}
-              />
-              <label
-                className="form-check-label"
-                htmlFor="userTypePersoanaFizica"
-              >
-                Persoană Fizică
-              </label>
-            </div>
-            <div className="form-check">
-              <input
-                className="form-check-input"
-                type="radio"
-                id="userTypePersoanaJuridica"
-                name="userType"
-                value="persoana_juridica"
-                checked={formData.userType === "persoana_juridica"}
-                onChange={handleUserTypeChange}
-              />
-              <label
-                className="form-check-label"
-                htmlFor="userTypePersoanaJuridica"
-              >
-                Persoană Juridică
-              </label>
-            </div>
+        <div className="user-type-container">
+          <div
+            className={`user-type-button ${formData.userType === "persoana_fizica" ? "active" : ""}`}
+            onClick={() => setFormData({ ...formData, userType: "persoana_fizica" })}
+          >
+            Persoană Fizică
+          </div>
+          <div
+            className={`user-type-button ${formData.userType === "persoana_juridica" ? "active" : ""}`}
+            onClick={() => setFormData({ ...formData, userType: "persoana_juridica" })}
+          >
+            Persoană Juridică
           </div>
         </div>
+
+
 
 
         {/* Email */}

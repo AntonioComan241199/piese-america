@@ -1,8 +1,8 @@
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider, useDispatch } from "react-redux";
-import { useEffect } from "react";
-import store from "../src/redux/store/store"
-
+import store from "../src/redux/store/store";
+import Layout from "./components/Layout/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 import Home from "./pages/Home";
@@ -10,14 +10,9 @@ import Contact from "./pages/Contact";
 import Signin from "./pages/Signin";
 import Register from "./pages/Register";
 import ResetPasswordRequest from "./pages/ResetPasswordRequest";
-import ResetPassword from './pages/ResetPassword'; // Asigură-te că importi corect componenta
+import ResetPassword from "./pages/ResetPassword";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import OilProducts from "./pages/OilProducts";
-
-
-
-import Header from "./components/Header/Header";
-import Footer from "./components/Footer/Footer";
 import MyOrders from "./pages/MyOrders";
 import MyOffers from "./pages/MyOffers";
 import RequestOrder from "./pages/RequestOrder";
@@ -28,9 +23,7 @@ import MyProfile from "./pages/MyProfile";
 import AdminOrders from "./pages/AdminOrders";
 import AdminOffers from "./pages/AdminOffers";
 
-
 import { checkAuth } from "./slices/authSlice";
-
 import { ProtectedRoute } from "./utils/ProtectedRoute";
 import { PublicRoute } from "./utils/PublicRoute";
 
@@ -43,24 +36,49 @@ const AppWrapper = () => {
 
   return (
     <ErrorBoundary>
-      <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/contact" element={<Contact />} />
-
-        {/* Rute publice */}
-        <Route path="/signin" element={<Signin />} />
-        
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <Home />
+            </Layout>
+          }
+        />
+        <Route
+          path="/home"
+          element={
+            <Layout>
+              <Home />
+            </Layout>
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <Layout>
+              <Contact />
+            </Layout>
+          }
+        />
+        <Route
+          path="/signin"
+          element={
+            <PublicRoute>
+              <Signin />
+            </PublicRoute>
+          }
+        />
         <Route
           path="/register"
           element={
             <PublicRoute>
-              <Register />
+              <Layout>
+                <Register />
+              </Layout>
             </PublicRoute>
           }
         />
-
         <Route
           path="/reset-password"
           element={
@@ -77,27 +95,29 @@ const AppWrapper = () => {
             </PublicRoute>
           }
         />
-
         <Route
           path="/terms"
           element={
-              <TermsAndConditions  />
+            <Layout>
+              <TermsAndConditions />
+            </Layout>
           }
         />
-
         <Route
           path="/oil-products"
           element={
-              <OilProducts   />
+            <Layout>
+              <OilProducts />
+            </Layout>
           }
         />
-
-        {/* Rute protejate */}
         <Route
           path="/my-profile"
           element={
             <ProtectedRoute>
-              <MyProfile />
+              <Layout>
+                <MyProfile />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -105,7 +125,9 @@ const AppWrapper = () => {
           path="/offer/:offerId"
           element={
             <ProtectedRoute>
-              <OfferDetail />
+              <Layout>
+                <OfferDetail />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -113,17 +135,19 @@ const AppWrapper = () => {
           path="/offer-generator/:orderId"
           element={
             <ProtectedRoute>
-              <OfferGenerator />
+              <Layout>
+                <OfferGenerator />
+              </Layout>
             </ProtectedRoute>
           }
         />
-
-        {/* Rute pentru Admin */}
         <Route
           path="/admin-orders"
           element={
             <ProtectedRoute>
-              <AdminOrders />
+              <Layout>
+                <AdminOrders />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -131,7 +155,9 @@ const AppWrapper = () => {
           path="/admin-offers"
           element={
             <ProtectedRoute>
-              <AdminOffers />
+              <Layout>
+                <AdminOffers />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -139,24 +165,39 @@ const AppWrapper = () => {
           path="/orders/:id"
           element={
             <ProtectedRoute>
-              <OrderDetails />
+              <Layout>
+                <OrderDetails />
+              </Layout>
             </ProtectedRoute>
           }
         />
-          {/* Adaugă alte rute admin când este necesar */}
-
-        <Route path="/my-orders" element={<MyOrders />} />
-        <Route path="/my-orders/:id" element={<OrderDetails />} />
-        <Route path="/my-offers" element={<MyOffers />} />
-
-
-        <Route path="/request-order" element={
+        <Route
+          path="/my-orders"
+          element={
+            <Layout>
+              <MyOrders />
+            </Layout>
+          }
+        />
+        <Route
+          path="/my-offers"
+          element={
+            <Layout>
+              <MyOffers />
+            </Layout>
+          }
+        />
+        <Route
+          path="/request-order"
+          element={
             <ProtectedRoute>
-              <RequestOrder />
+              <Layout>
+                <RequestOrder />
+              </Layout>
             </ProtectedRoute>
-          } />
+          }
+        />
       </Routes>
-      <Footer />
     </ErrorBoundary>
   );
 };

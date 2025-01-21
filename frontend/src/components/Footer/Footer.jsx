@@ -1,30 +1,16 @@
 import React from "react";
-import { Container, Row, Col } from "reactstrap";
+import { Container, Row, Col } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import "../../styles/footer.css";
 
 const quickLinks = [
-  {
-    path: "/home",
-    display: "Home",
-  },
-  {
-    path: "/contact",
-    display: "Contact",
-  },
-  {
-    path: "/request-order",
-    display: "Cere ofertă",
-  },
-  {
-    path: "/terms",
-    display: "Termeni și Condiții",
-  },
+  { path: "/home", display: "Home" },
+  { path: "/contact", display: "Contact" },
+  { path: "/request-order", display: "Cere ofertă" },
+  { path: "/terms", display: "Termeni și Condiții" },
 ];
 
 const Footer = () => {
-  const date = new Date();
-  const year = date.getFullYear();
+  const year = new Date().getFullYear();
   const navigate = useNavigate();
 
   const handleLinkClick = (path) => {
@@ -36,38 +22,27 @@ const Footer = () => {
     <footer className="bg-dark text-light py-5">
       <Container>
         <Row>
-          {/* Logo și descriere */}
-          <Col lg="4" md="6" className="mb-4">
-            <div className="text-center text-md-start">
-            <h1 className="text-uppercase text-white">
-              <Link
-                to="/home"
-                className="text-decoration-none text-white d-flex align-items-center gap-3"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          {/* Logo și Descriere */}
+          <Col lg={4} md={6} className="mb-4">
+            <h5 className="text-uppercase text-white">Piese Auto America</h5>
+            <p>
+              Piese auto de cea mai bună calitate, livrate rapid. Contactați-ne
+              pentru mai multe informații.
+            </p>
+            <p>
+              <a
+                href="https://automed.ro/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-light text-decoration-none"
               >
-                <i className="ri-car-line"></i>
-                Piese Auto <br /> America
-              </Link>
-            </h1>
-              <p className="mt-3">
-                Piese auto America este un magazin online de piese auto importate
-                din America. Oferim produse de cea mai bună calitate, livrate în
-                cel mai scurt timp posibil.
-              </p>
-              <p className="text-white-50">
-                <a
-                  href="https://automed.ro/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-light text-decoration-none"
-                >Fostul AutoMed.ro
-                </a>
-                </p>
-            </div>
+                Fostul AutoMed.ro
+              </a>
+            </p>
           </Col>
 
-          {/* Linkuri rapide */}
-          <Col lg="2" md="3" className="mb-4">
+          {/* Linkuri Rapide */}
+          <Col lg={2} md={3} className="mb-4">
             <h5 className="text-uppercase mb-3">Quick Links</h5>
             <ul className="list-unstyled">
               {quickLinks.map((item, index) => (
@@ -83,8 +58,8 @@ const Footer = () => {
             </ul>
           </Col>
 
-          {/* Sediu central */}
-          <Col lg="3" md="6" className="mb-4">
+          {/* Sediu și Locație */}
+          <Col lg={3} md={6} className="mb-4">
             <h5 className="text-uppercase mb-3">Sediu central</h5>
             <ul className="list-unstyled">
               <li className="mb-2">București, Bd. Mărăști 25, Sector 1</li>
@@ -109,10 +84,19 @@ const Footer = () => {
               </li>
               <li>Program: Luni - Vineri 09:00 - 17:00</li>
             </ul>
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2847.3280523795843!2d26.071459476662657!3d44.467447999388284!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40b2038ae9cd8969%3A0x35844ec921fc4cea!2sPIESE%20AUTO%20AMERICA%20(Quality%20Global%20Solutions%20SRL)!5e0!3m2!1sro!2sro!4v1737336717588!5m2!1sro!2sro"
+              width="100%"
+              height="150"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
           </Col>
 
           {/* Facebook */}
-          <Col lg="3" md="6" className="mb-4">
+          <Col lg={3} md={6} className="mb-4">
             <h5 className="text-uppercase mb-3">Găsiți-ne pe Facebook</h5>
             <a
               href="https://www.facebook.com/automedici/?locale=ro_RO"
@@ -129,7 +113,7 @@ const Footer = () => {
           </Col>
         </Row>
 
-        {/* Drepturi de autor */}
+        {/* Drepturi de Autor */}
         <Row className="mt-4">
           <Col>
             <p className="text-center m-0">

@@ -3,3 +3,38 @@
   pointer-events: none;
   border: 1px solid #ced4da;
 }
+
+/* Container pentru secțiunea de tip utilizator */
+.user-type-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 15px; /* Spațiere între butoane */
+}
+
+/* Stil pentru fiecare opțiune */
+.user-type-button {
+  display: inline-block;
+  padding: 15px 30px;
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  background-color: #f8f9fa;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #007bff;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Stil pentru butonul selectat */
+.user-type-button.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+/* Hover pentru butoane */
+.user-type-button:hover {
+  background-color: #0056b3;
+  color: #fff;
+}

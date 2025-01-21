@@ -1,0 +1,24 @@
+.hero__slider-section {
+    margin: 0; /* Elimină marginile */
+    padding: 0; /* Elimină padding-ul */
+  }
+  
+  .hero__slider-section .carousel {
+    width: 100vw; /* Ocupă toată lățimea ferestrei */
+    height: auto;
+    overflow: hidden; /* Ascunde orice depășire */
+  }
+  
+  .hero__slider-section .carousel img {
+    width: 100%; /* Forțează imaginile să ocupe toată lățimea */
+    height: 600px; /* Setează înălțime fixă pentru slider */
+    object-fit: cover; /* Asigură umplerea completă a containerului */
+  }
+  
+  .carousel-caption {
+    background: rgba(0, 0, 0, 0.6); /* Fundal semi-transparent */
+    color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  
