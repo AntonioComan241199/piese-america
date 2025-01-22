@@ -198,7 +198,7 @@ const OilProducts = () => {
         ) : (
           <Row>
             {getCurrentPageProducts().map((product, index) => (
-              <Col key={index} lg={3} md={4} sm={6} xs={12} className="mb-4">
+              <Col key={index} lg={4} md={6} sm={12} className="mb-4">
                 <Card className="h-100 shadow-sm">
                   <Card.Img
                     variant="top"

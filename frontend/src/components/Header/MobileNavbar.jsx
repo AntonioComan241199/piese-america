@@ -7,58 +7,93 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
   return (
     <Navbar expand="lg" bg="dark" variant="dark" className="d-lg-none">
       <Container>
+        {/* Brand-ul site-ului */}
         <Navbar.Brand>
           <Link to="/home" className="text-white text-decoration-none">
             <i className="ri-car-line me-2"></i>Piese Auto America
           </Link>
         </Navbar.Brand>
+
+        {/* Toggle pentru meniul mobil */}
         <Navbar.Toggle aria-controls="mobile-navbar">
           <i className="ri-menu-line"></i> <span className="ms-2">Meniu</span>
         </Navbar.Toggle>
+
+        {/* Navigație în meniul mobil */}
         <Navbar.Collapse id="mobile-navbar">
           <Nav className="ms-auto">
-            {/* Navigație generală */}
+            {/* Link-uri generale de navigare */}
             {navLinks.map((item, index) => (
               <Nav.Link
                 key={index}
                 as={NavLink}
                 to={item.path}
-                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                className={({ isActive }) =>
+                  isActive ? "nav-link active text-primary" : "nav-link text-white"
+                }
               >
                 {item.display}
               </Nav.Link>
             ))}
 
-            {/* Link-uri speciale pentru utilizatori autentificați */}
-            {isAuthenticated && user?.role === "client" && (
-              <>
-                <Nav.Link as={NavLink} to="/my-orders">
-                  Cererile mele
-                </Nav.Link>
-                <Nav.Link as={NavLink} to="/my-offers">
-                  Oferte primite
-                </Nav.Link>
-              </>
-            )}
-
-            {/* Link-uri speciale pentru administratori */}
-            {isAuthenticated && user?.role === "admin" && (
-              <>
-                <Nav.Link as={NavLink} to="/admin-orders">
-                  Cereri Ofertare
-                </Nav.Link>
-                <Nav.Link as={NavLink} to="/admin-offers">
-                  Management Oferte
-                </Nav.Link>
-              </>
-            )}
-
-            {/* Cont și Logout */}
+            {/* Link-uri suplimentare pentru utilizatori autentificați */}
             {isAuthenticated && (
               <>
-                <Nav.Link as={NavLink} to="/my-profile">
+                {user?.role === "client" && (
+                  <>
+                    <Nav.Link
+                      as={NavLink}
+                      to="/my-orders"
+                      className={({ isActive }) =>
+                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                      }
+                    >
+                      Evidenta Oferte
+                    </Nav.Link>
+                    <Nav.Link
+                      as={NavLink}
+                      to="/my-offers"
+                      className={({ isActive }) =>
+                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                      }
+                    >
+                      Evidenta Comenzi
+                    </Nav.Link>
+                  </>
+                )}
+                {user?.role === "admin" && (
+                  <>
+                    <Nav.Link
+                      as={NavLink}
+                      to="/admin-orders"
+                      className={({ isActive }) =>
+                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                      }
+                    >
+                      Evidenta Oferte
+                    </Nav.Link>
+                    <Nav.Link
+                      as={NavLink}
+                      to="/admin-offers"
+                      className={({ isActive }) =>
+                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                      }
+                    >
+                      Evidenta Comenzi
+                    </Nav.Link>
+                  </>
+                )}
+                {/* Link către profilul utilizatorului */}
+                <Nav.Link
+                  as={NavLink}
+                  to="/my-profile"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active text-primary" : "nav-link text-white"
+                  }
+                >
                   Contul meu
                 </Nav.Link>
+                {/* Buton de Logout */}
                 <Button
                   onClick={onLogout}
                   variant="outline-light"
@@ -73,10 +108,22 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
             {/* Link-uri pentru utilizatori neautentificați */}
             {!isAuthenticated && (
               <>
-                <Nav.Link as={NavLink} to="/signin">
+                <Nav.Link
+                  as={NavLink}
+                  to="/signin"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active text-primary" : "nav-link text-white"
+                  }
+                >
                   Login
                 </Nav.Link>
-                <Nav.Link as={NavLink} to="/register">
+                <Nav.Link
+                  as={NavLink}
+                  to="/register"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link active text-primary" : "nav-link text-white"
+                  }
+                >
                   Register
                 </Nav.Link>
               </>

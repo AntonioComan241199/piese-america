@@ -1,78 +1,100 @@
 .footer {
     background-color: #000d6b;
-    padding-top: 50px;
-    padding-bottom: 15px;
-    margin-left: 240px;
-    margin: 500px;
-}
-
-.footer__logo i {
-    color: white;
-    font-weight: 400;
+    padding: 50px 20px 15px;
+    margin: 0;
+    color: #ffffff;
+    position: relative;
+    z-index: 10;
 }
 
 .footer__logo span {
-    color: white;
+    color: #ffffff;
     font-weight: 500;
 }
 
 .footer__logo_content {
-    color: rgba(255, 255, 255, 0.715);
-    margin: 15px;
-    line-height: 30px;
-}
-
-.quick__link {
-    border: none !important;
-    background: transparent !important;
+    color: #ffffff;
+    opacity: 0.9;
+    line-height: 1.8;
 }
 
 .quick__link a {
-    color: rgba(255, 255, 255, 0.715);
+    color: #f9a826;
     text-decoration: none;
-    font-weight: 300;
-    transition: 0.2s;
+    font-weight: 400;
+    transition: color 0.2s ease-in-out;
 }
 
 .quick__link a:hover {
-    color: #f9a826;
+    color: #ffffff;
 }
 
-.footer__link-title {
-    color: white;
+.office__info {
+    color: #ffffff;
+    opacity: 0.9;
 }
 
-.office__info{
-    color: rgba(255, 255, 255, 0.715);
-    font-weight: 300;
-}
-
-.newsletter{
+.newsletter {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
-    border: 1px solid #7c8a972f;
-    border-radius: 50px;
-    background: #020a4de9;
+    padding: 10px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    background: rgba(2, 10, 77, 0.95);
 }
 
 .newsletter input {
     background: transparent;
-    color: white;
+    color: #ffffff;
     border: none;
     outline: none;
+    flex: 1;
 }
 
 .newsletter span i {
-    color: white;
+    color: #ffffff;
+    font-size: 1.2rem;
 }
 
 .footer__bottom {
-    border-top: 1px solid #7c8a972f;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    margin-top: 20px;
+    padding-top: 10px;
+    text-align: center;
 }
 
-.section__drescription{
-    color: rgba(255, 255, 255, 0.715);
-    font-weight: 200;
+.footer__bottom p {
+    color: #ffffff;
+    opacity: 0.7;
+    font-size: 0.9rem;
 }
+
+.footer-text {
+    color: rgba(255, 255, 255, 0.85); /* Contrast mai bun pentru text */
+    line-height: 1.8;
+    font-size: 0.9rem;
+  }
+  
+  .footer-text a {
+    color: #f9a826;
+    text-decoration: none;
+  }
+  
+  .footer-text a:hover {
+    color: #ffffff;
+  }
+  
+  footer h5 {
+    font-size: 1.2rem;
+    color: #ffffff;
+    margin-bottom: 15px;
+  }
+  
+  footer ul {
+    padding-left: 0;
+  }
+  
+  footer ul li {
+    margin-bottom: 10px;
+  }

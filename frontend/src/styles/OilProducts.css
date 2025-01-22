@@ -6,30 +6,36 @@
   margin: 0 auto;  /* Centrează imaginea orizontal */
 }
 
+/* Card-uri de produs */
+.card {
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
 .card-title {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bold;
   color: #333;
+  margin-bottom: 0.5rem;
 }
 
 .card-text small {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
-.card img {
-  max-height: 200px;
-  object-fit: contain;
+/* Spațiere între carduri */
+.row > .col-lg-4 {
+  margin-bottom: 20px;
 }
 
 
 /* Stiluri pentru paginare */
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-  gap: 5px;
-}
 
 .pagination-button {
   padding: 8px 12px;
@@ -60,15 +66,25 @@
 }
 
 
-/* Responsive */
-@media (max-width: 768px) {
-  .pagination-container {
-    flex-wrap: wrap;
-    gap: 10px;
+/* Responsive pentru produse */
+@media (max-width: 1200px) {
+  .row > .col-lg-4 {
+    flex: 0 0 50%;
+    max-width: 50%;
   }
+}
 
-  .pagination-button {
-    padding: 6px 10px;
-    font-size: 0.9rem;
+@media (max-width: 768px) {
+  .row > .col-lg-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
   }
+}
+
+/* Pagination pentru produsele afișate */
+.pagination-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
