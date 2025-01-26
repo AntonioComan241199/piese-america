@@ -65,7 +65,9 @@ const AppWrapper = () => {
           path="/signin"
           element={
             <PublicRoute>
-              <Signin />
+              <Layout>
+                <Signin />
+              </Layout>
             </PublicRoute>
           }
         />

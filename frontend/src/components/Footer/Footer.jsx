@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -12,6 +12,17 @@ const quickLinks = [
 const Footer = () => {
   const year = new Date().getFullYear();
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 991);
+
+  useEffect(() => {
+      const handleResize = () => {
+        setIsMobile(window.innerWidth <= 991);
+      };
+  
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+  
 
   const handleLinkClick = (path) => {
     navigate(path);
@@ -19,7 +30,12 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-dark text-light py-5">
+    <footer className="bg-dark text-light py-5"
+    style={{
+      marginLeft: isMobile ? "0" : "240px", // Se aliniază cu Sidebar
+      transition: "margin-left 0.3s ease", // Tranziție lină
+    }}
+    >
       <Container>
         <Row className="align-items-start">
           {/* Logo și Descriere */}

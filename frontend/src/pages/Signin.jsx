@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Logo from "../assets/all-images/Logo.webp";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -15,6 +15,14 @@ const Signin = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+   // Creează referința pentru câmpul de email
+   const emailInputRef = useRef(null);
+
+   // Setează focus pe câmpul de email la montare
+   useEffect(() => {
+     emailInputRef.current.focus();
+   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,7 +88,7 @@ const Signin = () => {
           <div className="text-center mb-5">
             <img
               src={Logo}
-              alt="Your Company"
+              alt="PIESE AUTO AMERICA"
               className="img-fluid mb-3"
               style={{ maxHeight: "160px" }}
             />
@@ -104,6 +112,7 @@ const Signin = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                ref={emailInputRef}
                 required
               />
             </div>

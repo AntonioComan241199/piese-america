@@ -1,9 +1,26 @@
 import React from "react";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { Nav, Button } from "react-bootstrap";
 import PropTypes from "prop-types";
 
 const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate("/home"); // Redirecționăm către pagina Home
+    onLogout(); // Apelăm funcția de logout
+  };
+
+  const filteredNavLinks = navLinks.filter(
+    (item) => !(item.path === "/request-order" && isAuthenticated && user?.role === "admin")
+  );
+  
+  const handleLinkClick  = () => {
+  window.scrollTo({ top: 0, behavior: "smooth" }); // Mergem în partea de sus a paginii
+};
+
+  
+
   return (
     <div
       className="sidebar bg-dark text-white"
@@ -18,16 +35,20 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
       }}
     >
       <h2 className="p-3">
-        <Link to="/home" className="text-white text-decoration-none">
+        <Link to="/home"
+          onClick={handleLinkClick}
+         className="text-white text-decoration-none"
+         >
           <i className="ri-car-line me-2"></i>Piese Auto America
         </Link>
       </h2>
       <Nav className="flex-column px-3">
         {/* Link-uri generale */}
-        {navLinks.map((item, index) => (
+        {filteredNavLinks.map((item, index) => (
           <NavLink
             key={index}
             to={item.path}
+            onClick={handleLinkClick}
             className={({ isActive }) =>
               isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
             }
@@ -43,7 +64,9 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
               <>
                 <NavLink
                   to="/my-orders"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
+                    
                     isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
                   }
                 >
@@ -51,6 +74,7 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                 </NavLink>
                 <NavLink
                   to="/my-offers"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
                   }
@@ -63,24 +87,27 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
               <>
                 <NavLink
                   to="/admin-orders"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
                   }
                 >
-                  Evidenta Oferte
+                  Evidenta Oferte Admin
                 </NavLink>
                 <NavLink
                   to="/admin-offers"
+                  onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
                   }
                 >
-                  Evidenta Comenzi
+                  Evidenta Comenzi Admin
                 </NavLink>
               </>
             )}
             <NavLink
               to="/my-profile"
+              onClick={handleLinkClick}
               className={({ isActive }) =>
                 isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
               }
@@ -88,7 +115,7 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
               Contul meu
             </NavLink>
             <Button
-              onClick={onLogout}
+              onClick={handleLogout}
               variant="outline-light"
               size="sm"
               className="mt-3"
@@ -103,6 +130,7 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
           <>
             <NavLink
               to="/signin"
+              onClick={handleLinkClick}
               className={({ isActive }) =>
                 isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
               }
@@ -111,6 +139,7 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
             </NavLink>
             <NavLink
               to="/register"
+              onClick={handleLinkClick}
               className={({ isActive }) =>
                 isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
               }

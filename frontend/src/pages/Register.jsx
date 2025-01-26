@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
@@ -25,6 +25,13 @@ export default function Register() {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Creează referința pentru câmpul de email
+  const emailInputRef = useRef(null);
+  useEffect(() => {
+    emailInputRef.current.focus();
+  }, []);
+  
 
   // Funcție pentru gestionarea schimbărilor în input-uri
   const handleChange = (e) => {
@@ -126,7 +133,7 @@ export default function Register() {
       <div className="row justify-content-center">
         <div className="col-md-6">
           <div className="text-center mb-4">
-            <img src={Logo} alt="Logo" className="img-fluid mb-3" style={{ maxHeight: "160px" }} />
+            <img src={Logo} alt="PIESE AUTO AMERICA" className="img-fluid mb-3" style={{ maxHeight: "160px" }} />
             <h2 className="fw-bold">Înregistrare</h2>
           </div>
           <form onSubmit={handleSubmit} className="p-4 border rounded shadow-sm bg-white">
@@ -143,6 +150,7 @@ export default function Register() {
                 className="form-control"
                 value={formData.email}
                 onChange={handleChange}
+                ref={emailInputRef}
                 required
               />
             </div>

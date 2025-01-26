@@ -7,6 +7,11 @@ const TopHeader = ({ isAuthenticated, user, onLogout }) => {
   const sidebarWidth = 240; // Lățimea Sidebar-ului
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    navigate("/home"); // Redirecționăm către pagina Home
+    onLogout(); // Apelăm funcția de logout
+  };
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 991);
@@ -67,7 +72,7 @@ const TopHeader = ({ isAuthenticated, user, onLogout }) => {
                     Salut, {user?.email}!
                   </span>
                   <Button
-                    onClick={onLogout}
+                    onClick={handleLogout}
                     variant="outline-light"
                     size="sm"
                     className={isMobile ? "w-50 mx-auto" : ""}

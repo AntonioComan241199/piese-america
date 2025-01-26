@@ -5,7 +5,14 @@
     color: #ffffff;
     position: relative;
     z-index: 10;
+    margin-left: 240px; /* Lățimea Sidebar-ului */
+
 }
+@media (max-width: 991px) {
+    footer {
+      margin-left: 0; /* Resetare pentru ecrane mici */
+    }
+  }
 
 .footer__logo span {
     color: #ffffff;

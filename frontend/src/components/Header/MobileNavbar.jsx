@@ -1,11 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { Navbar, Nav, Container, Button } from "react-bootstrap";
 import { NavLink, Link } from "react-router-dom";
 import PropTypes from "prop-types";
 
 const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
+  const [isExpanded, setIsExpanded] = useState(false); // Stare pentru navbar
+
+  const handleNavLinkClick = () => {
+    setIsExpanded(false); // Închide meniul după selectarea unei opțiuni
+    window.scrollTo({ top: 0, behavior: "smooth" }); // Mergem în partea de sus a paginii
+  };
+
   return (
-    <Navbar expand="lg" bg="dark" variant="dark" className="d-lg-none">
+    <Navbar
+      expand="lg"
+      bg="dark"
+      variant="dark"
+      className="d-lg-none"
+      expanded={isExpanded} // Controlează starea meniului
+    >
       <Container>
         {/* Brand-ul site-ului */}
         <Navbar.Brand>
@@ -15,7 +28,10 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
         </Navbar.Brand>
 
         {/* Toggle pentru meniul mobil */}
-        <Navbar.Toggle aria-controls="mobile-navbar">
+        <Navbar.Toggle
+          aria-controls="mobile-navbar"
+          onClick={() => setIsExpanded((prev) => !prev)} // Toggle între deschis/închis
+        >
           <i className="ri-menu-line"></i> <span className="ms-2">Meniu</span>
         </Navbar.Toggle>
 
@@ -28,6 +44,7 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                 key={index}
                 as={NavLink}
                 to={item.path}
+                onClick={handleNavLinkClick} // Închide meniul când se dă click
                 className={({ isActive }) =>
                   isActive ? "nav-link active text-primary" : "nav-link text-white"
                 }
@@ -44,8 +61,11 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                     <Nav.Link
                       as={NavLink}
                       to="/my-orders"
+                      onClick={handleNavLinkClick} // Închide meniul când se dă click
                       className={({ isActive }) =>
-                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                        isActive
+                          ? "nav-link active text-primary"
+                          : "nav-link text-white"
                       }
                     >
                       Evidenta Oferte
@@ -53,8 +73,11 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                     <Nav.Link
                       as={NavLink}
                       to="/my-offers"
+                      onClick={handleNavLinkClick} // Închide meniul când se dă click
                       className={({ isActive }) =>
-                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                        isActive
+                          ? "nav-link active text-primary"
+                          : "nav-link text-white"
                       }
                     >
                       Evidenta Comenzi
@@ -66,20 +89,26 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                     <Nav.Link
                       as={NavLink}
                       to="/admin-orders"
+                      onClick={handleNavLinkClick} // Închide meniul când se dă click
                       className={({ isActive }) =>
-                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                        isActive
+                          ? "nav-link active text-primary"
+                          : "nav-link text-white"
                       }
                     >
-                      Evidenta Oferte
+                      Evidenta Oferte Admin
                     </Nav.Link>
                     <Nav.Link
                       as={NavLink}
                       to="/admin-offers"
+                      onClick={handleNavLinkClick} // Închide meniul când se dă click
                       className={({ isActive }) =>
-                        isActive ? "nav-link active text-primary" : "nav-link text-white"
+                        isActive
+                          ? "nav-link active text-primary"
+                          : "nav-link text-white"
                       }
                     >
-                      Evidenta Comenzi
+                      Evidenta Comenzi Admin
                     </Nav.Link>
                   </>
                 )}
@@ -87,15 +116,21 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                 <Nav.Link
                   as={NavLink}
                   to="/my-profile"
+                  onClick={handleNavLinkClick} // Închide meniul când se dă click
                   className={({ isActive }) =>
-                    isActive ? "nav-link active text-primary" : "nav-link text-white"
+                    isActive
+                      ? "nav-link active text-primary"
+                      : "nav-link text-white"
                   }
                 >
                   Contul meu
                 </Nav.Link>
                 {/* Buton de Logout */}
                 <Button
-                  onClick={onLogout}
+                  onClick={() => {
+                    onLogout();
+                    setIsExpanded(false); // Închide meniul după logout
+                  }}
                   variant="outline-light"
                   size="sm"
                   className="mt-2"
@@ -111,8 +146,11 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                 <Nav.Link
                   as={NavLink}
                   to="/signin"
+                  onClick={handleNavLinkClick} // Închide meniul când se dă click
                   className={({ isActive }) =>
-                    isActive ? "nav-link active text-primary" : "nav-link text-white"
+                    isActive
+                      ? "nav-link active text-primary"
+                      : "nav-link text-white"
                   }
                 >
                   Login
@@ -120,8 +158,11 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                 <Nav.Link
                   as={NavLink}
                   to="/register"
+                  onClick={handleNavLinkClick} // Închide meniul când se dă click
                   className={({ isActive }) =>
-                    isActive ? "nav-link active text-primary" : "nav-link text-white"
+                    isActive
+                      ? "nav-link active text-primary"
+                      : "nav-link text-white"
                   }
                 >
                   Register
