@@ -8,6 +8,7 @@ import {
   addCommentToOrder,
   deleteOrder,
   exportOrders,
+  sendOrderEmail 
 } from "../controllers/orderController.js";
 import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
@@ -24,6 +25,9 @@ router.post("/", verifyToken, createOrder); // Creare cerere
 router.get("/client/orders", verifyToken, getUserOrders); // Obține cererile proprii
 router.get("/client/orders/:id", verifyToken, getOrderById); // Detalii cerere
 router.post("/client/orders/:id/comments", verifyToken, addCommentToOrder); // Adăugare comentariu
+
+// Rută pentru trimiterea email-ului cu cererea
+router.post("/send-email", verifyToken, sendOrderEmail);
 
 
 export default router;

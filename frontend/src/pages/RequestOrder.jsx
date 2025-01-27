@@ -164,19 +164,24 @@ const RequestOrder = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setLoading(true);
+    setMessage(""); // Resetăm mesajul anterior
+    setLoading(true); // Pornim indicatorul de încărcare
   
     try {
+      // Setăm header-ul pentru cererea POST
       const headers = {
         "Content-Type": "application/json",
       };
+  
+      // Verificăm token-ul și îl adăugăm la header dacă există
       const token = localStorage.getItem("accessToken");
       if (isAuthenticated && token) {
         headers.Authorization = `Bearer ${token}`;
       }
   
-      console.log("Trimitem datele:", formData); // Log pentru a verifica datele
+      console.log("Trimitem datele:", formData); // Log pentru debug
+  
+      // Trimitem cererea de creare a comenzii
       const response = await fetch("http://localhost:5000/api/orders", {
         method: "POST",
         headers,
@@ -184,22 +189,56 @@ const RequestOrder = () => {
       });
   
       if (!response.ok) {
+        // Dacă cererea nu a avut succes, aruncăm eroare
         const errorData = await response.json();
-        throw new Error(errorData.message || "Request failed");
+        throw new Error(errorData.message || "Cererea a eșuat");
       }
   
-      setMessage("Cererea a fost trimisă cu succes!");
+      const responseData = await response.json(); // Răspunsul serverului
+      const orderId = responseData?.order?._id; // Accesăm ObjectId-ul comenzii
+  
+      if (!orderId) {
+        // Dacă nu avem ObjectId, returnăm eroare
+        throw new Error("ID-ul comenzii nu a fost returnat.");
+      }
+  
+      // Construim link-ul către cererea de ofertă cu ObjectId
+      const orderLink = `http://localhost:5173/orders/${orderId}`;
+  
+      // Trimitem email-ul către admin pentru a-l notifica
+      const emailResponse = await fetch("http://localhost:5000/api/orders/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify({ orderLink, orderNumber: responseData?.order?.orderNumber }), // Trimit orderNumber și ObjectId-ul
+      });
+  
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        throw new Error(errorData.message || "Nu s-a putut trimite email-ul");
+      }
+  
+      // Dacă totul este OK, setăm mesajul de succes
+      setMessage(`Cererea a fost trimisă cu succes! Așteptați procesarea comenzii.`);
+      
+      // Resetăm formularul
       setFormData(initialFormData);
-      setMakes([]);
-      setModels([]);
+      setMakes([]); // Resetăm opțiunile de mărci
+      setModels([]); // Resetăm modelele
+  
     } catch (error) {
+      // În caz de eroare, afișăm mesajul de eroare
       setMessage(`Eroare: ${error.message}`);
     } finally {
+      // Oprim indicatorul de încărcare
       setLoading(false);
     }
   };
   
-
+    
+  
   return (
     <div className="container py-5">
       <h2 className="text-center mb-4">Formular Cerere Piese Auto</h2>

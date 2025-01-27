@@ -273,7 +273,7 @@ const OfferDetail = () => {
                 <h4>Total ofertă: <span className="text-success">{total.toFixed(2)} RON</span></h4>
               ) : (
                 <Alert variant="warning" className="text-center fw-bold fs-5 border border-danger bg-light">
-                  <i className="ri-error-warning-line text-danger"></i> Trebuie să selectezi piesele dorite din oferta înainte de a finaliza comanda!
+                  <i className="ri-error-warning-line text-danger"></i> Clientul trebuie să selecteze piesele dorite din oferta înainte de a finaliza comanda!
                 </Alert>
               )}
             </Col>

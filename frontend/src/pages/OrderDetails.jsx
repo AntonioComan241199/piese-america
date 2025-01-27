@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import CreateOfferModal from "./CreateOfferModal"; // Importul modalului
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -15,6 +16,7 @@ const OrderDetails = () => {
   const [error, setError] = useState("");
   const [newComment, setNewComment] = useState("");
   const [addingComment, setAddingComment] = useState(false);
+  const [showCreateOfferModal, setShowCreateOfferModal] = useState(false); // Stare pentru modal
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -103,6 +105,13 @@ const OrderDetails = () => {
     }
   };
 
+  // Funcția pentru deschiderea/modalul pentru crearea ofertei
+  const handleCreateOffer = () => {
+    console.log("Apăsat pe Creează ofertă");
+    setShowCreateOfferModal(true);
+    console.log("Starea modalului:", showCreateOfferModal);
+  };
+
   if (loading) {
     return <div className="text-center">Se încarcă...</div>;
   }
@@ -183,10 +192,10 @@ const OrderDetails = () => {
                   </div>
                 )}
 
-                {isAdmin && order.status === "ofertat" && (
-                  <div className="alert alert-info">
-                    <strong>Notificare:</strong> Clientul este în proces de selecție a pieselor din ofertă.
-                  </div>
+                {isAdmin && order.status === "asteptare_oferta" && (
+                  <button className="btn btn-success" onClick={handleCreateOffer}>
+                    Creează ofertă
+                  </button>
                 )}
 
                 <p><strong>Număr ofertă:</strong> {order.offerId.offerNumber}</p>
@@ -195,6 +204,12 @@ const OrderDetails = () => {
                 {isClient && order.status === "ofertat" && (
                   <button className="btn btn-primary" onClick={redirectToOffer}>
                     Selectează piesele dorite
+                  </button>
+                )}
+
+                {isAdmin && order.status === "ofertat" && (
+                  <button className="btn btn-primary" onClick={redirectToOffer}>
+                    Selectie piese client
                   </button>
                 )}
 
@@ -207,6 +222,11 @@ const OrderDetails = () => {
             ) : (
               <p><strong>Status ofertă:</strong> În așteptarea ofertei</p>
             )}
+            {isAdmin && order.status === "asteptare_oferta" && (
+                  <button className="btn btn-success" onClick={handleCreateOffer}>
+                    Creează ofertă
+                  </button>
+                )}
           </div>
         </div>
 
@@ -246,6 +266,19 @@ const OrderDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal pentru creare ofertă */}
+      {showCreateOfferModal && (
+        <CreateOfferModal
+        show={showCreateOfferModal} // Asigură-te că treci această proprietate
+        onHide={() => setShowCreateOfferModal(false)}
+        order={order}
+        onCreateOffer={(createdOffer) => {
+          // Acțiuni suplimentare după crearea ofertei, dacă e nevoie
+          console.log("Ofertă creată:", createdOffer);
+        }}
+      />
+      )}
     </div>
   );
 };

@@ -2,7 +2,8 @@ import Order from "../models/Order.js";
 import Counter from "../models/Counter.js";
 import Notification from "../models/Notification.js";
 import { errorHandler } from "../utils/error.js";
-import { getAuthenticatedUser } from "./userController.js";
+import nodemailer from 'nodemailer';
+
 
 // Creare cerere de ofertă
 export const createOrder = async (req, res, next) => {
@@ -335,3 +336,159 @@ export const deleteOrder = async (req, res, next) => {
     next(error);
   }
 };
+
+export const sendOrderEmail = async (req, res, next) => {
+  const { orderLink, orderNumber } = req.body; // Folosim orderNumber în loc de orderId
+
+  if (!orderLink || !orderNumber) {
+    return next(errorHandler(400, "Link-ul sau numărul comenzii nu sunt furnizate."));
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "SendGrid", // Folosește serviciul de email SendGrid
+      auth: {
+        user: "apikey", // Folosește "apikey" ca user
+        pass: process.env.SENDGRID_API_KEY, // Cheia API de la SendGrid
+      },
+    });
+
+    // Mesajul emailului cu subiect îmbunătățit
+    const mailOptions = {
+      from: "antonio.coman99@gmail.com", // Adresa expeditorului
+      to: "antonio.coman99@gmail.com", // Email-ul adminului
+      subject: `Nouă solicitare pentru piese auto - Comanda #${orderNumber}`, // Folosim orderNumber în subiect
+      text: `Salut! Un client a trimis o solicitare de ofertă. Poți vizualiza cererea completă accesând link-ul: ${orderLink}. Detalii suplimentare sunt disponibile în aplicație.`,
+      html: `
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: 'Arial', sans-serif;
+                background-color: #f8f9fc;
+                color: #333;
+                margin: 0;
+                padding: 0;
+                line-height: 1.6;
+              }
+    
+              /* Containerele */
+              .email-container {
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+    
+              /* Header */
+              .email-header {
+                text-align: center;
+                padding-bottom: 20px;
+                border-bottom: 2px solid #f1f1f1;
+              }
+    
+              .email-header h1 {
+                color: #007bff;
+                font-size: 24px;
+                margin: 0;
+              }
+    
+              /* Textul principal */
+              .email-body {
+                padding: 20px;
+                text-align: center;
+              }
+    
+              .email-body p {
+                font-size: 16px;
+                color: #555555;
+              }
+    
+              /* Buton CTA */
+              .cta-button {
+                display: inline-block;
+                background-color: #007bff;
+                color: white;
+                text-decoration: none;
+                padding: 15px 25px;
+                font-size: 18px;
+                border-radius: 5px;
+                margin-top: 20px;
+                font-weight: bold;
+                transition: background-color 0.3s;
+              }
+    
+              .cta-button:hover {
+                background-color: #0056b3;
+              }
+    
+              /* Footer */
+              .footer {
+                text-align: center;
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 2px solid #f1f1f1;
+                font-size: 14px;
+                color: #888;
+              }
+    
+              .footer a {
+                color: #007bff;
+                text-decoration: none;
+              }
+    
+              @media (max-width: 600px) {
+                .email-container {
+                  padding: 10px;
+                }
+                .email-header h1 {
+                  font-size: 22px;
+                }
+                .cta-button {
+                  font-size: 16px;
+                  padding: 12px 20px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="email-container">
+              <!-- Header -->
+              <div class="email-header">
+                <h1>Nouă solicitare pentru piese auto</h1>
+                <p>Comanda #${orderNumber}</p> <!-- Folosim orderNumber în titlu -->
+              </div>
+              
+              <!-- Body -->
+              <div class="email-body">
+                <p>Salut, <strong>admin</strong>!</p>
+                <p>Un client a trimis o solicitare de ofertă pentru piese auto. Detalii suplimentare sunt disponibile la următorul link:</p>
+                <a href="${orderLink}" class="cta-button">Vezi cererea de ofertă</a>
+              </div>
+    
+              <!-- Footer -->
+              <div class="footer">
+                <p>Acesta este un mesaj automat generat de aplicația <strong>Piese Auto America</strong>.</p>
+                <p>Îți mulțumim că faci parte din echipa noastră!</p>
+                <p><a href="mailto:antonio.coman99@gmail.com">Contactează-ne</a> pentru orice întrebări.</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+    
+    // Trimitem emailul
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Email-ul cu link-ul cererii a fost trimis cu succes." });
+    
+      
+  } catch (error) {
+    console.error("Eroare la trimiterea email-ului:", error);
+    return next(errorHandler(500, "Eroare la trimiterea email-ului: " + error.message));
+  }
+};
+
