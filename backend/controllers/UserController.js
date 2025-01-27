@@ -1,8 +1,53 @@
 import User from "../models/User.js";
 import Order from "../models/Order.js";
 import bcrypt from "bcrypt";
+import { errorHandler } from "../utils/error.js";
 
 
+// Obținerea adresei de facturare
+export const getBillingAddress = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    }
+    res.status(200).json({ billingAddress: user.billingAddress || {} });
+  } catch (error) {
+    console.error("Eroare la obținerea adresei:", error);
+    next(errorHandler(500, "Eroare la obținerea adresei."));
+  }
+};
+
+
+// Salvarea adresei de facturare
+export const saveBillingAddress = async (req, res, next) => {
+  try {
+    const { billingAddress } = req.body;
+
+    if (!billingAddress || !billingAddress.street || !billingAddress.number || !billingAddress.city || !billingAddress.county) {
+      return next(errorHandler(400, "Toate câmpurile obligatorii pentru adresa de facturare trebuie completate."));
+    }
+
+    const userId = req.user.id; // ID-ul utilizatorului din token
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return next(errorHandler(404, "Utilizatorul nu a fost găsit."));
+    }
+
+    // Actualizăm sau setăm adresa de facturare
+    user.billingAddress = billingAddress;
+
+    await user.save(); // Salvăm modificările
+
+    res.status(200).json({
+      success: true,
+      message: "Adresa de facturare a fost salvată cu succes.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // Actualizare profil utilizator
 export const updateUser = async (req, res, next) => {

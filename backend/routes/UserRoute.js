@@ -4,6 +4,8 @@ import {
   deleteUser,
   updateUser,
   getAuthenticatedUser,
+  getBillingAddress,
+  saveBillingAddress,
 } from "../controllers/UserController.js";
 import { verifyToken } from "../utils/verifyToken.js";
 import { body } from "express-validator";
@@ -23,5 +25,11 @@ router.put("/update-password/:id", verifyToken, changePassword);
 router.put("/update/:id", verifyToken, validateUpdateUser, updateUser);
 router.delete("/delete/:id", verifyToken, deleteUser);
 router.get("/me", verifyToken, getAuthenticatedUser);
+
+// Obține adresa de facturare
+router.get("/billing-address", verifyToken, getBillingAddress);
+
+// Salvează adresa de facturare
+router.post("/billing-address", verifyToken, saveBillingAddress);
 
 export default router;

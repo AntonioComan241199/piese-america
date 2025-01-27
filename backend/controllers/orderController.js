@@ -277,16 +277,31 @@ export const addCommentToOrder = async (req, res, next) => {
   try {
     const { text } = req.body;
 
+    // Caută cererea după ID
     const order = await Order.findById(req.params.id);
     if (!order) {
       return next(errorHandler(404, "Cererea de ofertă nu a fost găsită."));
     }
 
+    // Determină numele utilizatorului în funcție de tipul de utilizator
+    let userName;
+    if (req.user.role === "admin") {
+      userName = "Admin";
+    } else if (req.user.userType === "persoana_fizica") {
+      userName = `${req.user.firstName} ${req.user.lastName}`;
+    } else if (req.user.userType === "persoana_juridica" && req.user.companyDetails?.companyName) {
+      userName = req.user.companyDetails.companyName;
+    } else {
+      userName = "Utilizator necunoscut";
+    }
+
+    // Creează comentariul
     const comment = {
       text,
-      user: req.user.role === "admin" ? "Admin" : `${req.user.firstName} ${req.user.lastName}`,
+      user: userName,
     };
 
+    // Adaugă comentariul la cerere și salvează
     order.comments.push(comment);
     await order.save();
 
@@ -295,6 +310,7 @@ export const addCommentToOrder = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Ștergere cerere de ofertă
 export const deleteOrder = async (req, res, next) => {

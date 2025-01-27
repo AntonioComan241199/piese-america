@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const OrderDetails = () => {
   const { id } = useParams();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  const isClient = user?.role === "client";
+  const isAdmin = user?.role === "admin";
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,9 +19,7 @@ const OrderDetails = () => {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        const headers = {
-          "Content-Type": "application/json",
-        };
+        const headers = { "Content-Type": "application/json" };
         const token = localStorage.getItem("accessToken");
         if (isAuthenticated && token) {
           headers.Authorization = `Bearer ${token}`;
@@ -44,38 +47,59 @@ const OrderDetails = () => {
     fetchOrderDetails();
   }, [id, isAuthenticated]);
 
+  const getOfferStatus = (order) => {
+    if (!order.offerId) return "În așteptarea ofertei";
+    if (order.status === "oferta_acceptata") return "Ofertă acceptată";
+    if (order.status === "ofertat") return "Ofertat - În așteptarea selecției pieselor dorite";
+    if (order.status === "anulata") return "Ofertă anulată";
+    return "Status necunoscut";
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-
+  
     setAddingComment(true);
-
+  
     try {
-      const headers = {
-        "Content-Type": "application/json",
-      };
+      const headers = { "Content-Type": "application/json" };
       const token = localStorage.getItem("accessToken");
       if (isAuthenticated && token) {
         headers.Authorization = `Bearer ${token}`;
       }
-
+  
+      console.log("Payload trimis:", { text: newComment }); // Debug
+  
       const response = await fetch(`http://localhost:5000/api/orders/client/orders/${id}/comments`, {
         method: "POST",
         headers,
         body: JSON.stringify({ text: newComment }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Eroare la adăugarea comentariului.");
       }
-
-      const updatedOrder = await response.json();
-      setOrder(updatedOrder);
+  
+      const updatedComments = await response.json();
+      console.log("Comentarii actualizate:", updatedComments); // Debug
+  
+      setOrder((prevOrder) => ({
+        ...prevOrder,
+        comments: updatedComments.comments,
+      }));
+  
       setNewComment("");
     } catch (error) {
       setError(error.message);
     } finally {
       setAddingComment(false);
+    }
+  };
+  
+
+  const redirectToOffer = () => {
+    if (order.offerId) {
+      navigate(`/offer/${order.offerId._id}`);
     }
   };
 
@@ -94,68 +118,132 @@ const OrderDetails = () => {
   return (
     <div className="container py-5">
       <h2 className="text-center mb-4">Detalii cerere #{order.orderNumber}</h2>
+
       <div className="shadow p-4 rounded bg-light">
-        <h4>Informații utilizator</h4>
-        {order.userType === "persoana_fizica" ? (
-          <>
-            <p><strong>Prenume:</strong> {order.firstName}</p>
-            <p><strong>Nume:</strong> {order.lastName}</p>
-          </>
-        ) : (
-          <>
-            <p><strong>Numele firmei:</strong> {order.companyDetails?.companyName || "N/A"}</p>
-            <p><strong>CUI:</strong> {order.companyDetails?.cui || "N/A"}</p>
-            <p><strong>Nr. Reg. Comerț:</strong> {order.companyDetails?.nrRegCom || "N/A"}</p>
-          </>
-        )}
-        <p><strong>Email:</strong> {order.email}</p>
-        <p><strong>Telefon:</strong> {order.phoneNumber}</p>
+        {/* Informații utilizator */}
+        <div className="card mb-4">
+          <div className="card-header bg-primary text-white">
+            <h5 className="m-0">Informații utilizator</h5>
+          </div>
+          <div className="card-body">
+            {order.userType === "persoana_fizica" ? (
+              <>
+                <p><strong>Prenume:</strong> {order.firstName || "N/A"}</p>
+                <p><strong>Nume:</strong> {order.lastName || "N/A"}</p>
+              </>
+            ) : (
+              <>
+                <p><strong>Numele firmei:</strong> {order.companyDetails?.companyName || "N/A"}</p>
+                <p><strong>CUI:</strong> {order.companyDetails?.cui || "N/A"}</p>
+                <p><strong>Nr. Reg. Comerț:</strong> {order.companyDetails?.nrRegCom || "N/A"}</p>
+              </>
+            )}
+            <p><strong>Email:</strong> {order.email}</p>
+            <p><strong>Telefon:</strong> {order.phoneNumber}</p>
+          </div>
+        </div>
 
-        <hr />
-        <h4>Informații vehicul</h4>
-        <p><strong>An fabricație:</strong> {order.carYear}</p>
-        <p><strong>Marcă:</strong> {order.carMake}</p>
-        <p><strong>Model:</strong> {order.carModel}</p>
-        <p><strong>Tip combustibil:</strong> {order.fuelType}</p>
-        <p><strong>Capacitate cilindrică:</strong> {order.engineSize} cm³</p>
-        <p><strong>Putere motor:</strong> {order.enginePower} CP</p>
-        <p><strong>Cutie de viteze:</strong> {order.transmission}</p>
-        <p><strong>VIN:</strong> {order.vin}</p>
-        <hr />
-        <p><strong>Detalii piesă:</strong> {order.partDetails}</p>
+        {/* Informații vehicul */}
+        <div className="card mb-4">
+          <div className="card-header bg-secondary text-white">
+            <h5 className="m-0">Informații vehicul</h5>
+          </div>
+          <div className="card-body">
+            <p><strong>An fabricație:</strong> {order.carYear}</p>
+            <p><strong>Marcă:</strong> {order.carMake}</p>
+            <p><strong>Model:</strong> {order.carModel}</p>
+            <p><strong>Tip combustibil:</strong> {order.fuelType}</p>
+            <p><strong>Capacitate cilindrică:</strong> {order.engineSize} cm³</p>
+            <p><strong>Putere motor:</strong> {order.enginePower} CP</p>
+            <p><strong>Cutie de viteze:</strong> {order.transmission}</p>
+            <p><strong>VIN:</strong> {order.vin}</p>
+            <p><strong>Detalii piesă:</strong> {order.partDetails}</p>
+          </div>
+        </div>
 
-        <hr />
-        <h4>Comentarii</h4>
-        {order.comments && order.comments.length > 0 ? (
-          order.comments.map((comment, index) => (
-            <div key={index} className="mb-3">
-              <p>
-                <strong>{comment.user}</strong> ({new Date(comment.date).toLocaleString()}):
-              </p>
-              <p>{comment.text}</p>
-            </div>
-          ))
-        ) : (
-          <p>Nu există comentarii.</p>
-        )}
+        {/* Informații ofertă */}
+        <div className="card mb-4">
+          <div className="card-header bg-warning text-white">
+            <h5 className="m-0">Informații ofertă</h5>
+          </div>
+          <div className="card-body">
+            {order.offerId ? (
+              <>
+                <p><strong>Status:</strong> {getOfferStatus(order)}</p>
 
-        <div className="mt-4">
-          <h5>Adaugă un comentariu</h5>
-          <textarea
-            className="form-control mb-3"
-            rows="3"
-            placeholder="Scrie un comentariu..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            disabled={addingComment}
-          ></textarea>
-          <button
-            className="btn btn-primary"
-            onClick={handleAddComment}
-            disabled={addingComment}
-          >
-            {addingComment ? "Se adaugă..." : "Adaugă comentariu"}
-          </button>
+                {isClient && order.status === "ofertat" && (
+                  <div className="alert alert-warning">
+                    <strong>Atenție!</strong> Te rugăm să selectezi piesele dorite din oferta disponibilă.
+                  </div>
+                )}
+
+                {isClient && order.status === "oferta_acceptata" && (
+                  <div className="alert alert-success">
+                    <strong>Felicitări!</strong> Oferta ta a fost acceptată. Urmează pașii finali pentru procesare.
+                  </div>
+                )}
+
+                {isAdmin && order.status === "ofertat" && (
+                  <div className="alert alert-info">
+                    <strong>Notificare:</strong> Clientul este în proces de selecție a pieselor din ofertă.
+                  </div>
+                )}
+
+                <p><strong>Număr ofertă:</strong> {order.offerId.offerNumber}</p>
+                <p><strong>Total ofertă:</strong> {order.status === "ofertat" ? "Așteptare selecție piese" : `${order.offerId.total} RON`}</p>
+                
+                {isClient && order.status === "ofertat" && (
+                  <button className="btn btn-primary" onClick={redirectToOffer}>
+                    Selectează piesele dorite
+                  </button>
+                )}
+
+                {order.status === "oferta_acceptata" && (
+                  <button className="btn btn-primary" onClick={redirectToOffer}>
+                    Vezi oferta acceptată
+                  </button>
+                )}
+              </>
+            ) : (
+              <p><strong>Status ofertă:</strong> În așteptarea ofertei</p>
+            )}
+          </div>
+        </div>
+
+        {/* Secțiunea comentarii */}
+        <div className="card">
+          <div className="card-header bg-info text-white">
+            <h5 className="m-0">Comentarii</h5>
+          </div>
+          <div className="card-body">
+            {order.comments && order.comments.length > 0 ? (
+              order.comments.map((comment, index) => (
+                <div key={index} className="mb-3">
+                  <p>
+                    <strong>{comment.user || "Anonim"}</strong> ({new Date(comment.date).toLocaleString()}):
+                  </p>
+                  <p>{comment.text}</p>
+                </div>
+              ))
+            ) : (
+              <p>Nu există comentarii.</p>
+            )}
+            <textarea
+              className="form-control mb-3"
+              rows="3"
+              placeholder="Scrie un comentariu..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              disabled={addingComment}
+            ></textarea>
+            <button
+              className="btn btn-primary"
+              onClick={handleAddComment}
+              disabled={addingComment}
+            >
+              {addingComment ? "Se adaugă..." : "Adaugă comentariu"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

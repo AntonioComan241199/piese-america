@@ -7,7 +7,7 @@ const initialState = {
   profile: null,
   loading: true,
   error: "",
-  activeSection: "", // 'editProfile', 'changePassword', or empty for default view
+  activeSection: "", // 'editProfile', 'editBilling', 'changePassword', or empty for default view
   updatedData: {},
   passwordData: { currentPassword: "", newPassword: "" },
 };
@@ -18,7 +18,7 @@ const reducer = (state, action) => {
       return {
         ...state,
         profile: action.payload,
-        updatedData: { ...action.payload, companyDetails: action.payload.companyDetails || {} },
+        updatedData: { ...action.payload, billingAddress: action.payload.billingAddress || {} },
         loading: false,
       };
     case "SET_LOADING":
@@ -31,6 +31,14 @@ const reducer = (state, action) => {
       return { ...state, updatedData: { ...state.updatedData, ...action.payload } };
     case "UPDATE_PASSWORD":
       return { ...state, passwordData: { ...state.passwordData, ...action.payload } };
+    case "UPDATE_BILLING_ADDRESS":
+      return {
+        ...state,
+        updatedData: {
+          ...state.updatedData,
+          billingAddress: { ...state.updatedData.billingAddress, ...action.payload },
+        },
+      };
     default:
       return state;
   }
@@ -54,9 +62,8 @@ const MyProfile = () => {
   const fetchProfile = async () => {
     try {
       const response = await fetchWithAuth("http://localhost:5000/api/user/me");
-      console.log("Răspuns profil:", response); // Verifică răspunsul
       if (response && response.user) {
-        localDispatch({ type: "SET_PROFILE", payload: response.user }); // Setează doar obiectul `user`
+        localDispatch({ type: "SET_PROFILE", payload: response.user });
       } else {
         throw new Error("Datele utilizatorului nu au fost găsite.");
       }
@@ -69,28 +76,22 @@ const MyProfile = () => {
     }
   };
 
-
   const handleUpdateProfile = async () => {
     try {
-      const response = await fetchWithAuth(
-        `http://localhost:5000/api/user/update/${state.profile._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(state.updatedData),
-        }
-      );
-  
+      await fetchWithAuth(`http://localhost:5000/api/user/update/${state.profile._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(state.updatedData),
+      });
       alert("Profil actualizat cu succes!");
-      fetchProfile(); // Reîncarcă datele utilizatorului
+      fetchProfile();
       localDispatch({ type: "SET_ACTIVE_SECTION", payload: "" });
     } catch (err) {
       alert("Eroare la actualizarea profilului: " + err.message);
     }
   };
-  
 
   const handleChangePassword = async () => {
     try {
@@ -98,19 +99,14 @@ const MyProfile = () => {
         `http://localhost:5000/api/user/update-password/${state.profile._id}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(state.passwordData),
         }
       );
-  
-      // Presupunem că `fetchWithAuth` returnează direct JSON-ul
       if (response.error) {
         alert(`Eroare: ${response.message || "A apărut o eroare!"}`);
         return;
       }
-  
       alert(response.message || "Parola a fost schimbată cu succes!");
       localDispatch({ type: "SET_ACTIVE_SECTION", payload: "" });
     } catch (err) {
@@ -120,12 +116,10 @@ const MyProfile = () => {
 
   const handleDeleteAccount = async () => {
     if (!window.confirm("Ești sigur că vrei să ștergi contul?")) return;
-
     try {
       await fetchWithAuth(`http://localhost:5000/api/user/delete/${state.profile._id}`, {
         method: "DELETE",
       });
-
       reduxDispatch(logout());
       alert("Contul a fost șters cu succes!");
     } catch (err) {
@@ -134,7 +128,6 @@ const MyProfile = () => {
   };
 
   if (!authChecked) return <div>Verificăm autentificarea...</div>;
-
   if (state.loading) return <div className="alert alert-info">Se încarcă datele...</div>;
   if (state.error) return <div className="alert alert-danger">{state.error}</div>;
 
@@ -158,13 +151,18 @@ const MyProfile = () => {
             )}
             <p><strong>Email:</strong> {state.profile.email}</p>
             <p><strong>Telefon:</strong> {state.profile.phone || "N/A"}</p>
-            <p><strong>Rol:</strong> {state.profile.role}</p>
             <div className="d-flex flex-column gap-2">
               <button
                 className="btn btn-primary"
                 onClick={() => localDispatch({ type: "SET_ACTIVE_SECTION", payload: "editProfile" })}
               >
                 Editează Profil
+              </button>
+              <button
+                className="btn btn-info"
+                onClick={() => localDispatch({ type: "SET_ACTIVE_SECTION", payload: "editBilling" })}
+              >
+                Editează Date Facturare
               </button>
               <button
                 className="btn btn-warning"
@@ -179,7 +177,129 @@ const MyProfile = () => {
           </>
         )}
 
-        {state.activeSection === "editProfile" && (
+        
+
+        {state.activeSection === "editBilling" && (
+          <>
+            <h4>Editează Date de Facturare</h4>
+            <div className="mb-3">
+              <label htmlFor="billingCounty" className="form-label">Județ</label>
+              <input
+                type="text"
+                className="form-control"
+                id="billingCounty"
+                value={state.updatedData.billingAddress?.county || ""}
+                onChange={(e) =>
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { county: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="billingCity" className="form-label">Oraș</label>
+              <input
+                type="text"
+                className="form-control"
+                id="billingCity"
+                value={state.updatedData.billingAddress?.city || ""}
+                onChange={(e) =>
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { city: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="billingStreet" className="form-label">Stradă</label>
+              <input
+                type="text"
+                className="form-control"
+                id="billingStreet"
+                value={state.updatedData.billingAddress?.street || ""}
+                onChange={(e) =>
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { street: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="billingNumber" className="form-label">Număr</label>
+              <input
+                type="text"
+                className="form-control"
+                id="billingNumber"
+                value={state.updatedData.billingAddress?.number || ""}
+                onChange={(e) =>
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { number: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="billingBlock" className="form-label">Bloc</label>
+              <input
+                type="text"
+                className="form-control"
+                id="billingBlock"
+                value={state.updatedData.billingAddress?.block || ""}
+                onChange={(e) =>
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { block: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="billingEntrance" className="form-label">Scară</label>
+              <input
+                type="text"
+                className="form-control"
+                id="billingEntrance"
+                value={state.updatedData.billingAddress?.entrance || ""}
+                onChange={(e) =>
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { entrance: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="billingApartment" className="form-label">Apartament</label>
+              <input
+                type="text"
+                className="form-control"
+                id="billingApartment"
+                value={state.updatedData.billingAddress?.apartment || ""}
+                onChange={(e) =>
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { apartment: e.target.value },
+                  })
+                }
+              />
+            </div>
+            <button className="btn btn-success w-100 mb-2" onClick={handleUpdateProfile}>
+              Salvează
+            </button>
+            <button
+              className="btn btn-secondary w-100"
+              onClick={() => localDispatch({ type: "SET_ACTIVE_SECTION", payload: "" })}
+            >
+              Anulează
+            </button>
+          </>
+        )}
+
+{state.activeSection === "editProfile" && (
           <>
             <h4>Editează Profil</h4>
             {state.profile.userType === "persoana_fizica" ? (
@@ -212,7 +332,7 @@ const MyProfile = () => {
             ) : (
               <>
                 <div className="mb-3">
-                  <label htmlFor="companyName" className="form-label">Numele companiei</label>
+                  <label htmlFor="companyName" className="form-label">Numele Companiei</label>
                   <input
                     type="text"
                     className="form-control"
@@ -221,7 +341,12 @@ const MyProfile = () => {
                     onChange={(e) =>
                       localDispatch({
                         type: "UPDATE_DATA",
-                        payload: { companyDetails: { ...state.updatedData.companyDetails, companyName: e.target.value } },
+                        payload: {
+                          companyDetails: {
+                            ...state.updatedData.companyDetails,
+                            companyName: e.target.value,
+                          },
+                        },
                       })
                     }
                   />
@@ -236,7 +361,9 @@ const MyProfile = () => {
                     onChange={(e) =>
                       localDispatch({
                         type: "UPDATE_DATA",
-                        payload: { companyDetails: { ...state.updatedData.companyDetails, cui: e.target.value } },
+                        payload: {
+                          companyDetails: { ...state.updatedData.companyDetails, cui: e.target.value },
+                        },
                       })
                     }
                   />
@@ -251,7 +378,9 @@ const MyProfile = () => {
                     onChange={(e) =>
                       localDispatch({
                         type: "UPDATE_DATA",
-                        payload: { companyDetails: { ...state.updatedData.companyDetails, nrRegCom: e.target.value } },
+                        payload: {
+                          companyDetails: { ...state.updatedData.companyDetails, nrRegCom: e.target.value },
+                        },
                       })
                     }
                   />
@@ -281,6 +410,7 @@ const MyProfile = () => {
             </button>
           </>
         )}
+        
 
         {state.activeSection === "changePassword" && (
           <>

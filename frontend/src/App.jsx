@@ -182,6 +182,14 @@ const AppWrapper = () => {
           }
         />
         <Route
+          path="/my-orders/:id"
+          element={
+            <Layout>
+              <MyOrders />
+            </Layout>
+          }
+        />
+        <Route
           path="/my-offers"
           element={
             <Layout>

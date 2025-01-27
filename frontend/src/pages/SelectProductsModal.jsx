@@ -17,6 +17,8 @@ const SelectProductsModal = ({
   const [totalSelectie, setTotalSelectie] = useState(0);
   const [showDecisionButtons, setShowDecisionButtons] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false); // Stare pentru noul modal
+  const [confirmationMessage, setConfirmationMessage] = useState(""); // Stare pentru mesajul de confirmare
+
 
   const [errors, setErrors] = useState({
     billingCounty: "",
@@ -49,6 +51,71 @@ const SelectProductsModal = ({
   });
   const [isDeliverySame, setIsDeliverySame] = useState(false);
   const [pickupAtCentral, setPickupAtCentral] = useState(false);
+  const [isBillingAddressSaved, setIsBillingAddressSaved] = useState(false); // Verifică dacă adresa de facturare este salvată
+
+  const saveBillingAddress = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("Trebuie să fii autentificat pentru a salva adresa.");
+      }
+  
+      const response = await fetch("http://localhost:5000/api/user/billing-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ billingAddress }),
+      });
+  
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Eroare la salvarea adresei.");
+      }
+  
+      setIsBillingAddressSaved(true);
+      setConfirmationMessage("Adresa de facturare a fost salvată cu succes."); // Mesaj de confirmare
+  
+      setTimeout(() => setConfirmationMessage(""), 3000); // Ascundem mesajul după 3 secunde
+    } catch (error) {
+      console.error("Eroare:", error.message);
+      alert(`Eroare: ${error.message}`);
+    }
+  };
+  
+  
+
+  useEffect(() => {
+    if (!readonlyMode) {
+      // Obține adresa salvată din backend
+      const fetchBillingAddress = async () => {
+        try {
+          const token = localStorage.getItem("accessToken");
+          if (!token) return;
+
+          const response = await fetch("http://localhost:5000/api/user/billing-address", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setBillingAddress(data.billingAddress || {});
+          }
+        } catch (error) {
+          console.error("Eroare la obținerea adresei de facturare:", error);
+        }
+      };
+
+      fetchBillingAddress();
+    }
+  }, [readonlyMode]);
+
+  
+
 
   useEffect(() => {
     if (readonlyMode) {
@@ -231,8 +298,14 @@ const SelectProductsModal = ({
     const setAddress =
       addressType === "billing" ? setBillingAddress : setDeliveryAddress;
     const address = addressType === "billing" ? billingAddress : deliveryAddress;
+  
+    if (addressType === "billing") {
+      setIsBillingAddressSaved(false); // Resetăm starea "salvat" dacă se modifică adresa de facturare
+    }
+  
     setAddress({ ...address, [field]: value });
   };
+  
 
   const handleFinalizeSelections = () => {
     setShowConfirmationModal(true); // Deschide modalul de confirmare
@@ -510,7 +583,9 @@ const renderStep2 = () => {
                 </option>
               ))}
             </Form.Control>
-            {errors.billingCounty && <Form.Text className="text-danger">{errors.billingCounty}</Form.Text>}
+            {errors.billingCounty && (
+              <Form.Text className="text-danger">{errors.billingCounty}</Form.Text>
+            )}
           </Form.Group>
 
           {billingAddress.county && (
@@ -528,7 +603,9 @@ const renderStep2 = () => {
                   </option>
                 ))}
               </Form.Control>
-              {errors.billingCity && <Form.Text className="text-danger">{errors.billingCity}</Form.Text>}
+              {errors.billingCity && (
+                <Form.Text className="text-danger">{errors.billingCity}</Form.Text>
+              )}
             </Form.Group>
           )}
 
@@ -574,8 +651,25 @@ const renderStep2 = () => {
               />
             </Form.Group>
           ))}
+
+          {/* Buton pentru salvare adresă */}
+          <div className="d-flex justify-content-end">
+          <Button
+            variant="success"
+            onClick={saveBillingAddress}
+            disabled={isBillingAddressSaved && !Object.values(billingAddress).some((value) => value === "")}
+          >
+            {isBillingAddressSaved ? "Adresă salvată" : "Salvează adresa de facturare"}
+          </Button>
+          </div>
         </div>
       </div>
+      {/* Mesaj de confirmare */}
+      {confirmationMessage && (
+        <div className="alert alert-success text-center mb-3">
+          {confirmationMessage}
+        </div>
+      )}
 
       {/* Opțiuni de livrare */}
       <div className="card mb-4 shadow-sm">
@@ -618,7 +712,7 @@ const renderStep2 = () => {
           </div>
         </div>
       </div>
-
+  
       {/* Adresa de livrare */}
       {!pickupAtCentral && !isDeliverySame && (
         <div className="card shadow-sm">
@@ -641,9 +735,11 @@ const renderStep2 = () => {
                   </option>
                 ))}
               </Form.Control>
-              {errors.deliveryCounty && <Form.Text className="text-danger">{errors.deliveryCounty}</Form.Text>}
+              {errors.deliveryCounty && (
+                <Form.Text className="text-danger">{errors.deliveryCounty}</Form.Text>
+              )}
             </Form.Group>
-
+  
             {deliveryAddress.county && (
               <Form.Group controlId="deliveryCity" className="mb-3">
                 <Form.Label>Oraș</Form.Label>
@@ -661,7 +757,7 @@ const renderStep2 = () => {
                 </Form.Control>
               </Form.Group>
             )}
-
+  
             {/* Câmpuri obligatorii */}
             <Form.Group controlId="deliveryStreet" className="mb-3">
               <Form.Label>Strada</Form.Label>
@@ -675,7 +771,7 @@ const renderStep2 = () => {
                 <Form.Text className="text-danger">{errors.deliveryStreet}</Form.Text>
               )}
             </Form.Group>
-
+  
             <Form.Group controlId="deliveryNumber" className="mb-3">
               <Form.Label>Număr</Form.Label>
               <Form.Control
@@ -688,7 +784,7 @@ const renderStep2 = () => {
                 <Form.Text className="text-danger">{errors.deliveryNumber}</Form.Text>
               )}
             </Form.Group>
-
+  
             {/* Câmpuri opționale */}
             {[
               { field: "block", label: "Bloc" },
@@ -855,7 +951,7 @@ const renderStep2 = () => {
             <strong>Ești sigur că dorești să finalizezi oferta?</strong>
           </p>
           <p className="text-muted text-center">
-            <small>Acceptarea trimite oferta spre procesare, iar respingerea o anulează.</small>
+            <small>Prin acceptare se trimite oferta spre procesare, iar respingerea o anulează.</small>
           </p>
         </Modal.Body>
         <Modal.Footer className="d-flex justify-content-center">

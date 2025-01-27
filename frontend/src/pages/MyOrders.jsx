@@ -173,7 +173,7 @@ const MyOrders = () => {
                 <td>{new Date(order.orderDate).toLocaleDateString()}</td>
                 <td>
                   <Link
-                    to={`/my-orders/${order._id}`}
+                    to={`/orders/${order._id}`}
                     className="btn btn-primary btn-sm"
                   >
                     Detalii

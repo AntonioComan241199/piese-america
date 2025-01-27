@@ -15,6 +15,15 @@ const UserSchema = new mongoose.Schema({
   },
   role: { type: String, enum: ["client", "admin"], default: "client" }, // Rol (client sau admin)
   refreshToken: { type: String }, // Suport pentru Refresh Token
+  billingAddress: {
+    street: { type: String },
+    number: { type: String },
+    block: { type: String },
+    entrance: { type: String },
+    apartment: { type: String },
+    county: { type: String },
+    city: { type: String },
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
