@@ -93,6 +93,7 @@ const MyOffers = () => {
     setSelectedOffer({});
     setIsReadOnly(false);
     setShowSelectModal(false);
+    window.location.reload(); // Reîncarcă pagina complet
   };
 
   const saveSelections = async ({
@@ -261,12 +262,12 @@ const MyOffers = () => {
 
       <SelectProductsModal
         show={showSelectModal}
-        onHide={handleCloseModal}
         offer={selectedOffer}
         readonlyMode={isReadOnly}
         onSaveSelection={(data) => saveSelections(data)}
         onAcceptOffer={handleAcceptOffer}
         onRejectOffer={handleRejectOffer}
+        onHide={handleCloseModal}
       />
 
 

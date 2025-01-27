@@ -315,6 +315,8 @@ const SelectProductsModal = ({
     setShowConfirmationModal(true); // Afișează noul modal
   };
 
+  
+
   const handleAcceptOffer = async () => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -361,6 +363,20 @@ const SelectProductsModal = ({
         throw new Error(result.message || "Eroare la acceptarea ofertei.");
       }
   
+      // Trimite notificare email către admin
+      const emailResponse = await fetch("http://localhost:5000/api/offer/accept-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ offerNumber: offer.offerNumber }),
+      });
+  
+      if (!emailResponse.ok) {
+        console.error("Eroare la trimiterea email-ului către administrator.");
+      }
+  
       alert("Oferta a fost acceptată cu succes!");
       setShowConfirmationModal(false); // Închide modalul
       onHide(); // Închide și modalul principal
@@ -369,6 +385,7 @@ const SelectProductsModal = ({
       alert(`Eroare: ${error.message}`);
     }
   };
+  
   
   const handleRejectOffer = async () => {
     try {
@@ -393,6 +410,20 @@ const SelectProductsModal = ({
         throw new Error(result.message || "Eroare la respingerea ofertei.");
       }
   
+      // Trimite notificare email către admin
+      const emailResponse = await fetch("http://localhost:5000/api/offer/reject-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ offerNumber: offer.offerNumber }),
+      });
+  
+      if (!emailResponse.ok) {
+        console.error("Eroare la trimiterea email-ului către administrator.");
+      }
+  
       alert("Oferta a fost respinsă cu succes!");
       setShowConfirmationModal(false); // Închide modalul
       onHide(); // Închide și modalul principal
@@ -401,6 +432,7 @@ const SelectProductsModal = ({
       alert(`Eroare: ${error.message}`);
     }
   };
+  
 
   useEffect(() => {
   if (offer && offer.status === "comanda_spre_finalizare") {

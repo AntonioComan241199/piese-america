@@ -198,8 +198,18 @@ const OfferDetail = () => {
       await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}/accept`, {
         method: "POST",
       });
+  
+      // Actualizează manual statusul ofertei
+      setOffer((prevOffer) => ({
+        ...prevOffer,
+        status: "oferta_acceptata", // Status actualizat
+      }));
+  
       alert("Oferta a fost acceptată cu succes!");
-      fetchOffer();
+  
+      // Reîncarcă oferta din backend pentru a prelua toate detaliile actualizate
+      setLoading(true);
+      fetchOffer().then(() => setLoading(false));
     } catch (err) {
       alert("Eroare la acceptarea ofertei: " + err.message);
     }
@@ -210,8 +220,18 @@ const OfferDetail = () => {
       await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}/reject`, {
         method: "POST",
       });
+  
+      // Actualizează manual statusul ofertei
+      setOffer((prevOffer) => ({
+        ...prevOffer,
+        status: "oferta_respinsa", // Status actualizat
+      }));
+  
       alert("Oferta a fost respinsă cu succes!");
-      fetchOffer();
+  
+      // Reîncarcă oferta din backend pentru a prelua toate detaliile actualizate
+      setLoading(true);
+      fetchOffer().then(() => setLoading(false));
     } catch (err) {
       alert("Eroare la respingerea ofertei: " + err.message);
     }
@@ -345,12 +365,15 @@ const OfferDetail = () => {
       <SelectProductsModal
         show={showSelectModal}
         onHide={() => {
-          setShowSelectModal(false);
-          fetchOffer();
+          setShowSelectModal(false); // Ascunde modalul
+          setLoading(true); // Reîncarcă datele
+          fetchOffer().then(() => setLoading(false));
         }}
         offer={offer}
         readonlyMode={isReadOnly}
-        onSaveSelection={() => fetchOffer()}
+        onSaveSelection={() => {
+          window.location.reload(); // Reîncarcă pagina complet
+        }}
       />
     </Container>
   );

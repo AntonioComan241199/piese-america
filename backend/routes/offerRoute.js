@@ -16,7 +16,9 @@ import {
   updateQuantities,
   finalizeOffer,
   sendOfferEmail,
-  updateOfferStatus
+  updateOfferStatus,
+  acceptOfferEmail,
+  rejectOfferEmail
 } from "../controllers/offerController.js";
 import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
@@ -81,6 +83,8 @@ router.patch("/:offerId/finalize", verifyToken, finalizeOffer);
 
 
 router.post("/send-email", verifyToken, sendOfferEmail);
+router.post("/accept-email", acceptOfferEmail); // Ruta pentru acceptarea ofertei
+router.post("/reject-email", rejectOfferEmail); // Ruta pentru respingerea ofertei
 
 
 

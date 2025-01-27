@@ -932,3 +932,95 @@ export const finalizeOffer = async (req, res, next) => {
     next(error);
   }
 };
+
+export const acceptOfferEmail = async (req, res, next) => {
+  const { offerNumber } = req.body;
+
+  if (!offerNumber) {
+    return next(errorHandler(400, "Numărul ofertei nu este furnizat."));
+  }
+
+  try {
+    // Găsim oferta pe baza offerNumber și populăm datele comenzii
+    const offer = await Offer.findOne({ offerNumber }).populate("orderId", "email");
+
+    if (!offer) {
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL; // Adresa administratorului din variabilele de mediu
+    const offerLink = `http://localhost:5173/offer/${offer._id}`; // Link-ul către oferta acceptată
+
+    const transporter = nodemailer.createTransport({
+      service: "SendGrid",
+      auth: {
+        user: "apikey",
+        pass: process.env.SENDGRID_API_KEY,
+      },
+    });
+
+    const mailOptions = {
+      from: "antonio.coman99@gmail.com", // Adresa expeditorului
+      to: "antonio.coman99@gmail.com", // Email-ul administratorului
+      subject: `Oferta #${offerNumber} a fost acceptată`,
+      text: `Oferta #${offerNumber} a fost acceptată de client. Poți vizualiza oferta aici: ${offerLink}.`,
+      html: `
+        <h1>Oferta #${offerNumber} a fost acceptată</h1>
+        <p>Clientul a acceptat această ofertă.</p>
+        <p><a href="${offerLink}">Vizualizează oferta</a></p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Email-ul de acceptare a fost trimis administratorului cu succes." });
+  } catch (error) {
+    console.error("Eroare la trimiterea email-ului:", error);
+    return next(errorHandler(500, "Eroare la trimiterea email-ului: " + error.message));
+  }
+};
+
+export const rejectOfferEmail = async (req, res, next) => {
+  const { offerNumber } = req.body;
+
+  if (!offerNumber) {
+    return next(errorHandler(400, "Numărul ofertei nu este furnizat."));
+  }
+
+  try {
+    // Găsim oferta pe baza offerNumber și populăm datele comenzii
+    const offer = await Offer.findOne({ offerNumber }).populate("orderId", "email");
+
+    if (!offer) {
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL; // Adresa administratorului din variabilele de mediu
+    const offerLink = `http://localhost:5173/offer/${offer._id}`; // Link-ul către oferta respinsă
+
+    const transporter = nodemailer.createTransport({
+      service: "SendGrid",
+      auth: {
+        user: "apikey",
+        pass: process.env.SENDGRID_API_KEY,
+      },
+    });
+
+    const mailOptions = {
+      from: "antonio.coman99@gmail.com", // Adresa expeditorului
+      to: "antonio.coman99@gmail.com", // Email-ul administratorului
+      subject: `Oferta #${offerNumber} a fost respinsă`,
+      text: `Oferta #${offerNumber} a fost respinsă de client. Poți vizualiza oferta aici: ${offerLink}.`,
+      html: `
+        <h1>Oferta #${offerNumber} a fost respinsă</h1>
+        <p>Clientul a respins această ofertă.</p>
+        <p><a href="${offerLink}">Vizualizează oferta</a></p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Email-ul de respingere a fost trimis administratorului cu succes." });
+  } catch (error) {
+    console.error("Eroare la trimiterea email-ului:", error);
+    return next(errorHandler(500, "Eroare la trimiterea email-ului: " + error.message));
+  }
+};
