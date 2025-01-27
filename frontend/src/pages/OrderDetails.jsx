@@ -188,7 +188,7 @@ const OrderDetails = () => {
 
                 {isClient && order.status === "oferta_acceptata" && (
                   <div className="alert alert-success">
-                    <strong>Felicitări!</strong> Oferta ta a fost acceptată. Urmează pașii finali pentru procesare.
+                    <strong>Felicitări!</strong> Ai acceptat oferta, te rugăm să aștepți procesarea comenzii.
                   </div>
                 )}
 
@@ -209,7 +209,7 @@ const OrderDetails = () => {
 
                 {isAdmin && order.status === "ofertat" && (
                   <button className="btn btn-primary" onClick={redirectToOffer}>
-                    Selectie piese client
+                    Vezi Oferta - Selectie piese client
                   </button>
                 )}
 
@@ -270,14 +270,22 @@ const OrderDetails = () => {
       {/* Modal pentru creare ofertă */}
       {showCreateOfferModal && (
         <CreateOfferModal
-        show={showCreateOfferModal} // Asigură-te că treci această proprietate
-        onHide={() => setShowCreateOfferModal(false)}
-        order={order}
-        onCreateOffer={(createdOffer) => {
-          // Acțiuni suplimentare după crearea ofertei, dacă e nevoie
-          console.log("Ofertă creată:", createdOffer);
-        }}
-      />
+          show={showCreateOfferModal} // Trimite proprietatea pentru afișare
+          onHide={() => setShowCreateOfferModal(false)} // Închide modalul
+          order={order} // Trimite detaliile comenzii curente
+          onCreateOffer={(createdOffer) => {
+            console.log("Ofertă creată:", createdOffer);
+
+            // Actualizează starea comenzii pentru a reflecta oferta creată
+            setOrder((prevOrder) => ({
+              ...prevOrder,
+              offerId: createdOffer, // Adaugă oferta creată la comanda curentă
+              status: "ofertat", // Sau orice alt status relevant
+            }));
+
+            setShowCreateOfferModal(false); // Închide modalul după succes
+          }}
+        />
       )}
     </div>
   );

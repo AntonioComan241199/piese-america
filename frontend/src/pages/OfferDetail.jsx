@@ -68,7 +68,7 @@ const OfferDetail = () => {
     // Detalii companie
     const companyDetails = normalizeText(`FURNIZOR:
   GLOBAL QUALITY SOLUTIONS SRL
-  Bdul. Mărăști 25 E, București, Sector 1
+  Bdul. Mărăști 25, București, Sector 1
   CUI: 17426176
   Nr reg comertului: J40/6018/2005`);
 
@@ -146,7 +146,7 @@ const OfferDetail = () => {
     doc.text(statusText, statusX, contentStartY + 10);
 
     // Tabel piese selectate
-    const tableColumn = ["Cod Piesă", "Tip", "Producător", "Preț/unitate", "Cantitate", "Total"];
+    const tableColumn = ["Cod Piesa", "Tip", "Producator", "Pret/unitate", "Cantitate", "Total"];
     const tableRows = [];
 
     let totalSelectedParts = 0;
@@ -222,10 +222,10 @@ const OfferDetail = () => {
       <thead>
         <tr>
           <th>#</th>
-          <th>Cod Piesă</th>
+          <th>Cod Piesa</th>
           <th>Tip</th>
-          <th>Producător</th>
-          <th>Preț/unitate</th>
+          <th>Producator</th>
+          <th>Pret/unitate</th>
           <th>Cantitate</th>
           <th>Subtotal</th>
         </tr>

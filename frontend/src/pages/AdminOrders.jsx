@@ -222,14 +222,6 @@ const AdminOrders = () => {
                     >
                       Detalii
                     </Link>
-                    {order.status === "asteptare_oferta" && (
-                      <button
-                        className="btn btn-success btn-sm"
-                        onClick={() => openCreateOfferModal(order)}
-                      >
-                        Creează Ofertă
-                      </button>
-                    )}
                   </div>
                 </td>
               </tr>

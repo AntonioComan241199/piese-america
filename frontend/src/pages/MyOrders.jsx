@@ -100,6 +100,7 @@ const MyOrders = () => {
             <option value="">Toate Statusurile</option>
             <option value="asteptare_oferta">Așteptare ofertă</option>
             <option value="ofertat">Ofertat</option>
+            <option value="oferta_acceptata">Oferta Acceptata</option>
             <option value="livrare_in_procesare">Livrare în Procesare</option>
             <option value="livrata">Livrată</option>
             <option value="anulata">Anulată</option>
