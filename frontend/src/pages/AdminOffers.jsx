@@ -253,55 +253,55 @@ const AdminOffers = () => {
                   <td>{formatDateTime(offer.createdAt)}</td>
                   <td>{formatDateTime(offer.updatedAt)}</td>
                   <td>
-  <div className="dropdown">
-    <button
-      className="btn btn-primary btn-sm dropdown-toggle"
-      type="button"
-      id={`dropdown-${offer._id}`}
-      data-bs-toggle="dropdown"
-      aria-expanded="false"
-    >
-      Acțiuni
-    </button>
-    <ul className="dropdown-menu" aria-labelledby={`dropdown-${offer._id}`}>
-      <li>
-        <Link
-          to={`/offer/${offer._id}`}
-          className="dropdown-item"
-        >
-          Detalii
-        </Link>
-      </li>
-      <li>
-        <button
-          className="dropdown-item"
-          onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
-          disabled={offer.status !== "oferta_acceptata"}
-        >
-          Livrare în Procesare
-        </button>
-      </li>
-      <li>
-        <button
-          className="dropdown-item"
-          onClick={() => updateOfferStatus(offer._id, "livrata")}
-          disabled={offer.status !== "livrare_in_procesare"}
-        >
-          Livrată
-        </button>
-      </li>
-      <li>
-        <button
-          className="dropdown-item text-danger"
-          onClick={() => updateOfferStatus(offer._id, "anulata")}
-          disabled={offer.status === "anulata"}
-        >
-          Anulată
-        </button>
-      </li>
-    </ul>
-  </div>
-</td>
+                  <div className="dropdown">
+                <button
+                  className="btn btn-primary btn-sm dropdown-toggle position-static"
+                  type="button"
+                  id={`dropdown-${offer._id}`}
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  Acțiuni
+                </button>
+                <ul
+                  className="dropdown-menu dropdown-menu-end" /* Poziționează meniul în afara containerului */
+                  aria-labelledby={`dropdown-${offer._id}`}
+                >
+                  <li>
+                    <Link to={`/offer/${offer._id}`} className="dropdown-item">
+                      Detalii
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
+                      disabled={offer.status !== "oferta_acceptata"}
+                    >
+                      Livrare în Procesare
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => updateOfferStatus(offer._id, "livrata")}
+                      disabled={offer.status !== "livrare_in_procesare"}
+                    >
+                      Livrată
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item text-danger"
+                      onClick={() => updateOfferStatus(offer._id, "anulata")}
+                      disabled={offer.status === "anulata"}
+                    >
+                      Anulată
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              </td>
                 </tr>
               ))}
             </tbody>

@@ -4,8 +4,8 @@
   }
   
   .table-responsive {
-    overflow-x: auto;
-  }
+  overflow: visible !important; /* Permite conținutului să depășească containerul */
+}
   
   .table th, .table td {
     padding: 8px; /* Micșorăm padding-ul */
