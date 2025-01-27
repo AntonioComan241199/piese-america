@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Form } from "react-bootstrap";
+import { Modal, Button, Form, Tooltip, OverlayTrigger, Card, ButtonGroup } from "react-bootstrap";
 import locations from "../assets/locations.json";
 
 const SelectProductsModal = ({
@@ -16,6 +16,18 @@ const SelectProductsModal = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [totalSelectie, setTotalSelectie] = useState(0);
   const [showDecisionButtons, setShowDecisionButtons] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false); // Stare pentru noul modal
+
+  const [errors, setErrors] = useState({
+    billingCounty: "",
+    billingCity: "",
+    billingStreet: "",
+    billingNumber: "",
+    deliveryCounty: "",
+    deliveryStreet: "",
+    deliveryNumber: "",
+  });
+  
 
   const [billingAddress, setBillingAddress] = useState({
     street: "",
@@ -83,6 +95,7 @@ const SelectProductsModal = ({
             manufacturer: part.manufacturer || "N/A",
             pricePerUnit: part.pricePerUnit || 0,
             quantity: part.quantity || 0,
+            partCode: part.partCode || "N/A",
             total: part.total || 0,
           })) || []
         );
@@ -98,6 +111,7 @@ const SelectProductsModal = ({
               manufacturer: option.manufacturer,
               price: option.price,
               quantity: part.quantity,
+              partCode: part.partCode || "N/A",
             });
           });
         });
@@ -112,6 +126,7 @@ const SelectProductsModal = ({
               manufacturer: option.manufacturer,
               pricePerUnit: option.price,
               quantity: option.quantity,
+              partCode: option.partCode,
               total: 0,
             }))
           )
@@ -120,8 +135,6 @@ const SelectProductsModal = ({
     }
   }, [show, readonlyMode, offer]);
   
-  
-
   useEffect(() => {
     if (!readonlyMode && offer && Array.isArray(offer.parts)) {
       const grouped = {};
@@ -141,6 +154,7 @@ const SelectProductsModal = ({
               manufacturer: option.manufacturer || "N/A",
               price: option.price || 0,
               quantity: part.quantity, // Cantitatea specifică acestei opțiuni
+              partCode: part.partCode || "N/A",
               partId: part._id,
             });
           });
@@ -158,6 +172,7 @@ const SelectProductsModal = ({
           manufacturer: option.manufacturer,
           pricePerUnit: option.price,
           quantity: option.quantity,
+          partCode: option.partCode,
           total: 0,
         }))
       );
@@ -165,16 +180,11 @@ const SelectProductsModal = ({
     }
   }, [readonlyMode, offer]);
    
-      
-    
   useEffect(() => {
     if (isDeliverySame) {
       setDeliveryAddress(billingAddress);
     }
   }, [isDeliverySame, billingAddress]);
-
-  
-
 
   useEffect(() => {
     if (!readonlyMode && offer?.parts) {
@@ -189,6 +199,7 @@ const SelectProductsModal = ({
             manufacturer: option.manufacturer,
             price: option.price,
             quantity: part.quantity, // Cantitatea asociată acestei opțiuni
+            partCode: part.partCode || "N/A",
           });
         });
       });
@@ -202,6 +213,8 @@ const SelectProductsModal = ({
           include: false,
           quantity: option.quantity,
           pricePerUnit: option.price,
+          partCode: option.partCode,
+          manufacturer: option.manufacturer,
           total: 0,
         }))
       );
@@ -209,77 +222,10 @@ const SelectProductsModal = ({
     }
   }, [offer, readonlyMode]);
 
-
   useEffect(() => {
     const total = selections.reduce((sum, selection) => sum + (selection.include ? selection.total : 0), 0);
     setTotalSelectie(total);
   }, [selections])
-
-  const handleRadioChange = (partType, optionId) => {
-    setSelections((prevSelections) =>
-      prevSelections.map((selection) => {
-        if (selection.partType === partType) {
-          return {
-            ...selection,
-            include: selection.selectedOption === optionId, // Include doar opțiunea selectată
-            total: selection.selectedOption === optionId ? selection.pricePerUnit * selection.quantity : 0,
-          };
-        }
-        return selection;
-      })
-    );
-  };
-
-
-  const handleSelectChange = (partType, optionId) => {
-    setSelections((prevSelections) =>
-      prevSelections.map((selection) => {
-        if (selection.partType === partType) {
-          const group = groupedParts.find((g) => g.partType === partType);
-          const option = group?.options.find((o) => o.optionId === optionId);
-  
-          if (option) {
-            return {
-              ...selection,
-              selectedOption: optionId,
-              include: true,
-              manufacturer: option.manufacturer,
-              pricePerUnit: option.price,
-              quantity: option.quantity,
-              total: option.price * option.quantity,
-            };
-          }
-        }
-        return selection;
-      })
-    );
-  };
-  
-  
-  
-  
-  
-  
-  
-  
-  const handleCheckboxChange = (partType, optionId, checked) => {
-    setSelections((prevSelections) =>
-      prevSelections.map((selection) => {
-        if (selection.partType === partType && selection.selectedOption === optionId) {
-          return {
-            ...selection,
-            include: checked,
-            total: checked ? selection.pricePerUnit * selection.quantity : 0,
-          };
-        }
-        return selection;
-      })
-    );
-  };
-  
-  
-  
-
 
   const handleAddressChange = (field, value, addressType = "billing") => {
     const setAddress =
@@ -289,26 +235,98 @@ const SelectProductsModal = ({
   };
 
   const handleFinalizeSelections = () => {
-    onSaveSelection({
-      selectedParts: selections.filter(
-        (selection) => selection.include && selection.selectedOption
-      ),
-      billingAddress,
-      deliveryAddress: pickupAtCentral ? null : deliveryAddress,
-      pickupAtCentral,
-    });
-    setShowDecisionButtons(true); // Afișează butoanele "Acceptă" și "Respinge"
+    setShowConfirmationModal(true); // Deschide modalul de confirmare
   };
-  
 
-  const handleAcceptOffer = () => {
-    onAcceptOffer(offer._id);
-    setShowDecisionButtons(false); // Ascunde butoanele după acceptare
+  const handleOpenConfirmationModal = () => {
+    setShowConfirmationModal(true); // Afișează noul modal
+  };
+
+  const handleAcceptOffer = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("Autentificare necesară.");
+      }
+  
+      const dataToSave = {
+        selectedParts: selections.filter((selection) => selection.include && selection.selectedOption),
+        billingAddress,
+        deliveryAddress: pickupAtCentral ? null : deliveryAddress,
+        pickupAtCentral,
+      };
+  
+      // Salvează selecțiile
+      let response = await fetch(
+        `http://localhost:5000/api/offer/${offer._id}/selected-parts`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(dataToSave),
+        }
+      );
+  
+      let result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Eroare la salvarea selecțiilor.");
+      }
+  
+      // Schimbă statusul în "oferta_acceptata"
+      response = await fetch(`http://localhost:5000/api/offer/${offer._id}/accept`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Eroare la acceptarea ofertei.");
+      }
+  
+      alert("Oferta a fost acceptată cu succes!");
+      setShowConfirmationModal(false); // Închide modalul
+      onHide(); // Închide și modalul principal
+    } catch (error) {
+      console.error("Eroare:", error.message);
+      alert(`Eroare: ${error.message}`);
+    }
   };
   
-  const handleRejectOffer = () => {
-    onRejectOffer(offer._id);
-    setShowDecisionButtons(false); // Ascunde butoanele după respingere
+  const handleRejectOffer = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("Autentificare necesară.");
+      }
+  
+      const response = await fetch(
+        `http://localhost:5000/api/offer/${offer._id}/reject`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Eroare la respingerea ofertei.");
+      }
+  
+      alert("Oferta a fost respinsă cu succes!");
+      setShowConfirmationModal(false); // Închide modalul
+      onHide(); // Închide și modalul principal
+    } catch (error) {
+      console.error("Eroare:", error.message);
+      alert(`Eroare: ${error.message}`);
+    }
   };
 
   useEffect(() => {
@@ -319,208 +337,171 @@ const SelectProductsModal = ({
   }
 }, [offer]);
 
-  
+const handleSelectOption = (partType, optionId) => {
+  setSelections((prevSelections) =>
+    prevSelections.map((selection) => {
+      if (selection.partType === partType) {
+        const isSelected = selection.selectedOption === optionId;
+        return {
+          ...selection,
+          include: isSelected,
+          total: isSelected ? selection.pricePerUnit * selection.quantity : 0,
+        };
+      }
+      return selection;
+    })
+  );
+};
 
-  
-  
-  const renderStep1 = () => (
-    <Form>
-      {groupedParts.length > 0 ? (
-        groupedParts.map((group, index) => (
-          <div key={index} className="mb-4">
-            <h5 className="text-primary">{group.partType}</h5>
-            <div className="border rounded p-3">
-              {group.options.length > 1 ? (
-                group.options.map((option) => (
-                  <div key={option.optionId} className="d-flex justify-content-between align-items-center mb-2">
-                    <Form.Check
-                      type="radio"
-                      label={`${option.manufacturer} - ${option.price} RON/buc`}
-                      name={`part-${group.partType}`}
-                      checked={selections.some(
-                        (selection) =>
-                          selection.partType === group.partType &&
-                          selection.selectedOption === option.optionId &&
-                          selection.include
-                      )}
-                      onChange={() => handleRadioChange(group.partType, option.optionId)}
-                    />
-                    <span className="text-muted">
-                      Cantitate: {option.quantity} buc. -{" "}
-                      <strong>Subtotal: {option.price * option.quantity} RON</strong>
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div
-                  key={group.options[0]?.optionId}
-                  className="d-flex justify-content-between align-items-center mb-2"
-                >
-                  <Form.Check
-                    type="checkbox"
-                    label={`${group.options[0]?.manufacturer} - ${group.options[0]?.price} RON/buc`}
-                    checked={selections.some(
+const handleClearOption = (partType, optionId) => {
+  setSelections((prevSelections) =>
+    prevSelections.map((selection) => {
+      if (
+        selection.partType === partType &&
+        selection.selectedOption === optionId
+      ) {
+        return {
+          ...selection,
+          include: false,
+          total: 0,
+        };
+      }
+      return selection;
+    })
+  );
+};
+
+const renderStep1 = () => (
+  <Form>
+    <h4 className="mb-4 text-center text-primary">Selectează piesele dorite</h4>
+    <p className="text-muted mb-4 text-center">
+      Alege opțiunile pentru fiecare piesă disponibilă. Fiecare piesă este identificată printr-un cod unic
+      (<strong>Cod Piesă</strong>).
+    </p>
+
+    {groupedParts.length > 0 ? (
+      <div className="row">
+        {groupedParts.map((group, index) => (
+          <div key={index} className="col-12 col-md-6 col-lg-4 mb-4">
+            <Card className="shadow-sm h-100 border-0 rounded">
+              <Card.Header className="bg-primary text-white text-center rounded-top">
+                <h5 className="m-0">{group.partType}</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">
+                  Alege opțiunea potrivită pentru <strong>{group.partType}</strong>:
+                </p>
+                <ButtonGroup vertical className="w-100">
+                  {group.options.map((option) => {
+                    const isSelected = selections.some(
                       (selection) =>
                         selection.partType === group.partType &&
-                        selection.selectedOption === group.options[0]?.optionId &&
+                        selection.selectedOption === option.optionId &&
                         selection.include
-                    )}
-                    onChange={(e) =>
-                      handleCheckboxChange(
-                        group.partType,
-                        group.options[0]?.optionId,
-                        e.target.checked
-                      )
-                    }
-                  />
-                  <span className="text-muted">
-                    Cantitate: {group.options[0]?.quantity || 0} buc. -{" "}
-                    <strong>
-                      Subtotal: {group.options[0]?.price * (group.options[0]?.quantity || 0)} RON
-                    </strong>
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))
-      ) : (
-        <div className="alert alert-warning">Nu există piese disponibile pentru selecție.</div>
-      )}
-      <div className="d-flex justify-content-end mt-4">
-        <h5 className="text-primary">Total selecție: {totalSelectie} RON</h5>
-      </div>
-    </Form>
-  );
-  
-  
-  
-  
-  
-  
-  
+                    );
 
-  const renderStep2 = () => (
+                    return (
+                      <Button
+                        key={option.optionId}
+                        variant={isSelected ? "danger" : "outline-success"}
+                        className="mb-2 text-start py-3 d-flex justify-content-between align-items-center"
+                        onClick={() =>
+                          isSelected
+                            ? handleClearOption(group.partType, option.optionId)
+                            : handleSelectOption(group.partType, option.optionId)
+                        }
+                      >
+                        <div>
+                          <span
+                            className="badge bg-info text-dark me-2"
+                            style={{ fontSize: "0.85rem" }}
+                          >
+                            Cod piesă: {option.partCode}
+                          </span>
+                          <br />
+                          <strong>{option.manufacturer}</strong> - {option.price} RON/buc
+                          <br />
+                          <small className="text-muted">
+                            Subtotal: {option.price * option.quantity} RON
+                          </small>
+                        </div>
+                        <div
+                          className={`badge px-3 py-2 ${
+                            isSelected ? "bg-danger text-white" : "bg-success text-white"
+                          }`}
+                          style={{ fontSize: "0.85rem", fontWeight: "bold" }}
+                        >
+                          {isSelected ? "Elimină selecția" : "Selectează"}
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </ButtonGroup>
+              </Card.Body>
+              <Card.Footer className="text-center bg-light rounded-bottom">
+                <p className="text-muted small">
+                  Cod piesă afișat pentru fiecare opțiune. Apasă „Selectează” pentru a alege piesa.
+                </p>
+              </Card.Footer>
+            </Card>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="alert alert-warning text-center">
+        Nu există piese disponibile pentru selecție. Încearcă din nou mai târziu.
+      </div>
+    )}
+    <div className="d-flex justify-content-end mt-4">
+      <h5 className="text-primary">Total selecție: {totalSelectie} RON</h5>
+    </div>
+  </Form>
+);
+
+
+const renderStep2 = () => {
+  const validateStep2 = () => {
+    const newErrors = {};
+
+    // Validare facturare
+    if (!billingAddress.county) newErrors.billingCounty = "Județul este obligatoriu.";
+    if (!billingAddress.city) newErrors.billingCity = "Orașul este obligatoriu.";
+    if (!billingAddress.street) newErrors.billingStreet = "Strada este obligatorie.";
+    if (!billingAddress.number) newErrors.billingNumber = "Numărul este obligatoriu.";
+
+    // Validare livrare (dacă este activă)
+    if (!pickupAtCentral && !isDeliverySame) {
+      if (!deliveryAddress.county) newErrors.deliveryCounty = "Județul este obligatoriu.";
+      if (!deliveryAddress.city) newErrors.deliveryCity = "Orașul este obligatoriu.";
+      if (!deliveryAddress.street) newErrors.deliveryStreet = "Strada este obligatorie.";
+      if (!deliveryAddress.number) newErrors.deliveryNumber = "Numărul este obligatoriu.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // True dacă nu sunt erori
+  };
+
+  const handleNextStep = () => {
+    if (validateStep2()) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  return (
     <Form>
-      <h5>Adresa de facturare</h5>
-      <Form.Group controlId="billingCounty">
-        <Form.Label>Județ</Form.Label>
-        <Form.Control
-          as="select"
-          value={billingAddress.county}
-          onChange={(e) => handleAddressChange("county", e.target.value, "billing")}
-        >
-          <option value="">Selectează județul</option>
-          {counties.map((county) => (
-            <option key={county} value={county}>
-              {county}
-            </option>
-          ))}
-        </Form.Control>
-      </Form.Group>
-      {billingAddress.county && (
-        <Form.Group controlId="billingCity">
-          <Form.Label>Oraș</Form.Label>
-          <Form.Control
-            as="select"
-            value={billingAddress.city}
-            onChange={(e) => handleAddressChange("city", e.target.value, "billing")}
-          >
-            <option value="">Selectează orașul</option>
-            {citiesByCounty(billingAddress.county).map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </Form.Control>
-        </Form.Group>
-      )}
-      {/* Adresa detaliată */}
-      <Form.Group controlId="billingStreet">
-        <Form.Label>Stradă</Form.Label>
-        <Form.Control
-          type="text"
-          value={billingAddress.street}
-          onChange={(e) => handleAddressChange("street", e.target.value, "billing")}
-        />
-      </Form.Group>
-      <Form.Group controlId="billingNumber">
-        <Form.Label>Număr</Form.Label>
-        <Form.Control
-          type="text"
-          value={billingAddress.number}
-          onChange={(e) => handleAddressChange("number", e.target.value, "billing")}
-        />
-      </Form.Group>
-      <Form.Group controlId="billingBlock">
-        <Form.Label>Bloc</Form.Label>
-        <Form.Control
-          type="text"
-          value={billingAddress.block}
-          onChange={(e) => handleAddressChange("block", e.target.value, "billing")}
-        />
-      </Form.Group>
-      <Form.Group controlId="billingEntrance">
-        <Form.Label>Scară</Form.Label>
-        <Form.Control
-          type="text"
-          value={billingAddress.entrance}
-          onChange={(e) => handleAddressChange("entrance", e.target.value, "billing")}
-        />
-      </Form.Group>
-      <Form.Group controlId="billingApartment">
-        <Form.Label>Apartament</Form.Label>
-        <Form.Control
-          type="text"
-          value={billingAddress.apartment}
-          onChange={(e) => handleAddressChange("apartment", e.target.value, "billing")}
-        />
-      </Form.Group>
-  
-      <h5>Opțiuni de livrare</h5>
-      <Form.Group>
-      <Form.Check
-        type="radio"
-        label="Ridicare produse de la sediu central"
-        name="deliveryOption"
-        checked={pickupAtCentral}
-        onChange={() => {
-          setPickupAtCentral(true);
-          setIsDeliverySame(false); // Resetează opțiunea de copiere
-        }}
-      />
-        <Form.Check
-          type="radio"
-          label="Livrare la adresa specificată"
-          name="deliveryOption"
-          checked={!pickupAtCentral && !isDeliverySame}
-          onChange={() => {
-            setPickupAtCentral(false);
-            setIsDeliverySame(false); // Dezactivează opțiunea de copiere
-          }}
-        />
-      <Form.Check
-          type="radio"
-          label="Adresa de livrare este aceeași cu adresa de facturare"
-          name="deliveryOption"
-          checked={isDeliverySame}
-          onChange={() => {
-            setPickupAtCentral(false);
-            setIsDeliverySame(true);
-            setDeliveryAddress(billingAddress); // Copiază datele de facturare în livrare
-          }}
-        />
-      </Form.Group>
-  
-      {!pickupAtCentral && !isDeliverySame && (
-        <>
-          <h5>Adresa de livrare</h5>
-          <Form.Group controlId="deliveryCounty">
+      {/* Adresa de facturare */}
+      <div className="card mb-4 shadow-sm">
+        <div className="card-header bg-primary text-white">
+          <h5 className="m-0">Adresa de facturare</h5>
+        </div>
+        <div className="card-body">
+          <Form.Group controlId="billingCounty" className="mb-3">
             <Form.Label>Județ</Form.Label>
             <Form.Control
               as="select"
-              value={deliveryAddress.county}
-              onChange={(e) => handleAddressChange("county", e.target.value, "delivery")}
+              value={billingAddress.county}
+              onChange={(e) => handleAddressChange("county", e.target.value, "billing")}
+              isInvalid={!!errors.billingCounty}
             >
               <option value="">Selectează județul</option>
               {counties.map((county) => (
@@ -529,68 +510,206 @@ const SelectProductsModal = ({
                 </option>
               ))}
             </Form.Control>
+            {errors.billingCounty && <Form.Text className="text-danger">{errors.billingCounty}</Form.Text>}
           </Form.Group>
-          {deliveryAddress.county && (
-            <Form.Group controlId="deliveryCity">
+
+          {billingAddress.county && (
+            <Form.Group controlId="billingCity" className="mb-3">
               <Form.Label>Oraș</Form.Label>
               <Form.Control
                 as="select"
-                value={deliveryAddress.city}
-                onChange={(e) => handleAddressChange("city", e.target.value, "delivery")}
+                value={billingAddress.city}
+                onChange={(e) => handleAddressChange("city", e.target.value, "billing")}
               >
                 <option value="">Selectează orașul</option>
-                {citiesByCounty(deliveryAddress.county).map((city) => (
+                {citiesByCounty(billingAddress.county).map((city) => (
                   <option key={city} value={city}>
                     {city}
                   </option>
                 ))}
               </Form.Control>
+              {errors.billingCity && <Form.Text className="text-danger">{errors.billingCity}</Form.Text>}
             </Form.Group>
           )}
-          <Form.Group controlId="deliveryStreet">
-            <Form.Label>Stradă</Form.Label>
+
+          {/* Câmpuri obligatorii */}
+          <Form.Group controlId="billingStreet" className="mb-3">
+            <Form.Label>Strada</Form.Label>
             <Form.Control
               type="text"
-              value={deliveryAddress.street}
-              onChange={(e) => handleAddressChange("street", e.target.value, "delivery")}
+              value={billingAddress.street}
+              onChange={(e) => handleAddressChange("street", e.target.value, "billing")}
+              isInvalid={!!errors.billingStreet}
             />
+            {errors.billingStreet && (
+              <Form.Text className="text-danger">{errors.billingStreet}</Form.Text>
+            )}
           </Form.Group>
-          <Form.Group controlId="deliveryNumber">
+
+          <Form.Group controlId="billingNumber" className="mb-3">
             <Form.Label>Număr</Form.Label>
             <Form.Control
               type="text"
-              value={deliveryAddress.number}
-              onChange={(e) => handleAddressChange("number", e.target.value, "delivery")}
+              value={billingAddress.number}
+              onChange={(e) => handleAddressChange("number", e.target.value, "billing")}
+              isInvalid={!!errors.billingNumber}
             />
+            {errors.billingNumber && (
+              <Form.Text className="text-danger">{errors.billingNumber}</Form.Text>
+            )}
           </Form.Group>
-          <Form.Group controlId="deliveryBlock">
-            <Form.Label>Bloc</Form.Label>
-            <Form.Control
-              type="text"
-              value={deliveryAddress.block}
-              onChange={(e) => handleAddressChange("block", e.target.value, "delivery")}
-            />
-          </Form.Group>
-          <Form.Group controlId="deliveryEntrance">
-            <Form.Label>Scară</Form.Label>
-            <Form.Control
-              type="text"
-              value={deliveryAddress.entrance}
-              onChange={(e) => handleAddressChange("entrance", e.target.value, "delivery")}
-            />
-          </Form.Group>
-          <Form.Group controlId="deliveryApartment">
-            <Form.Label>Apartament</Form.Label>
-            <Form.Control
-              type="text"
-              value={deliveryAddress.apartment}
-              onChange={(e) => handleAddressChange("apartment", e.target.value, "delivery")}
-            />
-          </Form.Group>
-        </>
+
+          {/* Câmpuri opționale */}
+          {[
+            { field: "block", label: "Bloc" },
+            { field: "entrance", label: "Scară" },
+            { field: "apartment", label: "Apartament" },
+          ].map(({ field, label }, index) => (
+            <Form.Group key={index} controlId={`billing${field}`} className="mb-3">
+              <Form.Label>{label}</Form.Label>
+              <Form.Control
+                type="text"
+                value={billingAddress[field]}
+                onChange={(e) => handleAddressChange(field, e.target.value, "billing")}
+              />
+            </Form.Group>
+          ))}
+        </div>
+      </div>
+
+      {/* Opțiuni de livrare */}
+      <div className="card mb-4 shadow-sm">
+        <div className="card-header bg-secondary text-white">
+          <h5 className="m-0">Opțiuni de livrare</h5>
+        </div>
+        <div className="card-body">
+          <div className="d-flex flex-column gap-3">
+            <Button
+              variant={pickupAtCentral ? "success" : "outline-success"}
+              className="py-3"
+              onClick={() => {
+                setPickupAtCentral(true);
+                setIsDeliverySame(false);
+              }}
+            >
+              Ridicare produse de la sediu central
+            </Button>
+            <Button
+              variant={!pickupAtCentral && !isDeliverySame ? "success" : "outline-success"}
+              className="py-3"
+              onClick={() => {
+                setPickupAtCentral(false);
+                setIsDeliverySame(false);
+              }}
+            >
+              Livrare la adresa specificată
+            </Button>
+            <Button
+              variant={isDeliverySame ? "success" : "outline-success"}
+              className="py-3"
+              onClick={() => {
+                setPickupAtCentral(false);
+                setIsDeliverySame(true);
+                setDeliveryAddress(billingAddress);
+              }}
+            >
+              Adresa de livrare este aceeași cu adresa de facturare
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Adresa de livrare */}
+      {!pickupAtCentral && !isDeliverySame && (
+        <div className="card shadow-sm">
+          <div className="card-header bg-secondary text-white">
+            <h5 className="m-0">Adresa de livrare</h5>
+          </div>
+          <div className="card-body">
+            <Form.Group controlId="deliveryCounty" className="mb-3">
+              <Form.Label>Județ</Form.Label>
+              <Form.Control
+                as="select"
+                value={deliveryAddress.county}
+                onChange={(e) => handleAddressChange("county", e.target.value, "delivery")}
+                isInvalid={!!errors.deliveryCounty}
+              >
+                <option value="">Selectează județul</option>
+                {counties.map((county) => (
+                  <option key={county} value={county}>
+                    {county}
+                  </option>
+                ))}
+              </Form.Control>
+              {errors.deliveryCounty && <Form.Text className="text-danger">{errors.deliveryCounty}</Form.Text>}
+            </Form.Group>
+
+            {deliveryAddress.county && (
+              <Form.Group controlId="deliveryCity" className="mb-3">
+                <Form.Label>Oraș</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={deliveryAddress.city}
+                  onChange={(e) => handleAddressChange("city", e.target.value, "delivery")}
+                >
+                  <option value="">Selectează orașul</option>
+                  {citiesByCounty(deliveryAddress.county).map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+            )}
+
+            {/* Câmpuri obligatorii */}
+            <Form.Group controlId="deliveryStreet" className="mb-3">
+              <Form.Label>Strada</Form.Label>
+              <Form.Control
+                type="text"
+                value={deliveryAddress.street}
+                onChange={(e) => handleAddressChange("street", e.target.value, "delivery")}
+                isInvalid={!!errors.deliveryStreet}
+              />
+              {errors.deliveryStreet && (
+                <Form.Text className="text-danger">{errors.deliveryStreet}</Form.Text>
+              )}
+            </Form.Group>
+
+            <Form.Group controlId="deliveryNumber" className="mb-3">
+              <Form.Label>Număr</Form.Label>
+              <Form.Control
+                type="text"
+                value={deliveryAddress.number}
+                onChange={(e) => handleAddressChange("number", e.target.value, "delivery")}
+                isInvalid={!!errors.deliveryNumber}
+              />
+              {errors.deliveryNumber && (
+                <Form.Text className="text-danger">{errors.deliveryNumber}</Form.Text>
+              )}
+            </Form.Group>
+
+            {/* Câmpuri opționale */}
+            {[
+              { field: "block", label: "Bloc" },
+              { field: "entrance", label: "Scară" },
+              { field: "apartment", label: "Apartament" },
+            ].map(({ field, label }, index) => (
+              <Form.Group key={index} controlId={`delivery${field}`} className="mb-3">
+                <Form.Label>{label}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={deliveryAddress[field]}
+                  onChange={(e) => handleAddressChange(field, e.target.value, "delivery")}
+                />
+              </Form.Group>
+            ))}
+          </div>
+        </div>
       )}
     </Form>
   );
+};
 
   const renderStep3 = () => {
     const totalGeneral = selections.reduce((sum, selection) => {
@@ -599,152 +718,158 @@ const SelectProductsModal = ({
   
     return (
       <div>
-        <h5 className="mb-3">Rezumat selecții:</h5>
+        <h4 className="mb-4 text-center text-primary">Rezumat selecții</h4>
   
         {/* Listare piese selectate */}
-        {selections
-          .filter((selection) => selection.include && selection.selectedOption)
-          .map((selection, index) => (
-            <div key={index} className="mb-3">
-              <p>
-                <strong>Tip piesă:</strong> {selection.partType || "N/A"}
-              </p>
-              <p>
-                <strong>Producător:</strong>{" "}
-                {selection.manufacturer || "N/A"}
-              </p>
-              <p>
-                <strong>Cantitate:</strong> {selection.quantity || 0}
-              </p>
-              <p>
-                <strong>Preț/bucată:</strong>{" "}
-                {selection.pricePerUnit || 0} RON
-              </p>
-              <p>
-                <strong>Total:</strong> {selection.total || 0} RON
-              </p>
-              <hr />
-            </div>
-          ))}
+        <div className="row g-3">
+          {selections
+            .filter((selection) => selection.include && selection.selectedOption)
+            .map((selection, index) => (
+              <div key={index} className="col-12 col-md-6">
+                <div className="card shadow-sm">
+                  <div className="card-header bg-primary text-white text-center">
+                    <h5 className="m-0">{selection.partType || "Tip piesă necunoscut"}</h5>
+                  </div>
+                  <div className="card-body">
+                    <p><strong>Producător:</strong> {selection.manufacturer || "N/A"}</p>
+                    <p><strong>Cod piesă:</strong> {selection.partCode || "N/A"}</p>
+                    <p><strong>Cantitate:</strong> {selection.quantity || 0}</p>
+                    <p><strong>Preț/bucată:</strong> {selection.pricePerUnit || 0} RON</p>
+                    <p className="text-success"><strong>SubTotal:</strong> {selection.total || 0} RON</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+        </div>
   
         {/* Mesaj dacă nu există selecții */}
         {selections.filter((selection) => selection.include).length === 0 && (
-          <div className="text-danger mb-3">
+          <div className="alert alert-warning text-center mt-4">
             Nu există piese selectate.
           </div>
         )}
   
         {/* Total general */}
-        <div className="mb-4">
-          <h5 className="text-primary">Total general:</h5>
-          <p><strong>{totalGeneral || 0} RON</strong></p>
+        <div className="card my-4">
+          <div className="card-body text-center">
+            <h5 className="text-primary">Total general:</h5>
+            <h3 className="text-success">{totalGeneral || 0} RON</h3>
+          </div>
         </div>
   
         {/* Adresa de facturare */}
-        <div className="mb-4">
-          <h5 className="text-primary">Adresa de facturare:</h5>
-          {Object.values(billingAddress).filter((field) => field).length > 0 ? (
-            <div>
-              {billingAddress.street && <p>Stradă: {billingAddress.street}</p>}
-              {billingAddress.number && <p>Număr: {billingAddress.number}</p>}
-              {billingAddress.block && <p>Bloc: {billingAddress.block}</p>}
-              {billingAddress.entrance && <p>Scară: {billingAddress.entrance}</p>}
-              {billingAddress.apartment && <p>Apartament: {billingAddress.apartment}</p>}
-              {billingAddress.city && <p>Oraș: {billingAddress.city}</p>}
-              {billingAddress.county && <p>Județ: {billingAddress.county}</p>}
-            </div>
-          ) : (
-            <p className="text-danger">Adresa de facturare nu a fost specificată.</p>
-          )}
+        <div className="card mb-4">
+          <div className="card-header bg-secondary text-white">
+            <h5 className="m-0">Adresa de facturare</h5>
+          </div>
+          <div className="card-body">
+            {Object.values(billingAddress).filter((field) => field).length > 0 ? (
+              <ul className="list-group list-group-flush">
+                {billingAddress.street && <li className="list-group-item">Stradă: {billingAddress.street}</li>}
+                {billingAddress.number && <li className="list-group-item">Număr: {billingAddress.number}</li>}
+                {billingAddress.block && <li className="list-group-item">Bloc: {billingAddress.block}</li>}
+                {billingAddress.entrance && <li className="list-group-item">Scară: {billingAddress.entrance}</li>}
+                {billingAddress.apartment && <li className="list-group-item">Apartament: {billingAddress.apartment}</li>}
+                {billingAddress.city && <li className="list-group-item">Oraș: {billingAddress.city}</li>}
+                {billingAddress.county && <li className="list-group-item">Judet: {billingAddress.county}</li>}
+              </ul>
+            ) : (
+              <p className="text-danger">Adresa de facturare nu a fost specificată.</p>
+            )}
+          </div>
         </div>
   
         {/* Adresa de livrare */}
-        <div className="mb-4">
-          <h5 className="text-primary">Adresa de livrare:</h5>
-          {pickupAtCentral ? (
-            <p>Ridicare de la sediu central</p>
-          ) : Object.values(deliveryAddress).filter((field) => field).length > 0 ? (
-            <div>
-              {deliveryAddress.street && <p>Stradă: {deliveryAddress.street}</p>}
-              {deliveryAddress.number && <p>Număr: {deliveryAddress.number}</p>}
-              {deliveryAddress.block && <p>Bloc: {deliveryAddress.block}</p>}
-              {deliveryAddress.entrance && <p>Scară: {deliveryAddress.entrance}</p>}
-              {deliveryAddress.apartment && <p>Apartament: {deliveryAddress.apartment}</p>}
-              {deliveryAddress.city && <p>Oraș: {deliveryAddress.city}</p>}
-              {deliveryAddress.county && <p>Județ: {deliveryAddress.county}</p>}
-            </div>
-          ) : (
-            <p className="text-danger">Adresa de livrare nu a fost specificată.</p>
-          )}
-        </div>
-  
-        {/* Butoane pentru Acceptare/Respingere */}
-        {showDecisionButtons && (
-          <div className="d-flex justify-content-end">
-            <Button
-              variant="success"
-              onClick={handleAcceptOffer}
-              className="me-2"
-            >
-              Acceptă
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleRejectOffer}
-            >
-              Respinge
-            </Button>
+        <div className="card mb-4">
+          <div className="card-header bg-secondary text-white">
+            <h5 className="m-0">Adresa de livrare</h5>
           </div>
-        )}
+          <div className="card-body">
+            {pickupAtCentral ? (
+              <p>Ridicare de la sediu central</p>
+            ) : Object.values(deliveryAddress).filter((field) => field).length > 0 ? (
+              <ul className="list-group list-group-flush">
+                {deliveryAddress.street && <li className="list-group-item">Stradă: {deliveryAddress.street}</li>}
+                {deliveryAddress.number && <li className="list-group-item">Număr: {deliveryAddress.number}</li>}
+                {deliveryAddress.block && <li className="list-group-item">Bloc: {deliveryAddress.block}</li>}
+                {deliveryAddress.entrance && <li className="list-group-item">Scară: {deliveryAddress.entrance}</li>}
+                {deliveryAddress.apartment && <li className="list-group-item">Apartament: {deliveryAddress.apartment}</li>}
+                {deliveryAddress.city && <li className="list-group-item">Oraș: {deliveryAddress.city}</li>}
+                {deliveryAddress.county && <li className="list-group-item">Județ: {deliveryAddress.county}</li>}
+              </ul>
+            ) : (
+              <p className="text-danger">Adresa de livrare nu a fost specificată.</p>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
 
-  
-  
-  
-  
-  
-
   return (
-    <Modal show={show} onHide={onHide} size="lg" centered>
-      <Modal.Header closeButton>
-        <Modal.Title>
-          {readonlyMode
-            ? "Vizualizare selecții ofertă"
-            : `Pasul ${currentStep} - ${currentStep === 1 ? "Selectează piese" : "Adaugă detalii"}`}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {currentStep === 1 && !readonlyMode && renderStep1()}
-        {currentStep === 2 && !readonlyMode && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-      </Modal.Body>
-      <Modal.Footer>
-        {!readonlyMode && currentStep > 1 && (
-          <Button variant="secondary" onClick={() => setCurrentStep(currentStep - 1)}>
-            Înapoi
+    <>
+      <Modal show={show} onHide={onHide} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {readonlyMode
+              ? "Vizualizare selecții ofertă"
+              : `Pasul ${currentStep} - ${currentStep === 1 ? "Selectează piese" : "Adaugă detalii"}`}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {currentStep === 1 && !readonlyMode && renderStep1()}
+          {currentStep === 2 && !readonlyMode && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+        </Modal.Body>
+        <Modal.Footer>
+          {!readonlyMode && currentStep > 1 && (
+            <Button variant="secondary" onClick={() => setCurrentStep(currentStep - 1)}>
+              Înapoi
+            </Button>
+          )}
+          {!readonlyMode && currentStep < 3 && (
+            <Button variant="primary" onClick={() => setCurrentStep(currentStep + 1)}>
+              Înainte
+            </Button>
+          )}
+          {currentStep === 3 && readonlyMode && (
+            <Button variant="secondary" onClick={onHide}>
+              Închide
+            </Button>
+          )}
+          {currentStep === 3 && !readonlyMode && (
+            <Button variant="success" onClick={handleFinalizeSelections}>
+              Finalizează
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
+  
+      {/* Modal pentru Acceptare/Respingere */}
+      <Modal show={showConfirmationModal} onHide={() => setShowConfirmationModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmare acțiune</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-center fs-5">
+            <strong>Ești sigur că dorești să finalizezi oferta?</strong>
+          </p>
+          <p className="text-muted text-center">
+            <small>Acceptarea trimite oferta spre procesare, iar respingerea o anulează.</small>
+          </p>
+        </Modal.Body>
+        <Modal.Footer className="d-flex justify-content-center">
+          <Button variant="success" className="px-4 py-2" onClick={handleAcceptOffer}>
+            Acceptă
           </Button>
-        )}
-        {!readonlyMode && currentStep < 3 && (
-          <Button variant="primary" onClick={() => setCurrentStep(currentStep + 1)}>
-            Înainte
+          <Button variant="danger" className="px-4 py-2" onClick={handleRejectOffer}>
+            Respinge
           </Button>
-        )}
-        {currentStep === 3 && readonlyMode && (
-          <Button variant="secondary" onClick={onHide}>
-            Închide
-          </Button>
-        )}
-        {currentStep === 3 && !readonlyMode && !showDecisionButtons && (
-          <Button variant="success" onClick={handleFinalizeSelections}>
-            Finalizează
-          </Button>
-)}
-
-      </Modal.Footer>
-    </Modal>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
+  
 };
 
 export default SelectProductsModal;

@@ -180,7 +180,6 @@ const AdminOffers = () => {
           >
             <option value="">Toate Statusurile</option>
             <option value="proiect">Proiect</option>
-            <option value="comanda_spre_finalizare">Comandă spre Finalizare</option>
             <option value="oferta_acceptata">Ofertă Acceptată</option>
             <option value="livrare_in_procesare">Livrare în Procesare</option>
             <option value="livrata">Livrată</option>

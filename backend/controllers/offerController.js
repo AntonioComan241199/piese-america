@@ -157,7 +157,6 @@ export const selectOptions = async (req, res, next) => {
       (sum, part) => sum + part.total,
       0
     );
-    offer.status = "comanda_spre_finalizare";
 
     await offer.save();
 
@@ -192,11 +191,7 @@ export const acceptOffer = async (req, res, next) => {
       return next(errorHandler(404, "Oferta nu a fost găsită."));
     }
 
-    if (offer.status !== "comanda_spre_finalizare") {
-      await session.abortTransaction();
-      session.endSession();
-      return next(errorHandler(400, "Oferta nu poate fi acceptată în acest moment."));
-    }
+
 
     offer.status = "oferta_acceptata";
     await offer.save({ session });
@@ -235,9 +230,7 @@ export const rejectOffer = async (req, res, next) => {
     const offer = await Offer.findById(req.params.offerId);
     if (!offer) return next(errorHandler(404, "Oferta nu a fost găsită."));
 
-    if (offer.status !== "comanda_spre_finalizare") {
-      return next(errorHandler(400, "Oferta nu poate fi anulată în acest moment."));
-    }
+
 
     offer.status = "anulata";
     await offer.save();
@@ -347,7 +340,6 @@ export const getUserOffers = async (req, res, next) => {
       const validStatuses = [
         "proiect",
         "trimisa",
-        "comanda_spre_finalizare",
         "oferta_acceptata",
         "livrare_in_procesare",
         "livrata",
@@ -454,7 +446,7 @@ export const getAllOffers = async (req, res, next) => {
     // Filtrare după status
     if (status) {
       const validStatuses = [
-        "proiect", "trimisa", "comanda_spre_finalizare", "oferta_acceptata", 
+        "proiect", "trimisa", "oferta_acceptata", 
         "livrare_in_procesare", "livrata", "anulata"
       ];
       if (!validStatuses.includes(status)) {
@@ -623,7 +615,7 @@ export const updateOffer = async (req, res, next) => {
 
     // Actualizare status
     if (status) {
-      const validStatuses = ["proiect", "trimisa", "comanda_spre_finalizare", "oferta_acceptata"];
+      const validStatuses = ["proiect", "trimisa", "oferta_acceptata"];
       if (!validStatuses.includes(status)) {
         return next(errorHandler(400, "Status invalid."));
       }
@@ -633,6 +625,35 @@ export const updateOffer = async (req, res, next) => {
     await offer.save();
 
     res.status(200).json({ success: true, message: "Oferta a fost actualizata cu succes.", offer });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateOfferStatus = async (req, res, next) => {
+  try {
+    const { offerId } = req.params;
+    const { status } = req.body;
+
+    // Verificare status valid
+    const validStatuses = ["proiect", "oferta_acceptata", "oferta_respinsa"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Status invalid." });
+    }
+
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+      return res.status(404).json({ message: "Oferta nu a fost găsită." });
+    }
+
+    offer.status = status;
+    await offer.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Statusul ofertei a fost actualizat la ${status}.`,
+      offer,
+    });
   } catch (error) {
     next(error);
   }
@@ -698,7 +719,6 @@ export const updateSelectedParts = async (req, res, next) => {
     offer.billingAddress = billingAddress;
     offer.deliveryAddress = pickupAtCentral ? null : deliveryAddress;
     offer.pickupAtCentral = pickupAtCentral;
-    offer.status = "comanda_spre_finalizare";
 
     const updatedOffer = await offer.save();
 
@@ -897,7 +917,6 @@ export const finalizeOffer = async (req, res, next) => {
 
     offer.selectedParts = updatedSelectedParts;
     offer.total = updatedTotal;
-    offer.status = "comanda_spre_finalizare";
     offer.billingAddress = billingAddress;
     offer.deliveryAddress = pickupAtCentral ? null : deliveryAddress;
     offer.pickupAtCentral = pickupAtCentral;

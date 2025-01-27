@@ -15,7 +15,8 @@ import {
   getOfferStats,
   updateQuantities,
   finalizeOffer,
-  sendOfferEmail
+  sendOfferEmail,
+  updateOfferStatus
 } from "../controllers/offerController.js";
 import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
@@ -67,6 +68,10 @@ router.patch("/:offerId/reject", verifyToken, rejectOffer);
 
 // Selectarea pieselor (client)
 router.patch("/:offerId/selected-parts", verifyToken, updateSelectedParts);
+
+// Actualizare status ofertă
+router.patch("/:offerId/update-status", verifyToken, updateOfferStatus);
+
 
 // Actualizare cantități piese (client)
 router.patch("/:offerId/update-quantities", verifyToken, updateQuantities);
