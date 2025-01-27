@@ -2,6 +2,7 @@ import Order from "../models/Order.js";
 import Counter from "../models/Counter.js";
 import Notification from "../models/Notification.js";
 import { errorHandler } from "../utils/error.js";
+import { getAuthenticatedUser } from "./userController.js";
 
 // Creare cerere de ofertă
 export const createOrder = async (req, res, next) => {
@@ -277,6 +278,11 @@ export const addCommentToOrder = async (req, res, next) => {
   try {
     const { text } = req.body;
 
+    // Verificăm dacă utilizatorul este autenticat
+    if (!req.user) {
+      return next(errorHandler(401, "Autentificare necesară."));
+    }
+
     // Caută cererea după ID
     const order = await Order.findById(req.params.id);
     if (!order) {
@@ -292,7 +298,7 @@ export const addCommentToOrder = async (req, res, next) => {
     } else if (req.user.userType === "persoana_juridica" && req.user.companyDetails?.companyName) {
       userName = req.user.companyDetails.companyName;
     } else {
-      userName = "Utilizator necunoscut";
+      userName = "Client";
     }
 
     // Creează comentariul
@@ -305,11 +311,14 @@ export const addCommentToOrder = async (req, res, next) => {
     order.comments.push(comment);
     await order.save();
 
+    // Trimite răspunsul
     res.status(200).json({ success: true, comments: order.comments });
   } catch (error) {
-    next(error);
+    next(error); // Tratează eroarea cu middleware-ul de erori
   }
 };
+
+
 
 
 // Ștergere cerere de ofertă

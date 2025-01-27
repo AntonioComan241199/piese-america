@@ -5,17 +5,12 @@ import { body, validationResult } from "express-validator";
 import nodemailer from "nodemailer";
 
 // Funcții auxiliare pentru generarea token-urilor
-export const generateAccessToken = (user) => {
-  const payload = {
-    id: user._id,
-    role: user.role,
-    userType: user.userType,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    companyDetails: user.companyDetails, // Include informațiile despre companie
-  };
-
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1d" });
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    { id: user._id, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
 };
 
 const generateRefreshToken = (user) => {

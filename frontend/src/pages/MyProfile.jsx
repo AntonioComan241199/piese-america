@@ -2,6 +2,19 @@ import React, { useEffect, useReducer, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { logout } from "../slices/authSlice";
+import locations from "../assets/locations.json";
+
+const counties = [...new Set(locations.map((location) => location.judet))].sort((a, b) => {
+  if (a === "BUCURESTI") return -1;
+  if (b === "BUCURESTI") return 1;
+  return a.localeCompare(b);
+});
+
+const citiesByCounty = (county) =>
+  locations
+      .filter((location) => location.judet === county)
+      .map((location) => location.nume)
+      .sort((a, b) => a.localeCompare(b));
 
 const initialState = {
   profile: null,
@@ -179,28 +192,35 @@ const MyProfile = () => {
 
         
 
-        {state.activeSection === "editBilling" && (
+{state.activeSection === "editBilling" && (
           <>
             <h4>Editează Date de Facturare</h4>
             <div className="mb-3">
               <label htmlFor="billingCounty" className="form-label">Județ</label>
-              <input
-                type="text"
+              <select
                 className="form-control"
                 id="billingCounty"
                 value={state.updatedData.billingAddress?.county || ""}
-                onChange={(e) =>
+                onChange={(e) => {
                   localDispatch({
                     type: "UPDATE_BILLING_ADDRESS",
                     payload: { county: e.target.value },
-                  })
-                }
-              />
+                  });
+                  localDispatch({
+                    type: "UPDATE_BILLING_ADDRESS",
+                    payload: { city: "" }, // Reset city when county changes
+                  });
+                }}
+              >
+                <option value="">Selectează județul</option>
+                {counties.map((county) => (
+                  <option key={county} value={county}>{county}</option>
+                ))}
+              </select>
             </div>
             <div className="mb-3">
               <label htmlFor="billingCity" className="form-label">Oraș</label>
-              <input
-                type="text"
+              <select
                 className="form-control"
                 id="billingCity"
                 value={state.updatedData.billingAddress?.city || ""}
@@ -210,7 +230,13 @@ const MyProfile = () => {
                     payload: { city: e.target.value },
                   })
                 }
-              />
+                disabled={!state.updatedData.billingAddress?.county}
+              >
+                <option value="">Selectează orașul</option>
+                {(citiesByCounty(state.updatedData.billingAddress?.county) || []).map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
             </div>
             <div className="mb-3">
               <label htmlFor="billingStreet" className="form-label">Stradă</label>
