@@ -167,7 +167,6 @@ table {
   border-collapse: collapse;
   background-color: var(--white-color);
   border-radius: var(--border-radius);
-  overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -177,7 +176,7 @@ th, td {
   text-align: left;
   border: 1px solid var(--light-color);
   white-space: nowrap !important; /* Evită ca textele să rupă layout-ul */
-  overflow: hidden;
+  overflow: visible !important; /* Evită ca textele să fie ascunse */
   text-overflow: ellipsis;
 }
 
@@ -248,7 +247,11 @@ tr:hover {
 .table-responsive {
   width: 100%;
   max-width: 100%;
+  overflow: visible !important; /* 🔹 Permite dropdown-ului să fie vizibil */
   overflow-x: auto !important; /* IMPORTANT: Forțează scroll orizontal */
   -webkit-overflow-scrolling: touch; /* Scroll fluid pe mobile */
   display: block !important; /* IMPORTANT: Asigură că div-ul este vizibil */
+  position: relative !important; /* 🔹 Asigură poziționarea */
+
 }
+

@@ -365,34 +365,35 @@ const OfferDetail = () => {
             <Col md={6}>
               <h5>Adresa de Facturare:</h5>
               <p>
-              {offer.billingAddress
-                ? [
-                    "Strada " + offer.billingAddress.street,
-                    "Nr. " + offer.billingAddress.number,
-                    "Bloc " + offer.billingAddress.block,
-                    "Sc. " + offer.billingAddress.entrance,
-                    "Ap. " + offer.billingAddress.apartment,
-                    offer.billingAddress.city,
-                    offer.billingAddress.county,
-                  ]
-                    .filter(Boolean) // Elimină valorile null, undefined sau stringuri goale
-                    .join(", ") // Concatenează doar valorile valide
-                : "Adresa de facturare nu este disponibilă - Produse Neselectate"}
+                {offer.billingAddress
+                  ? [
+                      offer.billingAddress.street ? `Strada ${offer.billingAddress.street}` : null,
+                      offer.billingAddress.number ? `Nr. ${offer.billingAddress.number}` : null,
+                      offer.billingAddress.block ? `Bloc ${offer.billingAddress.block}` : null,
+                      offer.billingAddress.entrance ? `Sc. ${offer.billingAddress.entrance}` : null,
+                      offer.billingAddress.apartment ? `Ap. ${offer.billingAddress.apartment}` : null,
+                      offer.billingAddress.city ? offer.billingAddress.city : null,
+                      offer.billingAddress.county ? offer.billingAddress.county : null,
+                    ]
+                      .filter(Boolean) // Elimină orice valoare null, undefined sau string gol
+                      .join(", ") // Concatenează doar valorile valide
+                  : "Adresa de facturare nu este disponibilă - Produse Neselectate"}
               </p>
+
               <h5>Adresa de Livrare:</h5>
               <p>
                 {offer.pickupAtCentral
                   ? "Ridicare de la sediul central"
                   : offer.deliveryAddress
                   ? [
-                      "Strada " + offer.deliveryAddress.street,
-                      "Nr. " + offer.deliveryAddress.number,
-                      "Bloc " + offer.deliveryAddress.block,
-                      "Sc. " + offer.deliveryAddress.entrance,
-                      "Ap. " + offer.deliveryAddress.apartment,
-                      offer.deliveryAddress.city,
-                      offer.deliveryAddress.county,
-                    ]
+                    offer.deliveryAddress.street ? `Strada ${offer.deliveryAddress.street}` : null,
+                    offer.deliveryAddress.number ? `Nr. ${offer.deliveryAddress.number}` : null,
+                    offer.deliveryAddress.block ? `Bloc ${offer.deliveryAddress.block}` : null,
+                    offer.deliveryAddress.entrance ? `Sc. ${offer.deliveryAddress.entrance}` : null,
+                    offer.deliveryAddress.apartment ? `Ap. ${offer.deliveryAddress.apartment}` : null,
+                    offer.deliveryAddress.city ? offer.deliveryAddress.city : null,
+                    offer.deliveryAddress.county ? offer.deliveryAddress.county : null,
+                  ]
                       .filter(Boolean) // Elimină valorile goale
                       .join(", ")
                   : "Adresa de livrare nu este disponibilă - Produse Neselectate"}

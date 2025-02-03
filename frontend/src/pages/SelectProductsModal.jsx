@@ -958,7 +958,11 @@ const renderStep2 = () => {
             </Button>
           )}
           {!readonlyMode && currentStep < 3 && (
-            <Button variant="primary" onClick={() => setCurrentStep(currentStep + 1)}>
+            <Button
+              variant="primary"
+              onClick={() => setCurrentStep(currentStep + 1)}
+              disabled={currentStep === 1 && !selections.some((selection) => selection.include)} // Blochează trecerea dacă nu sunt piese selectate
+            >
               Înainte
             </Button>
           )}

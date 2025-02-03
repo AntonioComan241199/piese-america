@@ -67,3 +67,14 @@
     }
   }
   
+
+  .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important; /* 🔹 Permite dropdown-ului să fie vizibil */
+    overflow-x: auto !important; /* IMPORTANT: Forțează scroll orizontal */
+    -webkit-overflow-scrolling: touch; /* Scroll fluid pe mobile */
+    display: block !important; /* IMPORTANT: Asigură că div-ul este vizibil */
+    position: relative !important; /* 🔹 Asigură poziționarea */
+  }
+  
