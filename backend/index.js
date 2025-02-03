@@ -25,10 +25,16 @@ app.use(express.json()); // Pentru parsarea datelor JSON
 app.use(cookieParser()); // Pentru parsarea cookie-urilor
 
 // Middleware pentru CORS
+const allowedOrigins = [
+  "http://localhost:5173",  // Vite dev server
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // URL-ul frontend-ului
-    credentials: true, // Permite trimiterea cookie-urilor sau header-ului Authorization
+    origin: allowedOrigins,
+    credentials: true, // Permite trimiterea cookie-urilor sau a header-ului Authorization
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Permite doar metodele necesare
+    allowedHeaders: ["Content-Type", "Authorization"], // Permite doar aceste headere
   })
 );
 

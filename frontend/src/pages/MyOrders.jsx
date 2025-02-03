@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { Table, Container, Button, Alert, Spinner } from "react-bootstrap";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const MyOrders = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -27,7 +29,7 @@ const MyOrders = () => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
-        `http://localhost:5000/api/orders/client/orders${
+        `${API_URL}/orders/client/orders${
           statusFilter || orderNumberFilter || orderDateFilter
             ? `?status=${statusFilter}&orderNumber=${orderNumberFilter}&orderDate=${orderDateFilter}&page=${currentPage}`
             : `?page=${currentPage}`

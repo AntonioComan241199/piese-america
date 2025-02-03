@@ -5,6 +5,9 @@ import { useDispatch } from "react-redux";
 import { login } from "../slices/authSlice";
 import { Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+
 const Signin = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -35,7 +38,7 @@ const Signin = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signin", {
+      const response = await fetch(`${API_URL}/auth/signin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,6 +50,9 @@ const Signin = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || "Autentificare eșuată.");
       }
+
+      console.log("API URL:", import.meta.env.VITE_API_URL);
+
 
       const data = await response.json();
 

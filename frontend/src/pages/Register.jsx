@@ -4,6 +4,8 @@ import { Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { login } from "../slices/authSlice";
 import Logo from "../assets/all-images/Logo.webp";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -76,7 +78,7 @@ export default function Register() {
     setLoading(true);
     try {
       // Înregistrare utilizator
-      const response = await fetch("http://localhost:5000/api/auth/signup", {
+      const response = await fetch(`${API_URL}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -88,7 +90,7 @@ export default function Register() {
       }
 
       // Login automat după înregistrare
-      const loginResponse = await fetch("http://localhost:5000/api/auth/signin", {
+      const loginResponse = await fetch(`${API_URL}/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email, password: formData.password }),

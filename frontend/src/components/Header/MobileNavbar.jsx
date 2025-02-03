@@ -6,6 +6,10 @@ import PropTypes from "prop-types";
 const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
   const [isExpanded, setIsExpanded] = useState(false); // Stare pentru navbar
 
+  const filteredNavLinks = navLinks.filter(
+    (item) => !(item.path === "/request-order" && isAuthenticated && user?.role === "admin")
+  );
+
   const handleNavLinkClick = () => {
     setIsExpanded(false); // Închide meniul după selectarea unei opțiuni
     window.scrollTo({ top: 0, behavior: "smooth" }); // Mergem în partea de sus a paginii
@@ -39,7 +43,7 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
         <Navbar.Collapse id="mobile-navbar">
           <Nav className="ms-auto">
             {/* Link-uri generale de navigare */}
-            {navLinks.map((item, index) => (
+            {filteredNavLinks.map((item, index) => (
               <Nav.Link
                 key={index}
                 as={NavLink}

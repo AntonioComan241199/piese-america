@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Form, Alert, Spinner } from "react-bootstrap";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const ResetPasswordRequest = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +18,7 @@ const ResetPasswordRequest = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/request-password-reset", {
+      const response = await fetch(`${API_URL}/auth/request-password-reset`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

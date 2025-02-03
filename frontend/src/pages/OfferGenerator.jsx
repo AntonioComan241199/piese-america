@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const OfferGenerator = () => {
   const { orderId } = useParams(); // Extrage `orderId` din URL
@@ -18,11 +20,11 @@ const OfferGenerator = () => {
       setLoading(true);
       setError("");
       try {
-        const orderResponse = await fetchWithAuth(`http://localhost:5000/api/order/${orderId}`);
+        const orderResponse = await fetchWithAuth(`${API_URL}/order/${orderId}`);
         setOrder(orderResponse.data);
 
         // Verificăm dacă există deja o ofertă pentru această comandă
-        const offerResponse = await fetchWithAuth(`http://localhost:5000/api/offer/order/${orderId}`);
+        const offerResponse = await fetchWithAuth(`${API_URL}/offer/order/${orderId}`);
         if (offerResponse.length > 0) {
           setOffer(offerResponse[0]); // Afișăm doar prima ofertă asociată
           setParts(offerResponse[0].parts);
@@ -57,14 +59,14 @@ const OfferGenerator = () => {
   // Trimite oferta către backend
   const handleSubmitOffer = async () => {
     try {
-      const response = await fetchWithAuth("http://localhost:5000/api/offer/create", {
+      const response = await fetchWithAuth(`${API_URL}/offer/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId, parts, total }),
       });
 
       // Actualizează statusul cererii de ofertare
-      await fetchWithAuth(`http://localhost:5000/api/order/${orderId}`, {
+      await fetchWithAuth(`${API_URL}/order/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "oferta_trimisa" }),

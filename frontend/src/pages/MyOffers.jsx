@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import SelectProductsModal from "./SelectProductsModal";
 import "../styles/MyOffers.css";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 
 const MyOffers = () => {
@@ -37,7 +38,7 @@ const MyOffers = () => {
         Authorization: `Bearer ${token}`,
       };
 
-      const url = new URL("http://localhost:5000/api/offer/client");
+      const url = new URL(`${API_URL}/offer/client`);
       url.searchParams.append("page", currentPage);
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("offerNumber", offerNumber);
@@ -111,7 +112,7 @@ const MyOffers = () => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/offer/${selectedOffer._id}/selected-parts`,
+        `${API_URL}/offer/${selectedOffer._id}/selected-parts`,
         {
           method: "PATCH",
           headers: {
@@ -143,7 +144,7 @@ const MyOffers = () => {
       const token = localStorage.getItem("accessToken");
   
       const response = await fetch(
-        `http://localhost:5000/api/offer/${offerId}/accept`,
+        `${API_URL}/offer/${offerId}/accept`,
         {
           method: "PATCH",
           headers: {
@@ -171,7 +172,7 @@ const MyOffers = () => {
       const token = localStorage.getItem("accessToken");
   
       const response = await fetch(
-        `http://localhost:5000/api/offer/${offerId}/reject`,
+        `${API_URL}/${offerId}/reject`,
         {
           method: "PATCH",
           headers: {

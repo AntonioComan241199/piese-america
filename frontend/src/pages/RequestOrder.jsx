@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import "../styles/RequestOrder.css";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+const CLIENT_URL = import.meta.env.CLIENT_URL = "http://localhost:5173/";
+
 
 const initialFormData = {
   userType: "persoana_fizica", // Default: persoana fizică
@@ -64,7 +68,7 @@ const RequestOrder = () => {
 
   const prepopulateUserData = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/user/me", {
+      const response = await fetch(`${API_URL}/user/me`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -102,7 +106,7 @@ const RequestOrder = () => {
 
   const fetchYears = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/cars/years");
+      const response = await fetch(`${API_URL}/cars/years`);
       if (response.ok) {
         const data = await response.json();
         setYears(Array.isArray(data.years) ? data.years : []);
@@ -118,7 +122,7 @@ const RequestOrder = () => {
 
   const fetchMakes = async (year) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/cars/makes?year=${year}`);
+      const response = await fetch(`${API_URL}/cars/makes?year=${year}`);
       if (response.ok) {
         const data = await response.json();
         setMakes(Array.isArray(data.makes) ? data.makes : []);
@@ -134,7 +138,7 @@ const RequestOrder = () => {
 
   const fetchModels = async (year, make) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/cars/models?year=${year}&make=${make}`);
+      const response = await fetch(`${API_URL}/cars/models?year=${year}&make=${make}`);
       if (response.ok) {
         const data = await response.json();
         setModels(Array.isArray(data.models) ? data.models : []);
@@ -180,7 +184,7 @@ const RequestOrder = () => {
   
       console.log("Trimitem datele:", formData); // Log pentru debug
   
-      const response = await fetch("http://localhost:5000/api/orders", {
+      const response = await fetch(`${API_URL}/orders`, {
         method: "POST",
         headers,
         body: JSON.stringify(formData),
@@ -199,8 +203,8 @@ const RequestOrder = () => {
       }
   
       // Trimiterea email-ului către admin
-      const orderLink = `http://localhost:5173/orders/${orderId}`;
-      const emailResponse = await fetch("http://localhost:5000/api/orders/send-email", {
+      const orderLink = `${CLIENT_URL}/orders/${orderId}`;
+      const emailResponse = await fetch(`${API_URL}/orders/send-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

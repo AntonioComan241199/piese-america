@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Tooltip, OverlayTrigger, Card, ButtonGroup } from "react-bootstrap";
 import locations from "../assets/locations.json";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const SelectProductsModal = ({
   show,
@@ -60,7 +62,7 @@ const SelectProductsModal = ({
         throw new Error("Trebuie să fii autentificat pentru a salva adresa.");
       }
   
-      const response = await fetch("http://localhost:5000/api/user/billing-address", {
+      const response = await fetch(`${API_URL}/user/billing-address`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +96,7 @@ const SelectProductsModal = ({
           const token = localStorage.getItem("accessToken");
           if (!token) return;
 
-          const response = await fetch("http://localhost:5000/api/user/billing-address", {
+          const response = await fetch(`${API_URL}/user/billing-address`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -333,7 +335,7 @@ const SelectProductsModal = ({
   
       // Salvează selecțiile
       let response = await fetch(
-        `http://localhost:5000/api/offer/${offer._id}/selected-parts`,
+        `${API_URL}/offer/${offer._id}/selected-parts`,
         {
           method: "PATCH",
           headers: {
@@ -350,7 +352,7 @@ const SelectProductsModal = ({
       }
   
       // Schimbă statusul în "oferta_acceptata"
-      response = await fetch(`http://localhost:5000/api/offer/${offer._id}/accept`, {
+      response = await fetch(`${API_URL}/offer/${offer._id}/accept`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -364,7 +366,7 @@ const SelectProductsModal = ({
       }
   
       // Trimite notificare email către admin
-      const emailResponse = await fetch("http://localhost:5000/api/offer/accept-email", {
+      const emailResponse = await fetch(`${API_URL}/offer/accept-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -395,7 +397,7 @@ const SelectProductsModal = ({
       }
   
       const response = await fetch(
-        `http://localhost:5000/api/offer/${offer._id}/reject`,
+        `${API_URL}/offer/${offer._id}/reject`,
         {
           method: "PATCH",
           headers: {
@@ -411,7 +413,7 @@ const SelectProductsModal = ({
       }
   
       // Trimite notificare email către admin
-      const emailResponse = await fetch("http://localhost:5000/api/offer/reject-email", {
+      const emailResponse = await fetch(`${API_URL}/offer/reject-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

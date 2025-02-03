@@ -6,6 +6,8 @@ import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { useSelector } from "react-redux";
 import SelectProductsModal from "./SelectProductsModal"; // Asigură-te că este importat corect
 import { Container, Row, Col, Table, Button, Alert, Card, Spinner, Badge } from "react-bootstrap";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const OfferDetail = () => {
   const { offerId } = useParams();
@@ -34,7 +36,7 @@ const OfferDetail = () => {
         setError("Nu ai permisiunea de a accesa oferta.");
         return;
       }
-      const response = await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}`);
+      const response = await fetchWithAuth(`${API_URL}/offer/${offerId}`);
       setOffer(response.offer);
     } catch (err) {
       setError("Nu s-a putut încărca oferta.");
@@ -195,7 +197,7 @@ const OfferDetail = () => {
 
   const handleAcceptOffer = async () => {
     try {
-      await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}/accept`, {
+      await fetchWithAuth(`${API_URL}/offer/${offerId}/accept`, {
         method: "POST",
       });
   
@@ -217,7 +219,7 @@ const OfferDetail = () => {
 
   const handleRejectOffer = async () => {
     try {
-      await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}/reject`, {
+      await fetchWithAuth(`${API_URL}/offer/${offerId}/reject`, {
         method: "POST",
       });
   

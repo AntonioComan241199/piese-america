@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { checkAuth } from "../slices/authSlice";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const AllOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -14,7 +16,7 @@ const AllOrders = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await fetchWithAuth("http://localhost:5000/api/order/admin");
+      const data = await fetchWithAuth(`${API_URL}/order/admin`);
       setOrders(data.data);
     } catch (err) {
       setError(err.message || "Failed to fetch orders");
@@ -44,7 +46,7 @@ const AllOrders = () => {
   const updateStatus = async (orderId, newStatus) => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:5000/api/order/${orderId}`,
+        `${API_URL}/order/${orderId}`,
         {
           method: "PATCH",
           body: JSON.stringify({ status: newStatus }),
@@ -60,7 +62,7 @@ const AllOrders = () => {
 
       if (response.data.offerId) {
         await fetchWithAuth(
-          `http://localhost:5000/api/offer/status/${response.data.offerId}`,
+          `${API_URL}/offer/status/${response.data.offerId}`,
           {
             method: "PATCH",
             body: JSON.stringify({ status: newStatus }),
@@ -75,7 +77,7 @@ const AllOrders = () => {
 
   const deleteOrder = async (orderId) => {
     try {
-      await fetchWithAuth(`http://localhost:5000/api/order/${orderId}`, {
+      await fetchWithAuth(`${API_URL}/order/${orderId}`, {
         method: "DELETE",
       });
       setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));

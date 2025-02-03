@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import CreateOfferModal from "./CreateOfferModal"; // Importul modalului
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const AdminOrders = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -35,7 +37,7 @@ const AdminOrders = () => {
         Authorization: `Bearer ${token}`,
       };
 
-      const url = new URL("http://localhost:5000/api/orders/admin");
+      const url = new URL(`${API_URL}/orders/admin`);
       url.searchParams.append("page", currentPage);
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("orderNumber", orderNumber);

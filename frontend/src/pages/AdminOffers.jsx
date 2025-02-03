@@ -3,6 +3,9 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import "../styles/AdminOffers.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+
 const AdminOffers = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const [offers, setOffers] = useState([]);
@@ -31,7 +34,7 @@ const AdminOffers = () => {
         Authorization: `Bearer ${token}`,
       };
 
-      const url = new URL("http://localhost:5000/api/offer/admin");
+      const url = new URL(`${API_URL}/offer/admin`);
       url.searchParams.append("page", currentPage);
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("offerNumber", offerNumber);
@@ -81,7 +84,7 @@ const AdminOffers = () => {
       const token = localStorage.getItem("accessToken");
 
       const response = await fetch(
-        `http://localhost:5000/api/offer/admin/${offerId}/delivery`,
+        `${API_URL}/offer/admin/${offerId}/delivery`,
         {
           method: "PATCH",
           headers: {
@@ -106,7 +109,7 @@ const AdminOffers = () => {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const url = new URL("http://localhost:5000/api/offer/admin/export");
+      const url = new URL(`${API_URL}/offer/admin/export`);
       url.searchParams.append("status", statusFilter);
       url.searchParams.append("offerNumber", offerNumber);
       if (selectedDate) {

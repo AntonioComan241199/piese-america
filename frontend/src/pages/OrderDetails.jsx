@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import CreateOfferModal from "./CreateOfferModal"; // Importul modalului
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -27,7 +29,7 @@ const OrderDetails = () => {
           headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await fetch(`http://localhost:5000/api/orders/client/orders/${id}`, {
+        const response = await fetch(`${API_URL}/orders/client/orders/${id}`, {
           method: "GET",
           headers,
         });
@@ -71,7 +73,7 @@ const OrderDetails = () => {
   
       console.log("Payload trimis:", { text: newComment }); // Debug
   
-      const response = await fetch(`http://localhost:5000/api/orders/client/orders/${id}/comments`, {
+      const response = await fetch(`${API_URL}/orders/client/orders/${id}/comments`, {
         method: "POST",
         headers,
         body: JSON.stringify({ text: newComment }),

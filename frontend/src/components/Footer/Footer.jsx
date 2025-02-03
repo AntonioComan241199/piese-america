@@ -85,7 +85,7 @@ const Footer = () => {
               <li className="mb-2">
                 Email secundar: <a href="mailto:automed.piese@gmail.com" className="text-light">automed.piese@gmail.com</a>
               </li>
-              <li>Program: Luni - Vineri 09:00 - 17:00</li>
+              <li>Program: Luni - Vineri 08:00 - 16:30</li>
             </ul>
           </Col>
 

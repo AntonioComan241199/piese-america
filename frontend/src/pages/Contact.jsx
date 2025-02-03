@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Container, Row, Col, Form, FormGroup, Label, Input, Button } from "reactstrap";
 import { Link } from "react-router-dom";
 import Helmet from "../components/Helmet/Helmet";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -23,7 +25,7 @@ const Contact = () => {
     setMessage("");
   
     try {
-      const response = await fetch("http://localhost:5000/api/contact", {
+      const response = await fetch(`${API_URL}//contact`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,7 +81,7 @@ const Contact = () => {
                   automed.piese@gmail.com
                 </a>
               </li>
-              <li><strong>Program:</strong> Luni - Vineri, 09:00 - 17:00</li>
+              <li><strong>Program:</strong> Luni - Vineri, 08:00 - 16:30</li>
             </ul>
           </Col>
           <Col md="6">

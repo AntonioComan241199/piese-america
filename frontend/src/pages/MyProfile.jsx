@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { logout } from "../slices/authSlice";
 import locations from "../assets/locations.json";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const counties = [...new Set(locations.map((location) => location.judet))].sort((a, b) => {
   if (a === "BUCURESTI") return -1;
@@ -74,7 +76,7 @@ const MyProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetchWithAuth("http://localhost:5000/api/user/me");
+      const response = await fetchWithAuth(`${API_URL}//user/me`);
       if (response && response.user) {
         localDispatch({ type: "SET_PROFILE", payload: response.user });
       } else {
@@ -91,7 +93,7 @@ const MyProfile = () => {
 
   const handleUpdateProfile = async () => {
     try {
-      await fetchWithAuth(`http://localhost:5000/api/user/update/${state.profile._id}`, {
+      await fetchWithAuth(`${API_URL}/user/update/${state.profile._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +111,7 @@ const MyProfile = () => {
   const handleChangePassword = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:5000/api/user/update-password/${state.profile._id}`,
+        `${API_URL}/user/update-password/${state.profile._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -130,7 +132,7 @@ const MyProfile = () => {
   const handleDeleteAccount = async () => {
     if (!window.confirm("Ești sigur că vrei să ștergi contul?")) return;
     try {
-      await fetchWithAuth(`http://localhost:5000/api/user/delete/${state.profile._id}`, {
+      await fetchWithAuth(`${API_URL}/user/delete/${state.profile._id}`, {
         method: "DELETE",
       });
       reduxDispatch(logout());

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
   const [parts, setParts] = useState([]);
@@ -74,7 +76,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
   
       console.log("Payload trimis:", payload); // Debugging
   
-      const response = await fetch("http://localhost:5000/api/offer/admin", {
+      const response = await fetch(`${API_URL}/offer/admin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +92,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
         setError(""); // Resetăm erorile
   
         // Apelăm API-ul backend pentru a trimite email-ul
-        const emailResponse = await fetch("http://localhost:5000/api/offer/send-email", {
+        const emailResponse = await fetch(`${API_URL}//offer/send-email`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -129,7 +129,7 @@ const TopHeader = ({ isAuthenticated, user, onLogout }) => {
               </div>
               <div className="d-block">
                 <i className="ri-time-line me-2"></i>
-                Luni - Vineri, 09:00 - 18:00
+                Luni - Vineri, 08:00 - 16:30
               </div>
             </Col>
             <Col xs={12} lg={4} className="text-lg-end mt-3 mt-lg-0">

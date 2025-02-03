@@ -5,6 +5,8 @@ import "jspdf-autotable";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { useSelector } from "react-redux";
 import SelectProductsModal from "./SelectProductsModal"; // Asigură-te că este importat corect
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 
 
 const OfferDetail = () => {
@@ -37,7 +39,7 @@ const OfferDetail = () => {
         setError("Nu ai permisiunea de a accesa oferta.");
         return;
       }
-      const response = await fetchWithAuth(`http://localhost:5000/api/offer/${offerId}`);
+      const response = await fetchWithAuth(`${API_URL}/offer/${offerId}`);
       setOffer(response.offer);
     } catch (err) {
       setError("Nu s-a putut încărca oferta.");
@@ -223,7 +225,7 @@ ${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A
   }) => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:5000/api/offer/${offerId}/selected-parts`,
+        `${API_URL}/offer/${offerId}/selected-parts`,
         {
           method: "PATCH",
           body: JSON.stringify({
@@ -252,7 +254,7 @@ ${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A
   const handleAcceptOffer = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:5000/api/offer/${offerId}/accept`,
+        `${API_URL}/offer/${offerId}/accept`,
         { method: "PATCH" }
       );
   
@@ -270,7 +272,7 @@ ${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A
   const handleRejectOffer = async () => {
     try {
       const response = await fetchWithAuth(
-        `http://localhost:5000/api/offer/${offerId}/reject`,
+        `${API_URL}/offer/${offerId}/reject`,
         { method: "PATCH" }
       );
   
