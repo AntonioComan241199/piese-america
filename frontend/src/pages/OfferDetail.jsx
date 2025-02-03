@@ -139,30 +139,47 @@ const OfferDetail = () => {
     const statusText = normalizeText(`Status: ${offer.status}`);
     const titleX = (doc.internal.pageSize.width - doc.getTextWidth(titleText)) / 2;
     const statusX = (doc.internal.pageSize.width - doc.getTextWidth(statusText)) / 2;
-    const contentStartY =
-        startY +
-        Math.max(companyLines.length, clientLines.length + billingLines.length + deliveryLines.length) * 5 +
-        10;
+    const contentStartY = startY + 60;
 
     doc.text(titleText, titleX, contentStartY);
     doc.text(statusText, statusX, contentStartY + 10);
 
-    // Tabel piese selectate
-    const tableColumn = ["Cod Piesa", "Tip", "Producator", "Pret/unitate", "Cantitate", "Total"];
+    // Definire coloană tabel
+    const tableColumn = [
+        "Cod Piesa",
+        "Tip",
+        "Producator",
+        "Pret/unitate",
+        "Cantitate",
+        "Subtotal fara TVA",
+        "TVA (19%)",
+        "Subtotal cu TVA",
+    ];
     const tableRows = [];
 
-    let totalSelectedParts = 0;
+    let totalFaraTVA = 0;
+    let totalTVA = 0;
+    let totalCuTVA = 0;
 
     (offer.selectedParts || []).forEach((part) => {
+        const subtotalFaraTVA = part.pricePerUnit * part.quantity;
+        const tva = subtotalFaraTVA * 0.19;
+        const subtotalCuTVA = subtotalFaraTVA + tva;
+
+        totalFaraTVA += subtotalFaraTVA;
+        totalTVA += tva;
+        totalCuTVA += subtotalCuTVA;
+
         const rowData = [
             normalizeText(part.partCode || "N/A"),
             normalizeText(part.partType || "N/A"),
             normalizeText(part.manufacturer || "N/A"),
-            `${part.pricePerUnit} RON`,
+            `${part.pricePerUnit.toFixed(2)} RON`,
             part.quantity || 0,
-            `${part.total} RON`,
+            `${subtotalFaraTVA.toFixed(2)} RON`,
+            `${tva.toFixed(2)} RON`,
+            `${subtotalCuTVA.toFixed(2)} RON`,
         ];
-        totalSelectedParts += part.total || 0;
         tableRows.push(rowData);
     });
 
@@ -172,22 +189,29 @@ const OfferDetail = () => {
         body: tableRows,
     });
 
-    // Total selectii
-    const totalText = normalizeText(`Total selectii: ${totalSelectedParts.toFixed(2)} RON`);
-    const totalTextWidth = doc.getTextWidth(totalText);
-    const totalX = doc.internal.pageSize.width - totalTextWidth - 10;
+    // Totaluri
+    const totalText = normalizeText(`Total fără TVA: ${totalFaraTVA.toFixed(2)} RON`);
+    const tvaText = normalizeText(`TVA (19%): ${totalTVA.toFixed(2)} RON`);
+    const totalCuTVAText = normalizeText(`Total cu TVA: ${totalCuTVA.toFixed(2)} RON`);
+
+    const totalX = doc.internal.pageSize.width - doc.getTextWidth(totalText) - 10;
 
     doc.text(totalText, totalX, doc.previousAutoTable.finalY + 10);
+    doc.text(tvaText, totalX, doc.previousAutoTable.finalY + 20);
+    doc.text(totalCuTVAText, totalX, doc.previousAutoTable.finalY + 30);
 
     // Salvare PDF
     doc.save(`Oferta_${offer.offerNumber}.pdf`);
-  };
+};
 
   const calculateTotal = () => {
-    if (offer?.selectedParts?.length > 0) {
-      return offer.selectedParts.reduce((sum, part) => sum + part.total, 0);
-    }
-    return null;
+    if (!offer?.selectedParts?.length) return null;
+  
+    const totalFaraTVA = offer.selectedParts.reduce((sum, part) => sum + (part.pricePerUnit * part.quantity), 0);
+    const totalTVA = totalFaraTVA * 0.19;
+    const totalCuTVA = totalFaraTVA + totalTVA;
+  
+    return { totalFaraTVA, totalTVA, totalCuTVA };
   };
 
   const handleSelectProducts = () => {
@@ -240,41 +264,55 @@ const OfferDetail = () => {
   };
 
   const renderProductTable = () => (
-    <Table striped bordered hover responsive className="mt-4">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Cod Piesa</th>
-          <th>Tip</th>
-          <th>Producator</th>
-          <th>Pret/unitate</th>
-          <th>Cantitate</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>
-        {offer.parts.map((part, index) => {
-          const selectedPart = offer.selectedParts.find((sp) => sp.partCode === part.partCode);
-          const isSelected = !!selectedPart;
-
-          return (
-            <tr
-              key={part.partCode}
-              className={isSelected ? "table-success" : ""}
-            >
-              <td>{index + 1}</td>
-              <td>{part.partCode}</td>
-              <td>{part.partType}</td>
-              <td>{part.manufacturer}</td>
-              <td>{part.pricePerUnit} RON</td>
-              <td>{part.quantity}</td>
-              <td>{isSelected ? `${selectedPart.total} RON (selectat)` : `${part.pricePerUnit * part.quantity} RON`}</td>
+    <div className="table-container">
+      <div className="table-responsive">
+        <Table striped bordered hover className="mt-4">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cod Piesa</th>
+              <th>Tip</th>
+              <th>Producator</th>
+              <th>Pret/unitate</th>
+              <th>Cantitate</th>
+              <th>Subtotal fără TVA</th>
+              <th>TVA (19%)</th>
+              <th>Subtotal cu TVA</th>
             </tr>
-          );
-        })}
-      </tbody>
-    </Table>
+          </thead>
+          <tbody>
+            {offer.parts.map((part, index) => {
+              const selectedPart = offer.selectedParts.find((sp) => sp.partCode === part.partCode);
+              const isSelected = !!selectedPart;
+              const subtotalFaraTVA = part.pricePerUnit * part.quantity;
+              const tva = subtotalFaraTVA * 0.19;
+              const subtotalCuTVA = subtotalFaraTVA + tva;
+  
+              return (
+                <tr key={part.partCode} className={isSelected ? "table-success" : ""}>
+                  <td>{index + 1}</td>
+                  <td>{part.partCode}</td>
+                  <td>{part.partType}</td>
+                  <td>{part.manufacturer}</td>
+                  <td>{part.pricePerUnit.toFixed(2)} RON</td>
+                  <td>{part.quantity}</td>
+                  <td>{subtotalFaraTVA.toFixed(2)} RON</td>
+                  <td>{tva.toFixed(2)} RON</td>
+                  <td>
+                    {isSelected
+                      ? `${selectedPart.total.toFixed(2)} RON (selectat)`
+                      : `${subtotalCuTVA.toFixed(2)} RON`}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </div>
+    </div>
   );
+  
+  
 
   const total = calculateTotal();
 
@@ -292,10 +330,14 @@ const OfferDetail = () => {
             <Col md={6}>
               <h5>Status: <Badge bg="info" text="dark">{offer.status}</Badge></h5>
               {total !== null ? (
-                <h4>Total ofertă: <span className="text-success">{total.toFixed(2)} RON</span></h4>
+                  <div>
+                  <h4>Total ofertă fără TVA: <span className="text-primary">{total.totalFaraTVA.toFixed(2)} RON</span></h4>
+                  <h4>TVA (19%): <span className="text-danger">{total.totalTVA.toFixed(2)} RON</span></h4>
+                  <h4>Total ofertă cu TVA: <span className="text-success">{total.totalCuTVA.toFixed(2)} RON</span></h4>
+                </div>
               ) : (
                 <Alert variant="warning" className="text-center fw-bold fs-5 border border-danger bg-light">
-                  <i className="ri-error-warning-line text-danger"></i> Clientul trebuie să selecteze piesele dorite din oferta înainte de a finaliza comanda!
+                  <i className="ri-error-warning-line text-danger"></i> Clientul trebuie să selecteze piesele dorite din ofertă înainte de a finaliza comanda!
                 </Alert>
               )}
             </Col>
@@ -323,16 +365,36 @@ const OfferDetail = () => {
             <Col md={6}>
               <h5>Adresa de Facturare:</h5>
               <p>
-                {offer.billingAddress
-                  ? `${offer.billingAddress.street}, ${offer.billingAddress.city}, ${offer.billingAddress.county}`
-                  : "Adresa de facturare nu este disponibilă - Produse Neselectate"}
+              {offer.billingAddress
+                ? [
+                    "Strada " + offer.billingAddress.street,
+                    "Nr. " + offer.billingAddress.number,
+                    "Bloc " + offer.billingAddress.block,
+                    "Sc. " + offer.billingAddress.entrance,
+                    "Ap. " + offer.billingAddress.apartment,
+                    offer.billingAddress.city,
+                    offer.billingAddress.county,
+                  ]
+                    .filter(Boolean) // Elimină valorile null, undefined sau stringuri goale
+                    .join(", ") // Concatenează doar valorile valide
+                : "Adresa de facturare nu este disponibilă - Produse Neselectate"}
               </p>
               <h5>Adresa de Livrare:</h5>
               <p>
                 {offer.pickupAtCentral
                   ? "Ridicare de la sediul central"
                   : offer.deliveryAddress
-                  ? `${offer.deliveryAddress.street}, ${offer.deliveryAddress.city}, ${offer.deliveryAddress.county}`
+                  ? [
+                      "Strada " + offer.deliveryAddress.street,
+                      "Nr. " + offer.deliveryAddress.number,
+                      "Bloc " + offer.deliveryAddress.block,
+                      "Sc. " + offer.deliveryAddress.entrance,
+                      "Ap. " + offer.deliveryAddress.apartment,
+                      offer.deliveryAddress.city,
+                      offer.deliveryAddress.county,
+                    ]
+                      .filter(Boolean) // Elimină valorile goale
+                      .join(", ")
                   : "Adresa de livrare nu este disponibilă - Produse Neselectate"}
               </p>
             </Col>
@@ -340,7 +402,7 @@ const OfferDetail = () => {
 
           {renderProductTable()}
 
-          {user?.role === "client" && (!offer.selectedParts || offer.selectedParts.length === 0) && (
+          {user?.role === "client" && (!offer.selectedParts || offer.selectedParts.length === 0) && offer?.status != "anulata" && (
             <div className="text-center my-4">
               <Button
                 className="btn-lg btn-warning text-dark fw-bold py-3 px-5 border border-dark shadow-lg"

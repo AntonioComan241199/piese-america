@@ -163,11 +163,11 @@ input:focus, select:focus, textarea:focus {
 /* Tables */
 table {
   width: 100%;
+  min-width: 1000px !important; /* Ajustează pentru a forța scroll-ul */
   border-collapse: collapse;
-  margin-bottom: 1.5rem;
   background-color: var(--white-color);
   border-radius: var(--border-radius);
-  overflow: visible;
+  overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -176,6 +176,9 @@ th, td {
   padding: 10px;
   text-align: left;
   border: 1px solid var(--light-color);
+  white-space: nowrap !important; /* Evită ca textele să rupă layout-ul */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 th {
@@ -220,4 +223,32 @@ tr:hover {
   .main-content {
     padding: 20px 10px;
   }
+}
+
+/* ✅ Responsive: micșorează fonturile și padding-ul pe mobil */
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto !important;
+  }
+
+  .table th, .table td {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+/* ✅ Previne orice problemă cu scroll-ul */
+.table-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden; /* Evită să fie suprascris */
+}
+
+/* ✅ Asigură scroll orizontal pentru tabele */
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important; /* IMPORTANT: Forțează scroll orizontal */
+  -webkit-overflow-scrolling: touch; /* Scroll fluid pe mobile */
+  display: block !important; /* IMPORTANT: Asigură că div-ul este vizibil */
 }
