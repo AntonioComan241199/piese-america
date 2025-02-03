@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import "../styles/RequestOrder.css";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
-const CLIENT_URL = import.meta.env.CLIENT_URL = "http://localhost:5173/";
+const VITE_FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 
 
 const initialFormData = {
@@ -203,7 +203,7 @@ const RequestOrder = () => {
       }
   
       // Trimiterea email-ului către admin
-      const orderLink = `${CLIENT_URL}/orders/${orderId}`;
+      const orderLink = `${VITE_FRONTEND_URL}/orders/${orderId}`;
       const emailResponse = await fetch(`${API_URL}/orders/send-email`, {
         method: "POST",
         headers: {

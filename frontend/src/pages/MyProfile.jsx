@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { logout } from "../slices/authSlice";
 import locations from "../assets/locations.json";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 
 const counties = [...new Set(locations.map((location) => location.judet))].sort((a, b) => {

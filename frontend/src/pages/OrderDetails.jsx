@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import CreateOfferModal from "./CreateOfferModal"; // Importul modalului
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 
 const OrderDetails = () => {
@@ -56,6 +56,10 @@ const OrderDetails = () => {
     if (order.status === "oferta_acceptata") return "Ofertă acceptată";
     if (order.status === "ofertat") return "Ofertat - În așteptarea selecției pieselor dorite";
     if (order.status === "anulata") return "Ofertă anulată";
+    if (order.status === "livrare_in_procesare") return "livrare_in_procesare";
+    if (order.status === "livrata") return "livrata";
+    if (order.status === "comanda_spre_finalizare") return "comanda_spre_finalizare";
+
     return "Status necunoscut";
   };
 

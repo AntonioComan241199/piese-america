@@ -6,7 +6,7 @@ import { fetchWithAuth } from "../utils/fetchWithAuth";
 import { useSelector } from "react-redux";
 import SelectProductsModal from "./SelectProductsModal"; // Asigură-te că este importat corect
 import { Container, Row, Col, Table, Button, Alert, Card, Spinner, Badge } from "react-bootstrap";
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 
 const OfferDetail = () => {
