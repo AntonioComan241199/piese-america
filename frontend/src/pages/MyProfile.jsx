@@ -76,7 +76,7 @@ const MyProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetchWithAuth(`${API_URL}//user/me`);
+      const response = await fetchWithAuth(`${API_URL}/user/me`);
       if (response && response.user) {
         localDispatch({ type: "SET_PROFILE", payload: response.user });
       } else {
