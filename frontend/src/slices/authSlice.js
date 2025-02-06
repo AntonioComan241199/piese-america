@@ -16,7 +16,9 @@ export const checkAuth = createAsyncThunk(
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = localStorage.getItem("refreshToken");
 
-      if (!refreshToken) return rejectWithValue("No refresh token found");
+      if (!refreshToken) {
+        return rejectWithValue("No refresh token found");
+      }
 
       if (accessToken) {
         const payload = JSON.parse(atob(accessToken.split(".")[1]));
@@ -38,8 +40,6 @@ export const checkAuth = createAsyncThunk(
       });
 
       if (!refreshResponse.ok) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
         throw new Error("Refresh token expired or invalid");
       }
 
@@ -63,6 +63,7 @@ export const checkAuth = createAsyncThunk(
     }
   }
 );
+
 
 const authSlice = createSlice({
   name: "auth",

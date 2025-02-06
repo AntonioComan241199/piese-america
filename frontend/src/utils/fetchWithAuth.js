@@ -6,60 +6,56 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
   let accessToken = state.auth.accessToken;
   const refreshToken = state.auth.refreshToken;
 
-  if (!accessToken && refreshToken) {
-    console.log("No access token, attempting refresh...");
-    try {
-      const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: refreshToken }),
-        Authorization: `Bearer ${accessToken}`, // Asigură-te că token-ul este inclus în cerere
-        ...(options.headers || {}),
-      });
-  
-      if (!refreshResponse.ok) {
-        console.error("Refresh token invalid:", refreshResponse.status);
-        store.dispatch(logout());
-        throw new Error("Session expired. Please log in again.");
-      }
-  
-      const refreshData = await refreshResponse.json();
-      console.log("Token refreshed successfully:", refreshData.accessToken);
-  
-      store.dispatch(setAccessToken({ accessToken: refreshData.accessToken }));
-      accessToken = refreshData.accessToken;
-    } catch (err) {
-      console.error("Failed to refresh token:", err.message);
-      store.dispatch(logout());
-      throw new Error("Failed to refresh token");
-    }
-  }
-  
-
   if (!accessToken) {
-    store.dispatch(logout());
-    throw new Error("No access token available");
+    if (refreshToken) {
+      try {
+        const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: refreshToken }),
+        });
+
+        if (!refreshResponse.ok) {
+          console.error("Refresh token invalid. Logging out...");
+          
+          if (refreshResponse.status === 401 || refreshResponse.status === 400) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            store.dispatch(logout());
+          }
+
+          throw new Error("Session expired. Please log in again.");
+        }
+
+        const refreshData = await refreshResponse.json();
+        store.dispatch(setAccessToken({ accessToken: refreshData.accessToken }));
+        accessToken = refreshData.accessToken;
+      } catch (err) {
+        console.error("Failed to refresh token:", err.message);
+        store.dispatch(logout());
+        throw new Error("Failed to refresh token");
+      }
+    } else {
+      store.dispatch(logout());
+      throw new Error("No access token available");
+    }
   }
 
   try {
-    const method = options.method?.toUpperCase() || "GET";
-    const isBodyMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
-    const defaultHeaders = {
-      Authorization: `Bearer ${accessToken}`,
-      ...(isBodyMethod && { "Content-Type": "application/json" }),
-    };
-
     const response = await fetch(url, {
       ...options,
-      method,
+      method: options.method?.toUpperCase() || "GET",
       headers: {
-        ...defaultHeaders,
-        ...options.headers,
+        Authorization: `Bearer ${accessToken}`,
+        ...(options.headers || {}),
       },
     });
 
     if (!response.ok) {
       if (response.status === 401) {
+        console.error("Unauthorized request. Logging out...");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         store.dispatch(logout());
         throw new Error("Unauthorized. Please log in again.");
       }
@@ -68,8 +64,7 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
       throw new Error(errorData.message || `Error: ${response.status}`);
     }
 
-    if (rawResponse) return response;
-    return response.json();
+    return rawResponse ? response : response.json();
   } catch (err) {
     console.error("fetchWithAuth error:", err.message);
     throw new Error(err.message || "Unknown error occurred");

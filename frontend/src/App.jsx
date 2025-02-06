@@ -1,9 +1,11 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Provider, useDispatch } from "react-redux";
+import { Provider, useDispatch, useSelector } from "react-redux";
 import store from "../src/redux/store/store";
 import Layout from "./components/Layout/Layout";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { Spinner } from "react-bootstrap";
+
 
 import Home from "./pages/Home";
 import Contact from "./pages/Contact";
@@ -29,10 +31,21 @@ import { PublicRoute } from "./utils/PublicRoute";
 
 const AppWrapper = () => {
   const dispatch = useDispatch();
+  const { authChecked } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
+    if (!authChecked) {
+      dispatch(checkAuth()); // ✅ Se apelează doar dacă autentificarea nu este deja verificată
+    }
+  }, [dispatch, authChecked]);
+
+  if (!authChecked) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+        <Spinner animation="border" variant="primary" />
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>
