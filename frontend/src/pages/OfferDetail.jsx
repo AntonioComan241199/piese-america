@@ -149,11 +149,11 @@ const OfferDetail = () => {
         "Cod Piesa",
         "Tip",
         "Producator",
-        "Pret/unitate",
+        "Pret unitar",
         "Cantitate",
-        "Subtotal fara TVA",
+        "Valoare fara TVA",
         "TVA (19%)",
-        "Subtotal cu TVA",
+        "Valoare cu TVA",
     ];
     const tableRows = [];
 
@@ -273,11 +273,11 @@ const OfferDetail = () => {
               <th>Cod Piesa</th>
               <th>Tip</th>
               <th>Producator</th>
-              <th>Pret/unitate</th>
+              <th>Pret unitar</th>
               <th>Cantitate</th>
-              <th>Subtotal fără TVA</th>
+              <th>Valoare fără TVA</th>
               <th>TVA (19%)</th>
-              <th>Subtotal cu TVA</th>
+              <th>Valoare cu TVA</th>
             </tr>
           </thead>
           <tbody>
@@ -300,7 +300,7 @@ const OfferDetail = () => {
                   <td>{tva.toFixed(2)} RON</td>
                   <td>
                     {isSelected
-                      ? `${selectedPart.total.toFixed(2)} RON (selectat)`
+                      ? `${(selectedPart.pricePerUnit * selectedPart.quantity * 1.19).toFixed(2)} RON (selectat)`
                       : `${subtotalCuTVA.toFixed(2)} RON`}
                   </td>
                 </tr>

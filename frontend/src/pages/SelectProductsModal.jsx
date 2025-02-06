@@ -526,10 +526,18 @@ const renderStep1 = () => (
                             Cod piesă: {option.partCode}
                           </span>
                           <br />
-                          <strong>{option.manufacturer}</strong> - {option.price} RON/buc
+                          Cantitate: <strong></strong>{option.quantity} bucăți
+                          <br /> 
+                          <strong>{option.manufacturer}</strong> - {option.price} RON/buc Fara TVA
+                          <br />
+                          
                           <br />
                           <small className="text-muted">
-                            Subtotal: {option.price * option.quantity} RON
+                            Subtotal fara TVA: {option.price * option.quantity} RON
+                          </small>
+                          <br />
+                          <small className="text-muted">
+                            Subtotal cu TVA: {option.price * option.quantity *1.19} RON
                           </small>
                         </div>
                         <div
@@ -560,7 +568,10 @@ const renderStep1 = () => (
       </div>
     )}
     <div className="d-flex justify-content-end mt-4">
-      <h5 className="text-primary">Total selecție: {totalSelectie} RON</h5>
+      <h5 className="text-primary">Total selecție fara TVA: {totalSelectie} RON</h5>
+    </div>
+    <div className="d-flex justify-content-end mt-4">
+      <h5 className="text-primary">Total selecție cu TVA: {totalSelectie*1.19} RON</h5>
     </div>
   </Form>
 );
@@ -864,8 +875,9 @@ const renderStep2 = () => {
                     <p><strong>Producător:</strong> {selection.manufacturer || "N/A"}</p>
                     <p><strong>Cod piesă:</strong> {selection.partCode || "N/A"}</p>
                     <p><strong>Cantitate:</strong> {selection.quantity || 0}</p>
-                    <p><strong>Preț/bucată:</strong> {selection.pricePerUnit || 0} RON</p>
-                    <p className="text-success"><strong>SubTotal:</strong> {selection.total || 0} RON</p>
+                    <p><strong>Preț/bucată fara TVA:</strong> {selection.pricePerUnit || 0} RON</p>
+                    <p className="text-success"><strong>SubTotal fara TVA:</strong> {selection.total || 0} RON</p>
+                    <p className="text-success"><strong>SubTotal cu TVA:</strong> {selection.total*1.19 || 0} RON</p>
                   </div>
                 </div>
               </div>
@@ -882,8 +894,10 @@ const renderStep2 = () => {
         {/* Total general */}
         <div className="card my-4">
           <div className="card-body text-center">
-            <h5 className="text-primary">Total general:</h5>
+            <h5 className="text-primary">Total general fara TVA:</h5>
             <h3 className="text-success">{totalGeneral || 0} RON</h3>
+            <h5 className="text-primary">Total general cu TVA:</h5>
+            <h3 className="text-success">{totalGeneral*1.19 || 0} RON</h3>
           </div>
         </div>
   

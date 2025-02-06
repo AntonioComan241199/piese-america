@@ -205,7 +205,7 @@ const OrderDetails = () => {
                 )}
 
                 <p><strong>Număr ofertă:</strong> {order.offerId.offerNumber}</p>
-                <p><strong>Total ofertă:</strong> {order.status === "ofertat" ? "Așteptare selecție piese" : `${order.offerId.total} RON`}</p>
+                <p><strong>Total ofertă fara TVA:</strong> {order.status === "ofertat" ? "Așteptare selecție piese" : `${order.offerId.total} RON`}</p>
                 
                 {isClient && order.status === "ofertat" && (
                   <button className="btn btn-primary" onClick={redirectToOffer}>

@@ -231,7 +231,7 @@ const AdminOffers = () => {
               <tr>
                 <th>#</th>
                 <th>Număr Cerere</th>
-                <th>Total</th>
+                <th>Valoare fara TVA</th>
                 <th>Status</th>
                 <th>Creată La</th>
                 <th>Ultima Modificare</th>
