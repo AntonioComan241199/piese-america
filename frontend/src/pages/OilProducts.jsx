@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button, Modal, Image, Form } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
 import { Helmet, HelmetProvider } from "react-helmet-async";
+import OilProductModal from "../components/OilProductModal";
 import "../styles/OilProducts.css";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const OilProducts = () => {
   const [products, setProducts] = useState([]);
@@ -9,19 +12,21 @@ const OilProducts = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // State pentru paginare
+  // Paginare
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
-  // State pentru căutare
+  // Căutare
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("../../data/oil-products.json");
+        const response = await fetch(`${API_URL}/oil-products`);
         if (!response.ok) throw new Error("Eroare la încărcarea datelor.");
         const data = await response.json();
+
+        console.log("🔹 Produse primite din API:", data);
 
         const validProducts = data.filter(
           (product) => product["Title"] && product["Image Src"] && product["Variant Price"]
@@ -63,12 +68,19 @@ const OilProducts = () => {
     setCurrentPage(pageNumber);
   };
 
+  const getImageUrl = (imagePath) => {
+    console.log("🔹 Verificare imagine:", imagePath);
+    if (!imagePath) return "";
+    return imagePath.startsWith("/uploads/")
+      ? `${API_URL.replace("/api", "")}${imagePath}`
+      : imagePath;
+  };
+
   const renderPagination = () => {
     const pages = [];
-    const maxPagesToShow = 5; // Numărul maxim de pagini afișate complet
+    const maxPagesToShow = 5;
 
     if (totalPages <= maxPagesToShow) {
-      // Afișăm toate paginile dacă sunt mai puține decât maxPagesToShow
       for (let i = 1; i <= totalPages; i++) {
         pages.push(
           <button
@@ -81,7 +93,6 @@ const OilProducts = () => {
         );
       }
     } else {
-      // Prima pagină
       pages.push(
         <button
           key={1}
@@ -92,16 +103,10 @@ const OilProducts = () => {
         </button>
       );
 
-      // Punctele de la început
       if (currentPage > 3) {
-        pages.push(
-          <span key="start-ellipsis" className="pagination-ellipsis">
-            ...
-          </span>
-        );
+        pages.push(<span key="start-ellipsis" className="pagination-ellipsis">...</span>);
       }
 
-      // Paginile curente
       const startPage = Math.max(2, currentPage - 1);
       const endPage = Math.min(totalPages - 1, currentPage + 1);
 
@@ -117,16 +122,10 @@ const OilProducts = () => {
         );
       }
 
-      // Punctele de la sfârșit
       if (currentPage < totalPages - 2) {
-        pages.push(
-          <span key="end-ellipsis" className="pagination-ellipsis">
-            ...
-          </span>
-        );
+        pages.push(<span key="end-ellipsis" className="pagination-ellipsis">...</span>);
       }
 
-      // Ultima pagină
       pages.push(
         <button
           key={totalPages}
@@ -169,13 +168,10 @@ const OilProducts = () => {
       <Container className="py-5">
         <Helmet>
           <title>Produse Uleiuri - Piese Auto</title>
-          <meta
-            name="description"
-            content="Catalogul nostru de uleiuri de calitate superioară pentru diverse aplicații auto."
-          />
+          <meta name="description" content="Catalogul nostru de uleiuri de calitate superioară pentru diverse aplicații auto." />
         </Helmet>
 
-        <h1 className="text-center mb-4">Uleiuri si Lubrifianti Auto</h1>
+        <h1 className="text-center mb-4">Uleiuri și Lubrifianți Auto</h1>
 
         <Form.Group className="mb-4 d-flex">
           <Form.Control
@@ -185,12 +181,8 @@ const OilProducts = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="me-2"
           />
-          <Button variant="primary" onClick={handleFilter} className="me-2">
-            Filtrează
-          </Button>
-          <Button variant="secondary" onClick={handleReset}>
-            Resetează
-          </Button>
+          <Button variant="primary" onClick={handleFilter} className="me-2">Filtrează</Button>
+          <Button variant="secondary" onClick={handleReset}>Resetează</Button>
         </Form.Group>
 
         {getCurrentPageProducts().length === 0 ? (
@@ -202,15 +194,15 @@ const OilProducts = () => {
                 <Card className="h-100 shadow-sm">
                   <Card.Img
                     variant="top"
-                    src={product["Image Src"] || product["Variant Image"]}
+                    src={getImageUrl(product["Image Src"] || product["Variant Image"])}
                     alt={product["Title"] || "Imagine Produs"}
                     style={{ objectFit: "contain", height: "200px" }}
                   />
                   <Card.Body className="d-flex flex-column">
-                    <Card.Title className="text-wrap text-truncate" title={product["Title"]}>
-                      {product["Title"] || "Produs fără titlu"}
-                    </Card.Title>
-                    <Card.Text className="text-wrap">
+                  <Card.Title style={{ wordWrap: "break-word", whiteSpace: "normal" }}>
+                    {product["Title"] || "Produs fără titlu"}
+                  </Card.Title>
+                    <Card.Text>
                       <small className="text-muted">
                         Tip: <strong>{product["Type"] || "Nespecificat"}</strong>
                       </small>
@@ -220,14 +212,10 @@ const OilProducts = () => {
                       </small>
                       <br />
                       <strong className="text-muted">
-                        Pret: <strong>{product["Variant Price"] || "Nespecificat"}</strong> RON
+                        Preț: <strong>{product["Variant Price"] || "Nespecificat"}</strong> RON
                       </strong>
                     </Card.Text>
-                    <Button
-                      variant="primary"
-                      className="mt-auto"
-                      onClick={() => handleShowDetails(product)}
-                    >
+                    <Button variant="primary" className="mt-auto" onClick={() => handleShowDetails(product)}>
                       Detalii
                     </Button>
                   </Card.Body>
@@ -238,71 +226,14 @@ const OilProducts = () => {
         )}
 
         {renderPagination()}
-      </Container>
 
-      {selectedProduct && (
-        <Modal
+        <OilProductModal
           show={showModal}
-          onHide={() => {
-            setShowModal(false);
-            setSelectedProduct(null);
-          }}
-          centered
-          size="lg"
-        >
-          <Helmet>
-            <title>{selectedProduct["SEO Title"] || selectedProduct["Title"]}</title>
-            <meta
-              name="description"
-              content={selectedProduct["SEO Description"] || ""}
-            />
-          </Helmet>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              {selectedProduct["SEO Title"] || selectedProduct["Title"]}
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div
-              className="modal-body-content mb-3"
-              dangerouslySetInnerHTML={{
-                __html: selectedProduct?.["Body (HTML)"] || "",
-              }}
-            />
-            <Row>
-              <Col md={6}>
-                <p>
-                  <strong>Tip:</strong> {selectedProduct?.["Type"] || "Nespecificat"}
-                </p>
-                <p>
-                  <strong>Ambalaj:</strong> {selectedProduct?.["Option1 Value"] || "Nespecificat"}
-                </p>
-                <p>
-                  <strong>Preț:</strong> {selectedProduct?.["Variant Price"] ? `${parseFloat(selectedProduct["Variant Price"]).toFixed(2)} RON` : "Nespecificat"}
-                </p>
-                <p>
-                  <strong>Utilizare:</strong> {selectedProduct?.["Utilizare (product.metafields.custom.utilizare)"] || "Nespecificat"}
-                </p>
-              </Col>
-              <Col md={6} className="text-center">
-                {selectedProduct?.["Variant Image"] && (
-                  <Image
-                    src={selectedProduct["Variant Image"]}
-                    alt={selectedProduct["Title"]}
-                    fluid
-                    style={{ maxHeight: "200px" }}
-                  />
-                )}
-              </Col>
-            </Row>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
-              Închide
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      )}
+          handleClose={() => setShowModal(false)}
+          product={selectedProduct}
+          clearSelectedProduct={() => setSelectedProduct(null)}
+        />
+      </Container>
     </HelmetProvider>
   );
 };

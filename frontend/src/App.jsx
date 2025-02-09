@@ -28,6 +28,7 @@ import AdminOffers from "./pages/AdminOffers";
 import { checkAuth } from "./slices/authSlice";
 import { ProtectedRoute } from "./utils/ProtectedRoute";
 import { PublicRoute } from "./utils/PublicRoute";
+import AdminOilProducts from "./pages/Admin/AdminOilProducts";
 
 const AppWrapper = () => {
   const dispatch = useDispatch();
@@ -142,6 +143,17 @@ const AppWrapper = () => {
             <ProtectedRoute>
               <Layout>
                 <OfferDetail />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/oil-products"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminOilProducts />
               </Layout>
             </ProtectedRoute>
           }

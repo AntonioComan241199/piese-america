@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -12,7 +13,7 @@ import carRoutes from "./routes/carRoutes.js";
 import offerRoute from "./routes/offerRoute.js";
 import notificationRoute from "./routes/notificationRoute.js";
 import contactRoute from "./routes/contactRoute.js";
-
+import oilProductsRoutes from "./routes/oilProductsRoutes.js";
 
 // Configurare variabile de mediu
 dotenv.config();
@@ -45,6 +46,9 @@ mongoose.connect(process.env.MONGODB_URI, {}).then(() => {
     console.log("MongoDB connection error:", err);
 });
 
+// Expunem folderul "uploads" ca resursă statică
+const __dirname = path.resolve(); // Pentru compatibilitate cu ES Module
+app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
 // Definirea rutelor API
 app.use("/api/user", userRouter); // Rute pentru utilizatori
@@ -54,6 +58,8 @@ app.use("/api/cars", carRoutes); // Rute pentru date despre mașini
 app.use("/api/offer", offerRoute); // Rute pentru oferte
 app.use("/api/notifications", notificationRoute);
 app.use("/api/contact", contactRoute); // Rute pentru formularul de contact
+app.use("/api/oil-products", oilProductsRoutes);
+
 
 
 // Middleware pentru gestionarea erorilor
