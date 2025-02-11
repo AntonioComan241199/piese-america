@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import fs from 'fs';
 
 // Importăm rutele
 import userRouter from "./routes/UserRoute.js";
@@ -14,6 +15,7 @@ import offerRoute from "./routes/offerRoute.js";
 import notificationRoute from "./routes/notificationRoute.js";
 import contactRoute from "./routes/contactRoute.js";
 import oilProductsRoutes from "./routes/oilProductsRoutes.js";
+import fireExtinguishersRoutes from "./routes/fireExtinguishersRoutes.js";
 
 // Configurare variabile de mediu
 dotenv.config();
@@ -35,7 +37,7 @@ app.use(
     origin: allowedOrigins,
     credentials: true, // Permite trimiterea cookie-urilor sau a header-ului Authorization
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Permite doar metodele necesare
-    allowedHeaders: ["Content-Type", "Authorization"], // Permite doar aceste headere
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"], // Am adăugat
   })
 );
 
@@ -50,6 +52,11 @@ mongoose.connect(process.env.MONGODB_URI, {}).then(() => {
 const __dirname = path.resolve(); // Pentru compatibilitate cu ES Module
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)){
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Definirea rutelor API
 app.use("/api/user", userRouter); // Rute pentru utilizatori
 app.use("/api/auth", authRouter); // Rute pentru autentificare
@@ -59,6 +66,7 @@ app.use("/api/offer", offerRoute); // Rute pentru oferte
 app.use("/api/notifications", notificationRoute);
 app.use("/api/contact", contactRoute); // Rute pentru formularul de contact
 app.use("/api/oil-products", oilProductsRoutes);
+app.use("/api/fire-extinguishers", fireExtinguishersRoutes);
 
 
 

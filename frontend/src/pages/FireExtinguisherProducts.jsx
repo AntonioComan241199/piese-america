@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Container, Row, Col, Card, Button, Form, Spinner, Alert } from "react-bootstrap";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-import OilProductModal from "../components/OilProductModal";
-import "../styles/OilProducts.css";
+import FireExtinguisherModal from "../components/FireExtinguisherModal";
+import "../styles/FireExtinguishers.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const OilProducts = () => {
+const FireExtinguishersProducts = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -19,15 +19,9 @@ const OilProducts = () => {
   const itemsPerPage = 12;
 
   const types = useMemo(() => [
-    "Ulei Hidraulic",
-    "Ulei de motor",
-    "Ulei Transmisie",
-    "Ulei Servodirectie",
-    "Vaselina",
-    "Calendare",
-    "Aditivi",
-    "Spray-uri",
-    "Kit Antipana",
+    "Stingatoare cu CO2",
+    "Stingatoare cu pulbere",
+    "Stingatoare cu spuma mecanica",
     "Altele"
   ], []);
 
@@ -36,11 +30,11 @@ const OilProducts = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${API_URL}/oil-products`);
+        const response = await fetch(`${API_URL}/fire-extinguishers`);
         if (!response.ok) throw new Error("Eroare la încărcarea datelor.");
         const data = await response.json();
 
-        console.log("🔹 Produse primite din API:", data);
+        console.log("🔹 Stingătoare primite din API:", data);
 
         const validProducts = data.filter(
           (product) => product["Title"] && product["Image Src"] && product["Variant Price"]
@@ -49,7 +43,7 @@ const OilProducts = () => {
         setProducts(validProducts);
         setFilteredProducts(validProducts);
       } catch (error) {
-        console.error("Eroare la încărcarea produselor:", error.message);
+        console.error("Eroare la încărcarea stingătoarelor:", error.message);
         setError(error.message);
       } finally {
         setIsLoading(false);
@@ -204,13 +198,13 @@ const OilProducts = () => {
       <Card.Img
         loading="lazy"
         variant="top"
-        src={getImageUrl(product["Image Src"] || product["Variant Image"])}
-        alt={product["Title"] || "Imagine Produs"}
+        src={getImageUrl(product["Image Src"])}
+        alt={product["Title"] || "Imagine Stingător"}
         style={{ objectFit: "contain", height: "200px" }}
       />
       <Card.Body className="d-flex flex-column">
         <Card.Title style={{ wordWrap: "break-word", whiteSpace: "normal" }}>
-          {product["Title"] || "Produs fără titlu"}
+          {product["Title"] || "Stingător fără titlu"}
         </Card.Title>
         <Card.Text>
           <small className="text-muted">
@@ -218,7 +212,7 @@ const OilProducts = () => {
           </small>
           <br />
           <small className="text-muted">
-            Ambalaj: <strong>{product["Option1 Value"] || "Nespecificat"}</strong>
+            Capacitate: <strong>{product["Option1 Value"] || "Nespecificat"}</strong>
           </small>
           <br />
           <strong className="text-muted">
@@ -253,20 +247,20 @@ const OilProducts = () => {
     <HelmetProvider>
       <Container className="py-5">
         <Helmet>
-          <title>Produse Uleiuri - Piese Auto</title>
+          <title>Stingătoare Auto - Piese Auto</title>
           <meta
             name="description"
-            content="Catalogul nostru de uleiuri de calitate superioară pentru diverse aplicații auto."
+            content="Catalogul nostru de stingătoare auto de calitate superioară pentru siguranța dumneavoastră."
           />
         </Helmet>
 
-        <h1 className="text-center mb-4">Uleiuri și Lubrifianți Auto</h1>
+        <h1 className="text-center mb-4">Stingătoare Auto</h1>
 
         <Row className="mb-4">
           <Col md={5}>
             <Form.Control
               type="text"
-              placeholder="Caută produse după titlu..."
+              placeholder="Caută stingătoare după titlu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="mb-2 mb-md-0"
@@ -302,7 +296,7 @@ const OilProducts = () => {
             </Spinner>
           </div>
         ) : getCurrentPageProducts.length === 0 ? (
-          <p className="text-center">Nu există produse disponibile.</p>
+          <p className="text-center">Nu există stingătoare disponibile.</p>
         ) : (
           <Row>
             {getCurrentPageProducts.map((product, index) => (
@@ -315,7 +309,7 @@ const OilProducts = () => {
 
         {!isLoading && getCurrentPageProducts.length > 0 && renderPagination}
 
-        <OilProductModal
+        <FireExtinguisherModal
           show={showModal}
           handleClose={() => {
             setShowModal(false);
@@ -329,4 +323,4 @@ const OilProducts = () => {
   );
 };
 
-export default OilProducts;
+export default FireExtinguishersProducts;

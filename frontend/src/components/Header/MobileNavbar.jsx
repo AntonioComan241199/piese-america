@@ -114,6 +114,30 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                     >
                       Evidenta Comenzi Admin
                     </Nav.Link>
+                    <Nav.Link
+                      as={NavLink}
+                      to="/admin/oil-products"
+                      onClick={handleNavLinkClick} // Închide meniul când se dă click
+                      className={({ isActive }) =>
+                        isActive
+                          ? "nav-link active text-primary"
+                          : "nav-link text-white"
+                      }
+                    >
+                      Gestionare produse Uleiuri
+                    </Nav.Link>
+                    <Nav.Link
+                      as={NavLink}
+                      to="/admin/fire-extinguishers"
+                      onClick={handleNavLinkClick} // Închide meniul când se dă click
+                      className={({ isActive }) =>
+                        isActive
+                          ? "nav-link active text-primary"
+                          : "nav-link text-white"
+                      }
+                    >
+                      Gestionare produse Stingatoare
+                    </Nav.Link>                      
                   </>
                 )}
                 {/* Link către profilul utilizatorului */}

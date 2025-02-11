@@ -29,6 +29,9 @@ import { checkAuth } from "./slices/authSlice";
 import { ProtectedRoute } from "./utils/ProtectedRoute";
 import { PublicRoute } from "./utils/PublicRoute";
 import AdminOilProducts from "./pages/Admin/AdminOilProducts";
+import AdminFireExtinguishers from "./pages/Admin/AdminFireExtinguishers";
+import FireExtinguisherProducts from "./pages/FireExtinguisherProducts";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 
 const AppWrapper = () => {
   const dispatch = useDispatch();
@@ -128,6 +131,14 @@ const AppWrapper = () => {
           }
         />
         <Route
+          path="/fire-products"
+          element={
+            <Layout>
+              <FireExtinguisherProducts />
+            </Layout>
+          }
+        />
+        <Route
           path="/my-profile"
           element={
             <ProtectedRoute>
@@ -154,6 +165,27 @@ const AppWrapper = () => {
             <ProtectedRoute>
               <Layout>
                 <AdminOilProducts />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/fire-extinguishers"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminFireExtinguishers />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminDashboard />
               </Layout>
             </ProtectedRoute>
           }

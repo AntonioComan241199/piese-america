@@ -36,6 +36,7 @@ const Layout = ({ children }) => {
               { path: "/contact", display: "Contact" },
               { path: "/request-order", display: "Solicita oferta" },
               { path: "/oil-products", display: "Uleiuri si Lubrifianti" },
+              { path: "/fire-products", display: "Stingatoare" },
             ]}
           />
         )}

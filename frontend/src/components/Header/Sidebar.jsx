@@ -86,23 +86,15 @@ const Sidebar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
             {user?.role === "admin" && (
               <>
                 <NavLink
-                  to="/admin-orders"
+                  to="/admin/dashboard"
                   onClick={handleLinkClick}
                   className={({ isActive }) =>
                     isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
                   }
                 >
-                  Evidenta Oferte Admin
+                  Panou de Administrare Admin
                 </NavLink>
-                <NavLink
-                  to="/admin-offers"
-                  onClick={handleLinkClick}
-                  className={({ isActive }) =>
-                    isActive ? "nav-link active bg-primary text-white" : "nav-link text-white"
-                  }
-                >
-                  Evidenta Comenzi Admin
-                </NavLink>
+                
               </>
             )}
             <NavLink
