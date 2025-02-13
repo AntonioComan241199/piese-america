@@ -1,6 +1,9 @@
 import { store } from "../redux/store/store";
 import { logout, setAccessToken } from "../slices/authSlice";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+
 export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
   const state = store.getState();
   let accessToken = state.auth.accessToken;
@@ -9,7 +12,7 @@ export const fetchWithAuth = async (url, options = {}, rawResponse = false) => {
   if (!accessToken) {
     if (refreshToken) {
       try {
-        const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
+        const refreshResponse = await fetch(`${API_URL}/auth/refresh-token`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: refreshToken }),
