@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import CreateOfferModal from "./CreateOfferModal"; // Importul modalului
+import CreateOfferModal from "../Modals/CreateOfferModal"; // Importul modalului
 const API_URL = import.meta.env.VITE_API_URL;
 
 

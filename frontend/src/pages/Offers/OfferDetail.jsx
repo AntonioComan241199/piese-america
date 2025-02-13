@@ -2,20 +2,25 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import { fetchWithAuth } from "../utils/fetchWithAuth";
+import { fetchWithAuth } from "../../utils/fetchWithAuth";
 import { useSelector } from "react-redux";
-import SelectProductsModal from "./SelectProductsModal"; // Asigură-te că este importat corect
+import SelectProductsModal from "../Modals/SelectProductsModal"; // Asigură-te că este importat corect
 import { Container, Row, Col, Table, Button, Alert, Card, Spinner, Badge } from "react-bootstrap";
+import EditProductsModal from '../Modals/EditProductsModal';
 const API_URL = import.meta.env.VITE_API_URL;
+
 
 
 const OfferDetail = () => {
   const { offerId } = useParams();
+  const { isAuthenticated, authChecked, user } = useSelector((state) => state.auth);
+
   const [offer, setOffer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { isAuthenticated, authChecked, user } = useSelector((state) => state.auth);
+  
   const [showSelectModal, setShowSelectModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false); // Noul state pentru modal-ul de editare
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const fetchOffer = async () => {
@@ -319,6 +324,13 @@ const OfferDetail = () => {
   if (loading) return <Spinner animation="border" className="d-block mx-auto mt-5" />;
   if (error) return <Alert variant="danger">{error}</Alert>;
 
+  
+  const handleProductsUpdate = () => {
+    setLoading(true);
+    fetchOffer().then(() => setLoading(false));
+  };
+
+
   return (
     <Container className="my-4">
       <Card className="shadow">
@@ -424,6 +436,16 @@ const OfferDetail = () => {
               </Button>
             </div>
           )}
+
+          {user?.role === "admin" && (
+            <Button
+              variant="warning"
+              className="me-2"
+              onClick={() => setShowEditModal(true)}
+            >
+              <i className="ri-edit-line"></i> Editare Produse
+            </Button>
+          )}
         </Card.Body>
       </Card>
 
@@ -439,6 +461,12 @@ const OfferDetail = () => {
         onSaveSelection={() => {
           window.location.reload(); // Reîncarcă pagina complet
         }}
+      />
+      <EditProductsModal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        offer={offer}
+        onUpdate={handleProductsUpdate}
       />
     </Container>
   );

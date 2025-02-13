@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import Logo from "../assets/all-images/Logo.webp";
+import Logo from "../../assets/all-images/home-images/Logo.webp";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { login } from "../slices/authSlice";
+import { login } from "../../slices/authSlice";
 import { Link } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;

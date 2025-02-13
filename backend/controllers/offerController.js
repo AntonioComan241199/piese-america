@@ -1024,3 +1024,75 @@ export const rejectOfferEmail = async (req, res, next) => {
     return next(errorHandler(500, "Eroare la trimiterea email-ului: " + error.message));
   }
 };
+
+
+export const updateOfferProducts = async (req, res, next) => {
+  try {
+    const { offerId } = req.params;
+    const { updatedProducts } = req.body;
+
+    // Validare
+    if (!Array.isArray(updatedProducts)) {
+      return next(errorHandler(400, "Lista de produse actualizată este invalidă."));
+    }
+
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
+    }
+
+    // Verificăm dacă oferta poate fi editată
+    if (!["proiect", "trimisa"].includes(offer.status)) {
+      return next(errorHandler(400, "Oferta nu mai poate fi editată în statusul curent."));
+    }
+
+    // Validăm și procesăm fiecare produs
+    const processedProducts = updatedProducts.map(product => {
+      if (!product.partCode || !product.partType || !product.manufacturer || 
+          !product.pricePerUnit || !product.quantity) {
+        throw new Error("Toate câmpurile produsului sunt obligatorii.");
+      }
+
+      if (product.pricePerUnit <= 0 || product.quantity <= 0) {
+        throw new Error("Prețul și cantitatea trebuie să fie valori pozitive.");
+      }
+
+      return {
+        ...product,
+        total: product.pricePerUnit * product.quantity,
+        options: [{
+          manufacturer: product.manufacturer,
+          price: product.pricePerUnit,
+          description: `Opțiune de la ${product.manufacturer}`
+        }]
+      };
+    });
+
+    // Actualizăm oferta
+    offer.parts = processedProducts;
+    offer.total = processedProducts.reduce((sum, part) => sum + part.total, 0);
+    
+    // Adăugăm log pentru audit
+    offer.logs.push({
+      timestamp: new Date(),
+      userId: req.user.id,
+      action: "Actualizare produse",
+      details: `Produsele ofertei au fost actualizate. Număr produse: ${processedProducts.length}`
+    });
+
+    const updatedOffer = await offer.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Produsele au fost actualizate cu succes.",
+      offer: updatedOffer
+    });
+
+  } catch (error) {
+    if (error.message.includes("Toate câmpurile") || 
+        error.message.includes("Prețul și cantitatea")) {
+      return next(errorHandler(400, error.message));
+    }
+    next(error);
+  }
+};

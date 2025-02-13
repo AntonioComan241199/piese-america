@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import "../styles/AdminOffers.css";
+import "../../styles/AdminOffers.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 

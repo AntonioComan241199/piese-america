@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
-import { login } from "../slices/authSlice";
-import Logo from "../assets/all-images/Logo.webp";
+import { login } from "../../slices/authSlice";
+import Logo from "../../assets/all-images/home-images/Logo.webp";
 const API_URL = import.meta.env.VITE_API_URL;
 
 

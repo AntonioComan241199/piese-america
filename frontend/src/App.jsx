@@ -9,28 +9,30 @@ import { Spinner } from "react-bootstrap";
 
 import Home from "./pages/Home";
 import Contact from "./pages/Contact";
-import Signin from "./pages/Signin";
-import Register from "./pages/Register";
+import Signin from "./pages/Account/Signin";
+import Register from "./pages/Account/Register";
 import ResetPasswordRequest from "./pages/ResetPasswordRequest";
 import ResetPassword from "./pages/ResetPassword";
 import TermsAndConditions from "./pages/TermsAndConditions";
-import OilProducts from "./pages/OilProducts";
-import MyOrders from "./pages/MyOrders";
-import MyOffers from "./pages/MyOffers";
-import RequestOrder from "./pages/RequestOrder";
-import OrderDetails from "./pages/OrderDetails";
-import OfferDetail from "./pages/OfferDetail";
-import OfferGenerator from "./pages/OfferGenerator";
+import OilProducts from "./pages/Products/Oils/OilProducts";
+import MyOrders from "./pages/Orders/MyOrders";
+import MyOffers from "./pages/Offers/MyOffers";
+import RequestOrder from "./pages/Orders/RequestOrder";
+import OrderDetails from "./pages/Orders/OrderDetails";
+import OfferDetail from "./pages/Offers/OfferDetail";
+import OfferGenerator from "./pages/Offers/OfferGenerator";
 import MyProfile from "./pages/MyProfile";
-import AdminOrders from "./pages/AdminOrders";
-import AdminOffers from "./pages/AdminOffers";
+import AdminOrders from "./pages/Orders/AdminOrders";
+import AdminOffers from "./pages/Offers/AdminOffers";
+import RealtimeStats from "./pages/Admin/RealtimeStats";
 
 import { checkAuth } from "./slices/authSlice";
 import { ProtectedRoute } from "./utils/ProtectedRoute";
 import { PublicRoute } from "./utils/PublicRoute";
+import { ProtectedAdminRoute } from "./utils/ProtectedAdminRoute";
 import AdminOilProducts from "./pages/Admin/AdminOilProducts";
 import AdminFireExtinguishers from "./pages/Admin/AdminFireExtinguishers";
-import FireExtinguisherProducts from "./pages/FireExtinguisherProducts";
+import FireExtinguisherProducts from "./pages/Products/FireExtinghuishers/FireExtinguisherProducts";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 
 const AppWrapper = () => {
@@ -162,62 +164,72 @@ const AppWrapper = () => {
         <Route
           path="/admin/oil-products"
           element={
-            <ProtectedRoute>
+            <ProtectedAdminRoute>
               <Layout>
                 <AdminOilProducts />
               </Layout>
-            </ProtectedRoute>
+            </ProtectedAdminRoute>
           }
         />
         <Route
           path="/admin/fire-extinguishers"
           element={
-            <ProtectedRoute>
+            <ProtectedAdminRoute>
               <Layout>
                 <AdminFireExtinguishers />
               </Layout>
-            </ProtectedRoute>
+            </ProtectedAdminRoute>
           }
         />
 
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedAdminRoute>
               <Layout>
                 <AdminDashboard />
               </Layout>
-            </ProtectedRoute>
+            </ProtectedAdminRoute>
           }
         />
         <Route
           path="/offer-generator/:orderId"
           element={
-            <ProtectedRoute>
+            <ProtectedAdminRoute>
               <Layout>
                 <OfferGenerator />
               </Layout>
-            </ProtectedRoute>
+            </ProtectedAdminRoute>
           }
         />
         <Route
           path="/admin-orders"
           element={
-            <ProtectedRoute>
+            <ProtectedAdminRoute>
               <Layout>
                 <AdminOrders />
               </Layout>
-            </ProtectedRoute>
+            </ProtectedAdminRoute>
           }
         />
         <Route
           path="/admin-offers"
           element={
-            <ProtectedRoute>
+            <ProtectedAdminRoute>
               <Layout>
                 <AdminOffers />
               </Layout>
-            </ProtectedRoute>
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedAdminRoute>
+              <Layout>
+                <RealtimeStats />
+              </Layout>
+            </ProtectedAdminRoute>
           }
         />
         <Route

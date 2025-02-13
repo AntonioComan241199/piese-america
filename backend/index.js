@@ -16,7 +16,7 @@ import notificationRoute from "./routes/notificationRoute.js";
 import contactRoute from "./routes/contactRoute.js";
 import oilProductsRoutes from "./routes/oilProductsRoutes.js";
 import fireExtinguishersRoutes from "./routes/fireExtinguishersRoutes.js";
-
+import reportRoutes from './routes/reportRoutes.js';
 // Configurare variabile de mediu
 dotenv.config();
 
@@ -67,6 +67,7 @@ app.use("/api/notifications", notificationRoute);
 app.use("/api/contact", contactRoute); // Rute pentru formularul de contact
 app.use("/api/oil-products", oilProductsRoutes);
 app.use("/api/fire-extinguishers", fireExtinguishersRoutes);
+app.use('/api/reports', reportRoutes);
 
 
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import SelectProductsModal from "./SelectProductsModal";
-import "../styles/MyOffers.css";
+import SelectProductsModal from "../Modals/SelectProductsModal";
+import "../../styles/MyOffers.css";
 const API_URL = import.meta.env.VITE_API_URL;
 
 

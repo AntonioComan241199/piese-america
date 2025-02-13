@@ -18,7 +18,8 @@ import {
   sendOfferEmail,
   updateOfferStatus,
   acceptOfferEmail,
-  rejectOfferEmail
+  rejectOfferEmail,
+  updateOfferProducts
 } from "../controllers/offerController.js";
 import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
@@ -86,7 +87,12 @@ router.post("/send-email", verifyToken, sendOfferEmail);
 router.post("/accept-email", acceptOfferEmail); // Ruta pentru acceptarea ofertei
 router.post("/reject-email", rejectOfferEmail); // Ruta pentru respingerea ofertei
 
-
+// Actualizare produse într-o ofertă (admin)
+router.put("/admin/:offerId/update-products", 
+  verifyToken, 
+  checkRole("admin"), 
+  updateOfferProducts
+);
 
 
 export default router;

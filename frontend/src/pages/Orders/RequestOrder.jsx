@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import "../styles/RequestOrder.css";
+import "../../styles/RequestOrder.css";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const VITE_FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;

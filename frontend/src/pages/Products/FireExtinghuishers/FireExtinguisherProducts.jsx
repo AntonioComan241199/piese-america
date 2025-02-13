@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Container, Row, Col, Card, Button, Form, Spinner, Alert } from "react-bootstrap";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-import FireExtinguisherModal from "../components/FireExtinguisherModal";
-import "../styles/FireExtinguishers.css";
+import FireExtinguisherModal from "../../../components/FireExtinguisherModal";
+import "../../../styles/FireExtinguishers.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
