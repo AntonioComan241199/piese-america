@@ -92,7 +92,7 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                   <>
                     <Nav.Link
                       as={NavLink}
-                      to="/admin-orders"
+                      to="/admin/dashboard"
                       onClick={handleNavLinkClick} // Închide meniul când se dă click
                       className={({ isActive }) =>
                         isActive
@@ -100,44 +100,8 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
                           : "nav-link text-white"
                       }
                     >
-                      Evidenta Oferte Admin
-                    </Nav.Link>
-                    <Nav.Link
-                      as={NavLink}
-                      to="/admin-offers"
-                      onClick={handleNavLinkClick} // Închide meniul când se dă click
-                      className={({ isActive }) =>
-                        isActive
-                          ? "nav-link active text-primary"
-                          : "nav-link text-white"
-                      }
-                    >
-                      Evidenta Comenzi Admin
-                    </Nav.Link>
-                    <Nav.Link
-                      as={NavLink}
-                      to="/admin/oil-products"
-                      onClick={handleNavLinkClick} // Închide meniul când se dă click
-                      className={({ isActive }) =>
-                        isActive
-                          ? "nav-link active text-primary"
-                          : "nav-link text-white"
-                      }
-                    >
-                      Gestionare produse Uleiuri
-                    </Nav.Link>
-                    <Nav.Link
-                      as={NavLink}
-                      to="/admin/fire-extinguishers"
-                      onClick={handleNavLinkClick} // Închide meniul când se dă click
-                      className={({ isActive }) =>
-                        isActive
-                          ? "nav-link active text-primary"
-                          : "nav-link text-white"
-                      }
-                    >
-                      Gestionare produse Stingatoare
-                    </Nav.Link>                      
+                      Panou de Administrare Admin
+                    </Nav.Link>                    
                   </>
                 )}
                 {/* Link către profilul utilizatorului */}
