@@ -19,7 +19,8 @@ import {
   updateOfferStatus,
   acceptOfferEmail,
   rejectOfferEmail,
-  updateOfferProducts
+  updateOfferProducts,
+  addOfferProducts
 } from "../controllers/offerController.js";
 import { verifyToken, checkRole } from "../utils/verifyToken.js";
 
@@ -92,6 +93,13 @@ router.put("/admin/:offerId/update-products",
   verifyToken, 
   checkRole("admin"), 
   updateOfferProducts
+);
+
+// Adăugare produse noi într-o ofertă (admin)
+router.post("/admin/:offerId/add-products", 
+  verifyToken, 
+  checkRole("admin"), 
+  addOfferProducts
 );
 
 

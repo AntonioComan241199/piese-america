@@ -1096,3 +1096,114 @@ export const updateOfferProducts = async (req, res, next) => {
     next(error);
   }
 };
+
+export const addOfferProducts = async (req, res, next) => {
+  try {
+    const { offerId } = req.params;
+    const { newProducts } = req.body;
+
+    // Log pentru debugging
+    console.log('Payload primit:', newProducts);
+
+    // Validare inițială
+    if (!Array.isArray(newProducts)) {
+      return next(errorHandler(400, "Lista de produse noi este invalidă."));
+    }
+
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+      return next(errorHandler(404, "Oferta nu a fost găsită."));
+    }
+
+    // Verificare status
+    if (!["proiect", "trimisa"].includes(offer.status)) {
+      return next(errorHandler(400, "Oferta nu mai poate fi editată în statusul curent."));
+    }
+
+    // Adăugăm fallback pentru produsele existente
+    offer.parts = offer.parts.map(part => {
+      const partObj = part.toObject ? part.toObject() : part;
+      return {
+        ...partObj,
+        deliveryTerm: partObj.deliveryTerm || "Necunoscut"
+      };
+    });
+
+    // Validare și procesare produse noi
+    const processedNewProducts = newProducts.map(product => {
+      // Validare câmpuri obligatorii
+      const requiredFields = ['partCode', 'partType', 'manufacturer', 'pricePerUnit', 'quantity', 'deliveryTerm'];
+      const missingFields = requiredFields.filter(field => !product[field]);
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Câmpurile următoare sunt obligatorii: ${missingFields.join(', ')}`);
+      }
+
+      // Validare valori numerice
+      const price = parseFloat(product.pricePerUnit);
+      const quantity = parseInt(product.quantity);
+
+      if (isNaN(price) || price <= 0) {
+        throw new Error("Prețul trebuie să fie un număr pozitiv.");
+      }
+
+      if (isNaN(quantity) || quantity <= 0) {
+        throw new Error("Cantitatea trebuie să fie un număr pozitiv.");
+      }
+
+      // Construire obiect produs
+      return {
+        partCode: product.partCode.trim(),
+        partType: product.partType.trim(),
+        manufacturer: product.manufacturer.trim(),
+        pricePerUnit: price,
+        quantity: quantity,
+        deliveryTerm: product.deliveryTerm.trim() || "Necunoscut", // Fallback și aici
+        total: price * quantity,
+        options: [
+          {
+            manufacturer: product.manufacturer.trim(),
+            price: price,
+            description: `Opțiune de la ${product.manufacturer.trim()}`
+          }
+        ]
+      };
+    });
+
+    // Log pentru debugging
+    console.log('Produse procesate:', processedNewProducts);
+
+    // Adăugare produse și actualizare total
+    offer.parts.push(...processedNewProducts);
+    
+    // Recalculare total
+    offer.total = offer.parts.reduce((sum, part) => sum + part.total, 0);
+
+    // Log pentru debugging
+    console.log('Oferta înainte de salvare:', {
+      totalParts: offer.parts.length,
+      partsWithoutDeliveryTerm: offer.parts.filter(p => !p.deliveryTerm).length,
+      total: offer.total
+    });
+
+    // Salvare și răspuns
+    const updatedOffer = await offer.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Produsele noi au fost adăugate cu succes.",
+      offer: updatedOffer
+    });
+
+  } catch (error) {
+    console.error('Eroare la procesarea produselor:', error);
+    
+    if (error.message.includes("obligatorii") || 
+        error.message.includes("pozitiv") ||
+        error.message.includes("Termenul de livrare")) {
+      return next(errorHandler(400, error.message));
+    }
+    
+    next(error);
+  }
+};
