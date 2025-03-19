@@ -20,6 +20,10 @@ const PartSchema = new mongoose.Schema({
     required: true,
     min: [0.01, "Prețul trebuie să fie pozitiv și mai mare decât zero."],
   }, // Prețul per unitate
+  deliveryTerm: {
+    type: String,
+    required: [true, "Termenul de livrare este obligatoriu"],
+  }, // Termenul de livrare
   quantity: {
     type: Number,
     required: true,

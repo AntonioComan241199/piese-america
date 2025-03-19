@@ -102,7 +102,7 @@ const Footer = () => {
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
             <a
-              href="https://www.facebook.com/automedici/?locale=ro_RO"
+              href="https://www.facebook.com/pieseautoamerica?locale=ro_RO"
               target="_blank"
               rel="noopener noreferrer"
               className="text-light text-decoration-none d-flex align-items-center gap-3 mt-3"

@@ -255,6 +255,8 @@ const FireExtinguishersProducts = () => {
         </Helmet>
 
         <h1 className="text-center mb-4">Stingătoare Auto</h1>
+        <h5 className="text-center mb-4">Pentru comenzi sau informații suplimentare, vă rugăm să ne contactați!</h5>
+
 
         <Row className="mb-4">
           <Col md={5}>

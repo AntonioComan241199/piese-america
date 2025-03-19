@@ -11,6 +11,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
     manufacturer: "",
     pricePerUnit: "",
     quantity: "",
+    deliveryTerm: "",
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // Flag pentru prevenirea apelurilor multiple
@@ -24,9 +25,9 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
   }, [order]);
 
   const handleAddPart = () => {
-    const { partCode, partType, manufacturer, pricePerUnit, quantity } = newPart;
+    const { partCode, partType, manufacturer, pricePerUnit, quantity, deliveryTerm } = newPart;
 
-    if (!partCode || !partType || !manufacturer || !pricePerUnit || !quantity) {
+    if (!partCode || !partType || !manufacturer || !pricePerUnit || !quantity || !deliveryTerm) {
       setError("Toate câmpurile sunt obligatorii pentru a adăuga o piesă.");
       return;
     }
@@ -43,6 +44,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
       manufacturer: "",
       pricePerUnit: "",
       quantity: "",
+      deliveryTerm: "",
     });
     setError("");
   };
@@ -92,7 +94,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
         setError(""); // Resetăm erorile
   
         // Apelăm API-ul backend pentru a trimite email-ul
-        const emailResponse = await fetch(`${API_URL}//offer/send-email`, {
+        const emailResponse = await fetch(`${API_URL}/offer/send-email`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -181,6 +183,14 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
                 }))
               }
             />
+            <Form.Control
+              type="text"
+              placeholder="Termen livrare ex: 2-3 zile lucrătoare"
+              value={newPart.deliveryTerm}
+              onChange={(e) =>
+                setNewPart((prev) => ({ ...prev, deliveryTerm: e.target.value }))
+              }
+            />
             <Button variant="primary" onClick={handleAddPart}>
               Adaugă
             </Button>
@@ -195,7 +205,8 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
                 >
                   <span>
                     {part.partCode} - {part.partType} ({part.quantity} buc.,{" "}
-                    {part.manufacturer}) - {part.total} RON
+                    {part.manufacturer}) - {part.total} RON,
+                    Termen de livrare: {part.deliveryTerm && <small> {part.deliveryTerm}</small>}
                   </span>
                   <Button
                     variant="danger"

@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const initialState = {
   isAuthenticated: false,
   user: null,
@@ -33,7 +35,7 @@ export const checkAuth = createAsyncThunk(
         }
       }
 
-      const refreshResponse = await fetch("http://localhost:5000/api/auth/refresh-token", {
+      const refreshResponse = await fetch(`${API_URL}/auth/refresh-token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: refreshToken }),

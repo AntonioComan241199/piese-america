@@ -165,6 +165,7 @@ const SelectProductsModal = ({
             pricePerUnit: part.pricePerUnit || 0,
             quantity: part.quantity || 0,
             partCode: part.partCode || "N/A",
+            deliveryTerm: part.deliveryTerm || "N/A",
             total: part.total || 0,
           })) || []
         );
@@ -181,6 +182,7 @@ const SelectProductsModal = ({
               price: option.price,
               quantity: part.quantity,
               partCode: part.partCode || "N/A",
+              deliveryTerm: part.deliveryTerm || "N/A",
             });
           });
         });
@@ -196,6 +198,7 @@ const SelectProductsModal = ({
               pricePerUnit: option.price,
               quantity: option.quantity,
               partCode: option.partCode,
+              deliveryTerm: option.deliveryTerm || "N/A",
               total: 0,
             }))
           )
@@ -224,6 +227,7 @@ const SelectProductsModal = ({
               price: option.price || 0,
               quantity: part.quantity, // Cantitatea specifică acestei opțiuni
               partCode: part.partCode || "N/A",
+              deliveryTerm: part.deliveryTerm || "N/A",
               partId: part._id,
             });
           });
@@ -242,6 +246,7 @@ const SelectProductsModal = ({
           pricePerUnit: option.price,
           quantity: option.quantity,
           partCode: option.partCode,
+          deliveryTerm: option.deliveryTerm, // Adăugat aici
           total: 0,
         }))
       );
@@ -269,6 +274,7 @@ const SelectProductsModal = ({
             price: option.price,
             quantity: part.quantity, // Cantitatea asociată acestei opțiuni
             partCode: part.partCode || "N/A",
+            deliveryTerm: part.deliveryTerm || "N/A",
           });
         });
       });
@@ -283,6 +289,7 @@ const SelectProductsModal = ({
           quantity: option.quantity,
           pricePerUnit: option.price,
           partCode: option.partCode,
+          deliveryTerm: option.deliveryTerm || "N/A",
           manufacturer: option.manufacturer,
           total: 0,
         }))
@@ -530,6 +537,7 @@ const renderStep1 = () => (
                           <br /> 
                           <strong>{option.manufacturer}</strong> - {option.price} RON/buc Fara TVA
                           <br />
+                          Termen livrare: <strong>{option.deliveryTerm || 'N/A'}</strong>
                           
                           <br />
                           <small className="text-muted">
@@ -876,6 +884,7 @@ const renderStep2 = () => {
                     <p><strong>Cod piesă:</strong> {selection.partCode || "N/A"}</p>
                     <p><strong>Cantitate:</strong> {selection.quantity || 0}</p>
                     <p><strong>Preț/bucată fara TVA:</strong> {selection.pricePerUnit || 0} RON</p>
+                    <p><strong>Termen livrare:</strong> {selection.deliveryTerm || "N/A"}</p>
                     <p className="text-success"><strong>SubTotal fara TVA:</strong> {selection.total || 0} RON</p>
                     <p className="text-success"><strong>SubTotal cu TVA:</strong> {selection.total*1.19 || 0} RON</p>
                   </div>

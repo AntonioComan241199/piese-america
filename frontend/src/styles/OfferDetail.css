@@ -1,0 +1,25 @@
+.table-container {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .product-row {
+    transition: all 0.3s ease;
+  }
+  
+  .product-row:hover {
+    background-color: rgba(0,0,0,0.01);
+  }
+  
+  .selected-product {
+    border-left: 5px solid #28a745;
+  }
+  
+  .table {
+    margin-bottom: 0 !important;
+  }
+  
+  .table td, .table th {
+    padding: 0.5rem 1rem;
+  }
+
+  

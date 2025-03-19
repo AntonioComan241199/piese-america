@@ -13,6 +13,7 @@ const OfferGenerator = () => {
   const [parts, setParts] = useState([]); // Lista pieselor din ofertă
   const [total, setTotal] = useState(0); // Totalul ofertei
   const [message, setMessage] = useState(""); // Mesaj de succes/eroare
+  const [deliveryTerm, setDeliveryTerm] = useState("");
 
   // Fetch detalii comandă și ofertă
   useEffect(() => {
@@ -62,7 +63,7 @@ const OfferGenerator = () => {
       const response = await fetchWithAuth(`${API_URL}/offer/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, parts, total }),
+        body: JSON.stringify({ orderId, parts, total, deliveryTerm }),
       });
 
       // Actualizează statusul cererii de ofertare
@@ -181,6 +182,7 @@ const OfferGenerator = () => {
         </div>
       ))}
 
+      
       {/* Total și Submit */}
       <h4 className="mt-4">Total: {total} RON</h4>
       <button className="btn btn-success mt-3" onClick={handleSubmitOffer}>Trimite Ofertă</button>

@@ -8,6 +8,7 @@ import SelectProductsModal from "../Modals/SelectProductsModal"; // Asigură-te 
 import { Container, Row, Col, Table, Button, Alert, Card, Spinner, Badge } from "react-bootstrap";
 import EditProductsModal from '../Modals/EditProductsModal';
 const API_URL = import.meta.env.VITE_API_URL;
+import "../../styles/OfferDetail.css";
 
 
 
@@ -267,57 +268,132 @@ const OfferDetail = () => {
       alert("Eroare la respingerea ofertei: " + err.message);
     }
   };
-
-  const renderProductTable = () => (
-    <div className="table-container">
-      <div className="table-responsive">
-        <Table striped bordered hover className="mt-4">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Cod Piesa</th>
-              <th>Tip</th>
-              <th>Producator</th>
-              <th>Pret unitar</th>
-              <th>Cantitate</th>
-              <th>Valoare fără TVA</th>
-              <th>TVA (19%)</th>
-              <th>Valoare cu TVA</th>
-            </tr>
-          </thead>
-          <tbody>
-            {offer.parts.map((part, index) => {
-              const selectedPart = offer.selectedParts.find((sp) => sp.partCode === part.partCode);
-              const isSelected = !!selectedPart;
-              const subtotalFaraTVA = part.pricePerUnit * part.quantity;
-              const tva = subtotalFaraTVA * 0.19;
-              const subtotalCuTVA = subtotalFaraTVA + tva;
   
-              return (
-                <tr key={part.partCode} className={isSelected ? "table-success" : ""}>
-                  <td>{index + 1}</td>
-                  <td>{part.partCode}</td>
-                  <td>{part.partType}</td>
-                  <td>{part.manufacturer}</td>
-                  <td>{part.pricePerUnit.toFixed(2)} RON</td>
-                  <td>{part.quantity}</td>
-                  <td>{subtotalFaraTVA.toFixed(2)} RON</td>
-                  <td>{tva.toFixed(2)} RON</td>
-                  <td>
-                    {isSelected
-                      ? `${(selectedPart.pricePerUnit * selectedPart.quantity * 1.19).toFixed(2)} RON (selectat)`
-                      : `${subtotalCuTVA.toFixed(2)} RON`}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-      </div>
-    </div>
-  );
+    const renderProductTable = () => {
+      return (
+        <div className="table-container">
+          {offer.parts.map((part, index) => {
+            const selectedPart = offer.selectedParts.find((sp) => sp.partCode === part.partCode);
+            const isSelected = !!selectedPart;
+            const subtotalFaraTVA = part.pricePerUnit * part.quantity;
+            const tva = subtotalFaraTVA * 0.19;
+            const subtotalCuTVA = subtotalFaraTVA + tva;
   
+            return (
+              <div
+                key={part.partCode}
+                className={`mb-1 rounded overflow-hidden ${
+                  isSelected ? 'border border-success' : 'border'
+                }`}
+                style={{
+                  backgroundColor: '#fff',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {/* Header */}
+                <div
+                  className={`px-3 py-2 ${
+                    isSelected ? 'bg-success bg-gradient text-white' : 'bg-light'
+                  }`}
+                  style={{
+                    borderBottom: '1px solid rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h6 className="mb-0 fw-bold">
+                      <i className="ri-shopping-cart-2-line me-2"></i>
+                      Produs #{index + 1}
+                    </h6>
+                    {isSelected && (
+                      <span className="badge bg-white text-success px-2 py-1 rounded-pill">
+                        <i className="ri-check-line me-1"></i>
+                        Selectat
+                      </span>
+                    )}
+                  </div>
+                </div>
   
+                {/* Product Details */}
+                <div className="p-1">
+                  <div className="row g-1">
+                    {[
+                      {
+                        icon: 'ri-barcode-line',
+                        label: 'Cod Piesă',
+                        value: part.partCode,
+                        valueClass: 'fw-bold'
+                      },
+                      {
+                        icon: 'ri-tools-line',
+                        label: 'Tip',
+                        value: part.partType
+                      },
+                      {
+                        icon: 'ri-building-line',
+                        label: 'Producător',
+                        value: part.manufacturer
+                      },
+                      {
+                        icon: 'ri-money-euro-circle-line',
+                        label: 'Preț unitar',
+                        value: `${part.pricePerUnit.toFixed(2)} RON`,
+                        valueClass: 'text-primary'
+                      },
+                      {
+                        icon: 'ri-numbers-line',
+                        label: 'Cantitate',
+                        value: part.quantity
+                      },
+                      {
+                        icon: 'ri-calculator-line',
+                        label: 'Valoare fără TVA',
+                        value: `${subtotalFaraTVA.toFixed(2)} RON`,
+                        valueClass: 'text-success'
+                      },
+                      {
+                        icon: 'ri-percent-line',
+                        label: 'TVA (19%)',
+                        value: `${tva.toFixed(2)} RON`,
+                        valueClass: 'text-danger'
+                      },
+                      {
+                        icon: 'ri-money-euro-box-line',
+                        label: 'Valoare cu TVA',
+                        value: isSelected
+                          ? `${(selectedPart.pricePerUnit * selectedPart.quantity * 1.19).toFixed(2)} RON`
+                          : `${subtotalCuTVA.toFixed(2)} RON`,
+                        valueClass: 'fw-bold'
+                      },
+                      {
+                        icon: 'ri-time-line',
+                        label: 'Termen livrare',
+                        value: part.deliveryTerm
+                      }
+                    ].map((item, idx) => (
+                      <div key={idx} className="col-12">
+                        <div className="d-flex flex-column flex-sm-row align-items-sm-center py-0 px-2 rounded"
+                             style={{
+                               backgroundColor: isSelected ? 'rgba(25, 135, 84, 0.03)' : 'rgba(0,0,0,0.02)',
+                               transition: 'all 0.3s ease'
+                             }}>
+                          <div className="text-muted mb-0 mb-sm-0 me-sm-3" style={{minWidth: '120px'}}>
+                            <i className={`${item.icon} me-2`}></i>
+                            {item.label}
+                          </div>
+                          <div className={item.valueClass || ''}>
+                            {item.value}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    };
 
   const total = calculateTotal();
 
@@ -413,7 +489,7 @@ const OfferDetail = () => {
             </Col>
           </Row>
 
-          {renderProductTable()}
+          
 
           {user?.role === "client" && (!offer.selectedParts || offer.selectedParts.length === 0) && offer?.status != "anulata" && (
             <div className="text-center my-4">
@@ -425,6 +501,7 @@ const OfferDetail = () => {
               </Button>
             </div>
           )}
+          
 
           {offer.status === "comanda_spre_finalizare" && user?.role === "client" && (
             <div className="mt-4 text-center">
@@ -436,6 +513,8 @@ const OfferDetail = () => {
               </Button>
             </div>
           )}
+
+          {renderProductTable()}
 
           {user?.role === "admin" && (
             <Button

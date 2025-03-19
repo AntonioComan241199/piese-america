@@ -9,13 +9,13 @@ const generateAccessToken = (user) => {
   return jwt.sign(
     { id: user._id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "1h" }
+    { expiresIn: "24h" }
   );
 };
 
 const generateRefreshToken = (user) => {
   return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: "7d",
+    expiresIn: "30d",
   });
 };
 
@@ -143,32 +143,40 @@ export const refreshToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-
     const user = await User.findById(decoded.id);
+
     if (!user || user.refreshToken !== token) {
       return res.status(403).json({ code: "INVALID_REFRESH_TOKEN", message: "Invalid refresh token." });
     }
 
+    // Generează un nou access token și un nou refresh token
     const newAccessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
 
-    res.status(200).json({ accessToken: newAccessToken });
+    // Salvează noul refresh token în baza de date
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    res.status(200).json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
   } catch (error) {
     res.status(403).json({ code: "EXPIRED_REFRESH_TOKEN", message: "Invalid or expired refresh token." });
   }
 };
 
+
 // Deconectare utilizator
 export const signOut = async (req, res, next) => {
-  const { email } = req.body;
-
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
       return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
     }
 
-    // Invalidează token-ul din baza de date
+    // Șterge refreshToken-ul
     user.refreshToken = null;
     await user.save();
 
@@ -177,6 +185,7 @@ export const signOut = async (req, res, next) => {
     next(error);
   }
 };
+
 
 
 

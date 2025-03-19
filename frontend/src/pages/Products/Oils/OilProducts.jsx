@@ -261,7 +261,7 @@ const OilProducts = () => {
         </Helmet>
 
         <h1 className="text-center mb-4">Uleiuri și Lubrifianți Auto</h1>
-
+        <h5 className="text-center mb-4">Pentru comenzi sau informații suplimentare, vă rugăm să ne contactați!</h5>
         <Row className="mb-4">
           <Col md={5}>
             <Form.Control
