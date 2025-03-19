@@ -70,6 +70,7 @@ const EditProductsModal = ({ show, onHide, offer, onUpdate }) => {
               manufacturer: part.manufacturer,
               pricePerUnit: parseFloat(part.pricePerUnit),
               quantity: parseInt(part.quantity, 10),
+              deliveryTerm: part.deliveryTerm,
               _id: part._id
             }))
           }),
@@ -205,6 +206,20 @@ const EditProductsModal = ({ show, onHide, offer, onUpdate }) => {
                   </Form.Group>
                 </div>
                 <div className="col-md-4">
+                <Form.Group>
+                  <Form.Label>Termen livrare</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={part.deliveryTerm}
+                    onChange={(e) => handleFieldChange(index, 'deliveryTerm', e.target.value)}
+                    isInvalid={!part.deliveryTerm}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Termenul de livrare este obligatoriu
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </div>
+                <div className="col-md-4">
                   <Form.Group>
                     <Form.Label>Total (RON)</Form.Label>
                     <Form.Control
@@ -216,6 +231,7 @@ const EditProductsModal = ({ show, onHide, offer, onUpdate }) => {
                   </Form.Group>
                 </div>
               </div>
+              
             </div>
           ))}
         </Form>

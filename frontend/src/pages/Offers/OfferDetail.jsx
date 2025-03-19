@@ -9,6 +9,7 @@ import { Container, Row, Col, Table, Button, Alert, Card, Spinner, Badge } from 
 import EditProductsModal from '../Modals/EditProductsModal';
 const API_URL = import.meta.env.VITE_API_URL;
 import "../../styles/OfferDetail.css";
+import AddProductsModal from '../Modals/AddProductsModal';
 
 
 
@@ -22,6 +23,7 @@ const OfferDetail = () => {
   
   const [showSelectModal, setShowSelectModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false); // Noul state pentru modal-ul de editare
+  const [showAddModal, setShowAddModal] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const fetchOffer = async () => {
@@ -517,13 +519,22 @@ const OfferDetail = () => {
           {renderProductTable()}
 
           {user?.role === "admin" && (
-            <Button
-              variant="warning"
-              className="me-2"
-              onClick={() => setShowEditModal(true)}
-            >
-              <i className="ri-edit-line"></i> Editare Produse
-            </Button>
+            <>
+              <Button
+                variant="warning"
+                className="me-2"
+                onClick={() => setShowEditModal(true)}
+              >
+                <i className="ri-edit-line"></i> Editare Produse
+              </Button>
+              <Button
+                variant="success"
+                className="me-2"
+                onClick={() => setShowAddModal(true)}
+              >
+                <i className="ri-add-circle-line"></i> Adaugă Produse
+              </Button>
+            </>
           )}
         </Card.Body>
       </Card>
@@ -544,6 +555,12 @@ const OfferDetail = () => {
       <EditProductsModal
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
+        offer={offer}
+        onUpdate={handleProductsUpdate}
+      />
+      <AddProductsModal
+        show={showAddModal}
+        onHide={() => setShowAddModal(false)}
         offer={offer}
         onUpdate={handleProductsUpdate}
       />

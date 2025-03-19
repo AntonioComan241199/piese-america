@@ -3,37 +3,38 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import { fetchWithAuth } from "../../utils/fetchWithAuth";
 import { toast } from 'react-toastify';
 
+const initialProductState = {
+  partCode: '',
+  partType: '',
+  manufacturer: '',
+  pricePerUnit: '',
+  quantity: 1,
+  deliveryTerm: ''
+};
+
 const AddProductsModal = ({ show, onHide, offer, onUpdate }) => {
-  const [newProducts, setNewProducts] = useState([{
-    partCode: '',
-    partType: '',
-    manufacturer: '',
-    pricePerUnit: '',
-    quantity: 1,
-    deliveryTerm: ''
-  }]);
+  const [newProducts, setNewProducts] = useState([initialProductState]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (show) {
+    if (!show) {
+      setNewProducts([initialProductState]);
       setError('');
-      // Verifică statusul ofertei
-      if (!["proiect", "trimisa"].includes(offer?.status)) {
-        setError(`Oferta nu poate fi modificată în statusul curent (${offer?.status}).`);
-      }
     }
-  }, [show, offer]);
+  }, [show]);
+
+  useEffect(() => {
+      if (show && offer) {
+        // Verifică statusul ofertei
+        if (!["proiect", "trimisa"].includes(offer.status)) {
+          setError(`Nu mai pot fi adaugate produse in statusul curent al ofertei! (${offer.status}).`);
+        }
+      }
+    }, [show, offer]);
 
   const addNewProductField = () => {
-    setNewProducts([...newProducts, {
-      partCode: '',
-      partType: '',
-      manufacturer: '',
-      pricePerUnit: '',
-      quantity: 1,
-      deliveryTerm: ''
-    }]);
+    setNewProducts([...newProducts, { ...initialProductState }]);
   };
 
   const removeProductField = (index) => {
@@ -66,7 +67,10 @@ const AddProductsModal = ({ show, onHide, offer, onUpdate }) => {
   };
 
   const handleSave = async () => {
-    if (!validateProducts()) return;
+    if (!validateProducts()) {
+      toast.error('Verifică datele introduse înainte de a salva.');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -75,11 +79,12 @@ const AddProductsModal = ({ show, onHide, offer, onUpdate }) => {
       const formattedProducts = newProducts.map(product => ({
         ...product,
         pricePerUnit: parseFloat(product.pricePerUnit),
-        quantity: parseInt(product.quantity)
+        quantity: parseInt(product.quantity),
+        deliveryTerm: product.deliveryTerm.trim()
       }));
 
       const response = await fetchWithAuth(
-        `${import.meta.env.VITE_API_URL}/offer/${offer._id}/add-products`,
+        `${import.meta.env.VITE_API_URL}/offer/admin/${offer._id}/add-products`,
         {
           method: 'POST',
           headers: {
@@ -93,14 +98,6 @@ const AddProductsModal = ({ show, onHide, offer, onUpdate }) => {
         toast.success('Produsele au fost adăugate cu succes!');
         onUpdate();
         onHide();
-        setNewProducts([{
-          partCode: '',
-          partType: '',
-          manufacturer: '',
-          pricePerUnit: '',
-          quantity: 1,
-          deliveryTerm: ''
-        }]);
       } else {
         throw new Error(response.message || 'Eroare la adăugarea produselor');
       }
@@ -122,11 +119,7 @@ const AddProductsModal = ({ show, onHide, offer, onUpdate }) => {
         <Form>
           {error && (
             <div className="alert alert-danger mb-4" role="alert">
-              <div className="d-flex align-items-center">
-                <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                <strong>Eroare: </strong>
-                <span className="ms-1">{error}</span>
-              </div>
+              <strong>Eroare: </strong>{error}
             </div>
           )}
 
@@ -146,94 +139,30 @@ const AddProductsModal = ({ show, onHide, offer, onUpdate }) => {
               </div>
 
               <div className="row g-3">
-                <div className="col-md-6">
-                  <Form.Group>
-                    <Form.Label>Cod piesă</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={product.partCode}
-                      onChange={(e) => handleFieldChange(index, 'partCode', e.target.value)}
-                      isInvalid={!product.partCode}
-                    />
-                  </Form.Group>
-                </div>
-
-                <div className="col-md-6">
-                  <Form.Group>
-                    <Form.Label>Tip piesă</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={product.partType}
-                      onChange={(e) => handleFieldChange(index, 'partType', e.target.value)}
-                      isInvalid={!product.partType}
-                    />
-                  </Form.Group>
-                </div>
-
-                <div className="col-md-6">
-                  <Form.Group>
-                    <Form.Label>Producător</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={product.manufacturer}
-                      onChange={(e) => handleFieldChange(index, 'manufacturer', e.target.value)}
-                      isInvalid={!product.manufacturer}
-                    />
-                  </Form.Group>
-                </div>
-
-                <div className="col-md-6">
-                  <Form.Group>
-                    <Form.Label>Preț/unitate (RON)</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={product.pricePerUnit}
-                      onChange={(e) => handleFieldChange(index, 'pricePerUnit', e.target.value)}
-                      isInvalid={parseFloat(product.pricePerUnit) <= 0}
-                      min="0.01"
-                      step="0.01"
-                    />
-                  </Form.Group>
-                </div>
-
-                <div className="col-md-6">
-                  <Form.Group>
-                    <Form.Label>Cantitate</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={product.quantity}
-                      onChange={(e) => handleFieldChange(index, 'quantity', e.target.value)}
-                      isInvalid={parseInt(product.quantity) <= 0}
-                      min="1"
-                    />
-                  </Form.Group>
-                </div>
-
-                <div className="col-md-6">
-                  <Form.Group>
-                    <Form.Label>Termen livrare</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={product.deliveryTerm}
-                      onChange={(e) => handleFieldChange(index, 'deliveryTerm', e.target.value)}
-                      isInvalid={!product.deliveryTerm}
-                    />
-                  </Form.Group>
-                </div>
+                {[
+                  { label: 'Cod piesă', field: 'partCode', type: 'text' },
+                  { label: 'Tip piesă', field: 'partType', type: 'text' },
+                  { label: 'Producător', field: 'manufacturer', type: 'text' },
+                  { label: 'Preț/unitate (RON)', field: 'pricePerUnit', type: 'number', min: '0.01', step: '0.01' },
+                  { label: 'Cantitate', field: 'quantity', type: 'number', min: '1' },
+                  { label: 'Termen livrare', field: 'deliveryTerm', type: 'text' }
+                ].map(({ label, field, type, min, step }) => (
+                  <div key={field} className="col-md-6">
+                    <Form.Group>
+                      <Form.Label>{label}</Form.Label>
+                      <Form.Control
+                        type={type}
+                        value={product[field]}
+                        onChange={(e) => handleFieldChange(index, field, e.target.value)}
+                        min={min}
+                        step={step}
+                      />
+                    </Form.Group>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
-
-          <div className="text-center mt-3">
-            <Button 
-              variant="success" 
-              onClick={addNewProductField}
-              className="w-100"
-            >
-              <i className="bi bi-plus-circle me-2"></i>
-              Adaugă încă un produs
-            </Button>
-          </div>
         </Form>
       </Modal.Body>
       <Modal.Footer>
