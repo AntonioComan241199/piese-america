@@ -25,6 +25,7 @@ import MyProfile from "./pages/MyProfile";
 import AdminOrders from "./pages/Orders/AdminOrders";
 import AdminOffers from "./pages/Offers/AdminOffers";
 import RealtimeStats from "./pages/Admin/RealtimeStats";
+import FordMustangPage from "./pages/DedicatedCars/FordMustangPage";
 
 import { checkAuth } from "./slices/authSlice";
 import { ProtectedRoute } from "./utils/ProtectedRoute";
@@ -69,6 +70,14 @@ const AppWrapper = () => {
           element={
             <Layout>
               <Home />
+            </Layout>
+          }
+        />
+        <Route
+          path="/ford-mustang"
+          element={
+            <Layout>
+              <FordMustangPage />
             </Layout>
           }
         />

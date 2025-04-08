@@ -67,150 +67,172 @@ const OfferDetail = () => {
   };
 
   const exportSelectedToPDF = () => {
-    if (!offer || !offer.selectedParts?.length) {
-        setError("Oferta nu conține produse selectate pentru export.");
-        return;
-    }
+      if (!offer || !(offer.parts?.length || offer.selectedParts?.length)) {
+          setError("Oferta nu conține produse pentru export.");
+          return;
+      }
 
-    const doc = new jsPDF(); // Creează un document PDF
-    doc.setFont("helvetica", "normal");
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
 
-    // Detalii companie
-    const companyDetails = normalizeText(`FURNIZOR:
-  GLOBAL QUALITY SOLUTIONS SRL
-  Bdul. Mărăști 25, București, Sector 1
-  CUI: 17426176
-  Nr reg comertului: J40/6018/2005`);
+      const isDraft = !offer.selectedParts?.length;
 
-    // Detalii cumpărător
-    const buyerDetails = normalizeText(
-        offer.orderId?.userType === "persoana_fizica"
-            ? `Nume Client: ${offer.orderId.firstName || "N/A"} ${offer.orderId.lastName || "N/A"}
-  Telefon: ${offer.orderId.phoneNumber || "N/A"}
-  Email: ${offer.orderId.email || "N/A"}`
-            : `Firma: ${offer.orderId?.companyDetails?.companyName || "N/A"}
-  CUI: ${offer.orderId?.companyDetails?.cui || "N/A"}
-  Nr. Reg. Com: ${offer.orderId?.companyDetails?.nrRegCom || "N/A"}
-  Telefon: ${offer.orderId.phoneNumber || "N/A"}
-  Email: ${offer.orderId.email || "N/A"}`
-    );
+      // Detalii companie
+      const companyDetails = normalizeText(`FURNIZOR:
+    GLOBAL QUALITY SOLUTIONS SRL
+    Bdul. Mărăști 25, București, Sector 1
+    CUI: 17426176
+    Nr reg comertului: J40/6018/2005`);
 
-    // Adresa de facturare
-    const billingAddress = normalizeText(`Adresa Facturare:
+      // Detalii cumpărător
+      const buyerDetails = normalizeText(
+          offer.orderId?.userType === "persoana_fizica"
+              ? `Nume Client: ${offer.orderId.firstName || "N/A"} ${offer.orderId.lastName || "N/A"}
+    Telefon: ${offer.orderId.phoneNumber || "N/A"}
+    Email: ${offer.orderId.email || "N/A"}`
+              : `Firma: ${offer.orderId?.companyDetails?.companyName || "N/A"}
+    CUI: ${offer.orderId?.companyDetails?.cui || "N/A"}
+    Nr. Reg. Com: ${offer.orderId?.companyDetails?.nrRegCom || "N/A"}
+    Telefon: ${offer.orderId.phoneNumber || "N/A"}
+    Email: ${offer.orderId.email || "N/A"}`
+      );
+
+      // Adresa facturare
+      let billingAddress = normalizeText(`Adresa Facturare:
   ${offer.billingAddress?.street || "N/A"} ${offer.billingAddress?.number || ""}
   Bloc: ${offer.billingAddress?.block || "-"}, Scara: ${offer.billingAddress?.entrance || "-"}, Ap: ${offer.billingAddress?.apartment || "-"}
   ${offer.billingAddress?.city || "N/A"}, ${offer.billingAddress?.county || "N/A"}`);
+      if (isDraft) billingAddress += `\n*Adresa se completeaza la finalizarea ofertei.*`;
 
-    // Adresa de livrare
-    const deliveryAddress = normalizeText(
-        offer.pickupAtCentral
-            ? "Adresa Livrare: Ridicare de la sediul central"
-            : `Adresa Livrare:
+      // Adresa livrare
+      let deliveryAddress = offer.pickupAtCentral
+          ? "Adresa Livrare: Ridicare de la sediul central"
+          : normalizeText(`Adresa Livrare:
   ${offer.deliveryAddress?.street || "N/A"} ${offer.deliveryAddress?.number || ""}
   Bloc: ${offer.deliveryAddress?.block || "-"}, Scara: ${offer.deliveryAddress?.entrance || "-"}, Ap: ${offer.deliveryAddress?.apartment || "-"}
-  ${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`
-    );
+  ${offer.deliveryAddress?.city || "N/A"}, ${offer.deliveryAddress?.county || "N/A"}`);
+      if (isDraft && !offer.pickupAtCentral) deliveryAddress += `\n*Adresa se completeaza la finalizarea ofertei.*`;
 
-    // Generare PDF
-    doc.setFontSize(10);
+      // Layout setup
+      const leftStartX = 10;
+      const rightStartX = 110;
+      const startY = 10;
+      let currentY = startY;
 
-    const leftStartX = 10;
-    const rightStartX = 110;
-    const startY = 10;
+      // Companie
+      const companyLines = doc.splitTextToSize(companyDetails, 90);
+      companyLines.forEach((line, index) => {
+          doc.text(line, leftStartX, currentY + index * 5);
+      });
+      const companyBlockHeight = companyLines.length * 5;
 
-    // Companie (stânga)
-    const companyLines = doc.splitTextToSize(companyDetails, 90);
-    companyLines.forEach((line, index) => {
-        doc.text(line, leftStartX, startY + index * 5);
-    });
+      // Cumpărător
+      const clientLines = doc.splitTextToSize(buyerDetails, 90);
+      clientLines.forEach((line, index) => {
+          doc.text(line, rightStartX, currentY + index * 5);
+      });
+      const clientBlockHeight = clientLines.length * 5;
 
-    // Detalii cumpărător (dreapta)
-    const clientLines = doc.splitTextToSize(buyerDetails, 90);
-    clientLines.forEach((line, index) => {
-        doc.text(line, rightStartX, startY + index * 5);
-    });
+      currentY += Math.max(companyBlockHeight, clientBlockHeight) + 10;
 
-    // Adresa facturare
-    const billingLines = doc.splitTextToSize(billingAddress, 90);
-    billingLines.forEach((line, index) => {
-        doc.text(line, rightStartX, startY + clientLines.length * 5 + index * 5);
-    });
+      // Adresa facturare
+      const billingLines = doc.splitTextToSize(billingAddress, 90);
+      billingLines.forEach((line, index) => {
+          doc.text(line, rightStartX, currentY + index * 5);
+      });
+      currentY += billingLines.length * 5 + 10;
 
-    // Adresa livrare
-    const deliveryLines = doc.splitTextToSize(deliveryAddress, 90);
-    deliveryLines.forEach((line, index) => {
-        doc.text(line, rightStartX, startY + (clientLines.length + billingLines.length) * 5 + index * 5);
-    });
+      // Adresa livrare
+      const deliveryLines = doc.splitTextToSize(deliveryAddress, 90);
+      deliveryLines.forEach((line, index) => {
+          doc.text(line, rightStartX, currentY + index * 5);
+      });
+      currentY += deliveryLines.length * 5 + 15;
 
-    // Titlu ofertă
-    const titleText = normalizeText(`Oferta #${offer.offerNumber}`);
-    const statusText = normalizeText(`Status: ${offer.status}`);
-    const titleX = (doc.internal.pageSize.width - doc.getTextWidth(titleText)) / 2;
-    const statusX = (doc.internal.pageSize.width - doc.getTextWidth(statusText)) / 2;
-    const contentStartY = startY + 60;
+      // Titlu și status ofertă
+      const titleText = normalizeText(`Oferta #${offer.offerNumber} / ${new Date(offer.createdAt).toLocaleDateString("ro-RO")}`);
+      const statusText = normalizeText(`Status: ${offer.status}`);
+      const titleX = (doc.internal.pageSize.width - doc.getTextWidth(titleText)) / 2;
+      const statusX = (doc.internal.pageSize.width - doc.getTextWidth(statusText)) / 2;
 
-    doc.text(titleText, titleX, contentStartY);
-    doc.text(statusText, statusX, contentStartY + 10);
+      doc.text(titleText, titleX, currentY);
+      doc.text(statusText, statusX, currentY + 10);
+      currentY += 25;
 
-    // Definire coloană tabel
-    const tableColumn = [
-        "Cod Piesa",
-        "Tip",
-        "Producator",
-        "Pret unitar",
-        "Cantitate",
-        "Valoare fara TVA",
-        "TVA (19%)",
-        "Valoare cu TVA",
-    ];
-    const tableRows = [];
+      // Tabel piese
+      const tableColumn = [
+          "Cod Piesa",
+          "Tip",
+          "Producator",
+          "Pret unitar",
+          "Cantitate",
+          "Valoare fara TVA",
+          "TVA (19%)",
+          "Valoare cu TVA",
+      ];
+      const tableRows = [];
 
-    let totalFaraTVA = 0;
-    let totalTVA = 0;
-    let totalCuTVA = 0;
+      let totalFaraTVA = 0;
+      let totalTVA = 0;
+      let totalCuTVA = 0;
 
-    (offer.selectedParts || []).forEach((part) => {
-        const subtotalFaraTVA = part.pricePerUnit * part.quantity;
-        const tva = subtotalFaraTVA * 0.19;
-        const subtotalCuTVA = subtotalFaraTVA + tva;
+      const partsToExport = offer.selectedParts?.length ? offer.selectedParts : offer.parts;
 
-        totalFaraTVA += subtotalFaraTVA;
-        totalTVA += tva;
-        totalCuTVA += subtotalCuTVA;
+      partsToExport.forEach((part) => {
+          const subtotalFaraTVA = part.pricePerUnit * part.quantity;
+          const tva = subtotalFaraTVA * 0.19;
+          const subtotalCuTVA = subtotalFaraTVA + tva;
 
-        const rowData = [
-            normalizeText(part.partCode || "N/A"),
-            normalizeText(part.partType || "N/A"),
-            normalizeText(part.manufacturer || "N/A"),
-            `${part.pricePerUnit.toFixed(2)} RON`,
-            part.quantity || 0,
-            `${subtotalFaraTVA.toFixed(2)} RON`,
-            `${tva.toFixed(2)} RON`,
-            `${subtotalCuTVA.toFixed(2)} RON`,
-        ];
-        tableRows.push(rowData);
-    });
+          totalFaraTVA += subtotalFaraTVA;
+          totalTVA += tva;
+          totalCuTVA += subtotalCuTVA;
 
-    doc.autoTable({
-        startY: contentStartY + 20,
-        head: [tableColumn],
-        body: tableRows,
-    });
+          const rowData = [
+              normalizeText(part.partCode || "N/A"),
+              normalizeText(part.partType || "N/A"),
+              normalizeText(part.manufacturer || "N/A"),
+              `${part.pricePerUnit.toFixed(2)} RON`,
+              part.quantity || 0,
+              `${subtotalFaraTVA.toFixed(2)} RON`,
+              `${tva.toFixed(2)} RON`,
+              `${subtotalCuTVA.toFixed(2)} RON`,
+          ];
+          tableRows.push(rowData);
+      });
 
-    // Totaluri
-    const totalText = normalizeText(`Total fără TVA: ${totalFaraTVA.toFixed(2)} RON`);
-    const tvaText = normalizeText(`TVA (19%): ${totalTVA.toFixed(2)} RON`);
-    const totalCuTVAText = normalizeText(`Total cu TVA: ${totalCuTVA.toFixed(2)} RON`);
+      doc.autoTable({
+          startY: currentY,
+          head: [tableColumn],
+          body: tableRows,
+      });
 
-    const totalX = doc.internal.pageSize.width - doc.getTextWidth(totalText) - 10;
+      const totalStartY = doc.lastAutoTable.finalY + 10;
 
-    doc.text(totalText, totalX, doc.previousAutoTable.finalY + 10);
-    doc.text(tvaText, totalX, doc.previousAutoTable.finalY + 20);
-    doc.text(totalCuTVAText, totalX, doc.previousAutoTable.finalY + 30);
+      if (!isDraft) {
+          const totalText = normalizeText(`Total fără TVA: ${totalFaraTVA.toFixed(2)} RON`);
+          const tvaText = normalizeText(`TVA (19%): ${totalTVA.toFixed(2)} RON`);
+          const totalCuTVAText = normalizeText(`Total cu TVA: ${totalCuTVA.toFixed(2)} RON`);
+          const totalX = doc.internal.pageSize.width - doc.getTextWidth(totalText) - 10;
 
-    // Salvare PDF
-    doc.save(`Oferta_${offer.offerNumber}.pdf`);
-};
+          doc.text(totalText, totalX, totalStartY);
+          doc.text(tvaText, totalX, totalStartY + 10);
+          doc.text(totalCuTVAText, totalX, totalStartY + 20);
+      } else {
+          const infoText = normalizeText("Calculul totalului se va face la finalizarea ofertei, pe baza pieselor selectate.");
+          const infoX = (doc.internal.pageSize.width - doc.getTextWidth(infoText)) / 2;
+          doc.setFont(undefined, "italic");
+          doc.text(infoText, infoX, totalStartY);
+          doc.setFont(undefined, "normal");
+      }
+
+      // Salvare fișier
+      doc.save(`Oferta_${offer.offerNumber}.pdf`);
+  };  
+
+
+
+
 
   const calculateTotal = () => {
     if (!offer?.selectedParts?.length) return null;
@@ -435,7 +457,6 @@ const OfferDetail = () => {
               <Button
                 variant="outline-primary"
                 onClick={exportSelectedToPDF}
-                hidden={offer.selectedParts?.length === 0}
                 className="fs-5 py-2 px-4"
               >
                 <i className="ri-file-pdf-line"></i> Exportă PDF
