@@ -1,10 +1,10 @@
 {
   "dependencies": {
     "jwt-decode": "^4.0.0",
-    "react-router-sitemap": "^1.2.0"
+    "react-router-sitemap": "^1.2.0",
+    "sitemap": "^8.0.0"
   },
-
   "scripts": {
-      "generate-sitemap": "node generateSitemap.js"
+    "generate-sitemap": "node generateSitemap.js"
   }
 }
