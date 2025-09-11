@@ -1,19 +1,108 @@
-import React, { useState } from "react";
-import { Navbar, Nav, Container, Button } from "react-bootstrap";
-import { NavLink, Link } from "react-router-dom";
-import PropTypes from "prop-types";
+import React, { useState, memo, useCallback } from 'react';
+import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { NavLink, Link } from 'react-router-dom';
+import { useNavigation } from '../../hooks/useResponsive';
+import { getNavigationLinks, getAuthLinks, getUserDisplayName } from '../../utils/navigationHelpers';
+import { COMPANY_INFO, LAYOUT_DIMENSIONS } from '../Layout/constants';
 
-const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
-  const [isExpanded, setIsExpanded] = useState(false); // Stare pentru navbar
+// Navigation Link Component
+const MobileNavLink = memo(({ item, onLinkClick }) => (
+  <Nav.Link
+    as={NavLink}
+    to={item.path}
+    onClick={onLinkClick}
+    className={({ isActive }) =>
+      isActive 
+        ? 'nav-link active text-primary' 
+        : 'nav-link text-white'
+    }
+  >
+    {item.icon && <i className={`${item.icon} me-2`}></i>}
+    {item.display}
+  </Nav.Link>
+));
+MobileNavLink.displayName = 'MobileNavLink';
 
-  const filteredNavLinks = navLinks.filter(
-    (item) => !(item.path === "/request-order" && isAuthenticated && user?.role === "admin")
+// Auth Section Component
+const MobileAuthSection = memo(({ 
+  isAuthenticated, 
+  user, 
+  onLogout, 
+  onLinkClick 
+}) => {
+  if (isAuthenticated) {
+    return (
+      <>
+        {/* User info */}
+        <div className="px-3 py-2 border-top border-secondary">
+          <small className="text-muted d-block">Conectat ca:</small>
+          <span className="text-white">
+            <i className="ri-user-line me-2"></i>
+            {getUserDisplayName(user)}
+            {user?.role && (
+              <span className="badge bg-primary ms-2 small">
+                {user.role}
+              </span>
+            )}
+          </span>
+        </div>
+        
+        {/* Logout button */}
+        <div className="px-3 pb-3">
+          <Button
+            onClick={() => {
+              onLogout();
+              onLinkClick(); // Close menu
+            }}
+            variant="outline-light"
+            size="sm"
+            className="w-100"
+            aria-label="Logout din cont"
+          >
+            <i className="ri-logout-box-line me-2"></i>
+            Logout
+          </Button>
+        </div>
+      </>
+    );
+  }
+
+  const guestLinks = getAuthLinks(false);
+  
+  return (
+    <>
+      {guestLinks.map((item, index) => (
+        <MobileNavLink
+          key={index}
+          item={item}
+          onLinkClick={onLinkClick}
+        />
+      ))}
+    </>
   );
+});
+MobileAuthSection.displayName = 'MobileAuthSection';
 
-  const handleNavLinkClick = () => {
-    setIsExpanded(false); // Închide meniul după selectarea unei opțiuni
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Mergem în partea de sus a paginii
-  };
+// Main Mobile Navbar Component
+const MobileNavbar = memo(({ isAuthenticated, user, onLogout }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { handleNavigationClick } = useNavigation();
+  
+  const navigationLinks = getNavigationLinks(isAuthenticated, user);
+
+  const handleNavLinkClick = useCallback(() => {
+    setIsExpanded(false);
+    // Scroll to top is handled by navigation utility
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    setIsExpanded(false);
+    onLogout();
+  }, [onLogout]);
+
+  const handleToggle = useCallback(() => {
+    setIsExpanded(prev => !prev);
+  }, []);
 
   return (
     <Navbar
@@ -21,158 +110,63 @@ const MobileNavbar = ({ isAuthenticated, user, onLogout, navLinks = [] }) => {
       bg="dark"
       variant="dark"
       className="d-lg-none"
-      expanded={isExpanded} // Controlează starea meniului
+      expanded={isExpanded}
+      style={{ 
+        zIndex: LAYOUT_DIMENSIONS.Z_INDEX.MOBILE_NAVBAR,
+        borderBottom: '1px solid #495057'
+      }}
     >
       <Container>
-        {/* Brand-ul site-ului */}
-        <Navbar.Brand>
-          <Link to="/home" className="text-white text-decoration-none">
-            <i className="ri-car-line me-2"></i>Piese Auto America
-          </Link>
+        {/* Brand */}
+        <Navbar.Brand 
+          as={Link} 
+          to="/home" 
+          className="text-white text-decoration-none"
+          onClick={handleNavLinkClick}
+          aria-label={`Acasă - ${COMPANY_INFO.NAME}`}
+        >
+          <i className="ri-car-line me-2"></i>
+          {COMPANY_INFO.NAME}
         </Navbar.Brand>
 
-        {/* Toggle pentru meniul mobil */}
+        {/* Mobile Menu Toggle */}
         <Navbar.Toggle
           aria-controls="mobile-navbar"
-          onClick={() => setIsExpanded((prev) => !prev)} // Toggle între deschis/închis
+          onClick={handleToggle}
+          aria-label="Toggle navigation menu"
         >
-          <i className="ri-menu-line"></i> <span className="ms-2">Meniu</span>
+          <i className={isExpanded ? 'ri-close-line' : 'ri-menu-line'}></i>
+          <span className="ms-2">
+            {isExpanded ? 'Închide' : 'Meniu'}
+          </span>
         </Navbar.Toggle>
 
-        {/* Navigație în meniul mobil */}
+        {/* Collapsible Content */}
         <Navbar.Collapse id="mobile-navbar">
           <Nav className="ms-auto">
-            {/* Link-uri generale de navigare */}
-            {filteredNavLinks.map((item, index) => (
-              <Nav.Link
+            {/* Main Navigation Links */}
+            {navigationLinks.map((item, index) => (
+              <MobileNavLink
                 key={index}
-                as={NavLink}
-                to={item.path}
-                onClick={handleNavLinkClick} // Închide meniul când se dă click
-                className={({ isActive }) =>
-                  isActive ? "nav-link active text-primary" : "nav-link text-white"
-                }
-              >
-                {item.display}
-              </Nav.Link>
+                item={item}
+                onLinkClick={handleNavLinkClick}
+              />
             ))}
-
-            {/* Link-uri suplimentare pentru utilizatori autentificați */}
-            {isAuthenticated && (
-              <>
-                {user?.role === "client" && (
-                  <>
-                    <Nav.Link
-                      as={NavLink}
-                      to="/my-orders"
-                      onClick={handleNavLinkClick} // Închide meniul când se dă click
-                      className={({ isActive }) =>
-                        isActive
-                          ? "nav-link active text-primary"
-                          : "nav-link text-white"
-                      }
-                    >
-                      Evidenta Oferte
-                    </Nav.Link>
-                    <Nav.Link
-                      as={NavLink}
-                      to="/my-offers"
-                      onClick={handleNavLinkClick} // Închide meniul când se dă click
-                      className={({ isActive }) =>
-                        isActive
-                          ? "nav-link active text-primary"
-                          : "nav-link text-white"
-                      }
-                    >
-                      Evidenta Comenzi
-                    </Nav.Link>
-                  </>
-                )}
-                {user?.role === "admin" && (
-                  <>
-                    <Nav.Link
-                      as={NavLink}
-                      to="/admin/dashboard"
-                      onClick={handleNavLinkClick} // Închide meniul când se dă click
-                      className={({ isActive }) =>
-                        isActive
-                          ? "nav-link active text-primary"
-                          : "nav-link text-white"
-                      }
-                    >
-                      Panou de Administrare Admin
-                    </Nav.Link>                    
-                  </>
-                )}
-                {/* Link către profilul utilizatorului */}
-                <Nav.Link
-                  as={NavLink}
-                  to="/my-profile"
-                  onClick={handleNavLinkClick} // Închide meniul când se dă click
-                  className={({ isActive }) =>
-                    isActive
-                      ? "nav-link active text-primary"
-                      : "nav-link text-white"
-                  }
-                >
-                  Contul meu
-                </Nav.Link>
-                {/* Buton de Logout */}
-                <Button
-                  onClick={() => {
-                    onLogout();
-                    setIsExpanded(false); // Închide meniul după logout
-                  }}
-                  variant="outline-light"
-                  size="sm"
-                  className="mt-2"
-                >
-                  Logout
-                </Button>
-              </>
-            )}
-
-            {/* Link-uri pentru utilizatori neautentificați */}
-            {!isAuthenticated && (
-              <>
-                <Nav.Link
-                  as={NavLink}
-                  to="/signin"
-                  onClick={handleNavLinkClick} // Închide meniul când se dă click
-                  className={({ isActive }) =>
-                    isActive
-                      ? "nav-link active text-primary"
-                      : "nav-link text-white"
-                  }
-                >
-                  Login
-                </Nav.Link>
-                <Nav.Link
-                  as={NavLink}
-                  to="/register"
-                  onClick={handleNavLinkClick} // Închide meniul când se dă click
-                  className={({ isActive }) =>
-                    isActive
-                      ? "nav-link active text-primary"
-                      : "nav-link text-white"
-                  }
-                >
-                  Register
-                </Nav.Link>
-              </>
-            )}
           </Nav>
+          
+          {/* Authentication Section */}
+          <MobileAuthSection
+            isAuthenticated={isAuthenticated}
+            user={user}
+            onLogout={handleLogout}
+            onLinkClick={handleNavLinkClick}
+          />
         </Navbar.Collapse>
       </Container>
     </Navbar>
   );
-};
+});
 
-MobileNavbar.propTypes = {
-  navLinks: PropTypes.array.isRequired,
-  isAuthenticated: PropTypes.bool,
-  user: PropTypes.object,
-  onLogout: PropTypes.func,
-};
+MobileNavbar.displayName = 'MobileNavbar';
 
 export default MobileNavbar;

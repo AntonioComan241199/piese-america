@@ -34,7 +34,7 @@ const ResetPasswordRequest = () => {
 
       setSuccess("Un email a fost trimis pentru resetarea parolei.");
       setLoading(false);
-      setTimeout(() => navigate("/login"), 5000); // Navigăm spre login după câteva secunde
+      setTimeout(() => navigate("/signin"), 5000); // Navigăm spre signin după câteva secunde
     } catch (err) {
       setError(err.message);
       setLoading(false);

@@ -203,7 +203,7 @@ const RequestOrder = () => {
       }
   
       // Trimiterea email-ului către admin
-      const orderLink = `${VITE_FRONTEND_URL}/orders/${orderId}`;
+      const orderLink = `${VITE_FRONTEND_URL.replace(/\/$/, '')}/orders/${orderId}`;
       const emailResponse = await fetch(`${API_URL}/orders/send-email`, {
         method: "POST",
         headers: {

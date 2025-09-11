@@ -1,302 +1,180 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Provider, useDispatch, useSelector } from "react-redux";
-import store from "../src/redux/store/store";
-import Layout from "./components/Layout/Layout";
+import { HelmetProvider } from 'react-helmet-async';
+import store from "./redux/store/store";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { Spinner } from "react-bootstrap";
-
-
-import Home from "./pages/Home";
-import Contact from "./pages/Contact";
-import Signin from "./pages/Account/Signin";
-import Register from "./pages/Account/Register";
-import ResetPasswordRequest from "./pages/ResetPasswordRequest";
-import ResetPassword from "./pages/ResetPassword";
-import TermsAndConditions from "./pages/TermsAndConditions";
-import OilProducts from "./pages/Products/Oils/OilProducts";
-import MyOrders from "./pages/Orders/MyOrders";
-import MyOffers from "./pages/Offers/MyOffers";
-import RequestOrder from "./pages/Orders/RequestOrder";
-import OrderDetails from "./pages/Orders/OrderDetails";
-import OfferDetail from "./pages/Offers/OfferDetail";
-import OfferGenerator from "./pages/Offers/OfferGenerator";
-import MyProfile from "./pages/MyProfile";
-import AdminOrders from "./pages/Orders/AdminOrders";
-import AdminOffers from "./pages/Offers/AdminOffers";
-import RealtimeStats from "./pages/Admin/RealtimeStats";
-import FordMustangPage from "./pages/DedicatedCars/FordMustangPage";
-
+import RouteWrapper from "./components/common/RouteWrapper";
+import { FullPageLoading } from "./components/common/LoadingFallback";
 import { checkAuth } from "./slices/authSlice";
-import { ProtectedRoute } from "./utils/ProtectedRoute";
-import { PublicRoute } from "./utils/PublicRoute";
-import { ProtectedAdminRoute } from "./utils/ProtectedAdminRoute";
-import AdminOilProducts from "./pages/Admin/AdminOilProducts";
-import AdminFireExtinguishers from "./pages/Admin/AdminFireExtinguishers";
-import FireExtinguisherProducts from "./pages/Products/FireExtinghuishers/FireExtinguisherProducts";
-import AdminDashboard from "./pages/Admin/AdminDashboard";
+import { routeConfig, routeMeta } from "./config/routes";
 
+// 404 Page component
+const NotFound = () => (
+  <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div className="text-center">
+      <div className="mb-4">
+        <i className="ri-error-warning-line text-warning" style={{ fontSize: '4rem' }}></i>
+      </div>
+      <h1 className="h2 mb-3">404 - Pagina nu a fost găsită</h1>
+      <p className="text-muted mb-4">
+        Ne pare rău, dar pagina pe care o cauți nu există.
+      </p>
+      <div className="d-flex gap-2 justify-content-center">
+        <a href="/" className="btn btn-primary">
+          <i className="ri-home-line me-2"></i>
+          Înapoi acasă
+        </a>
+        <button 
+          className="btn btn-outline-secondary"
+          onClick={() => window.history.back()}
+        >
+          <i className="ri-arrow-left-line me-2"></i>
+          Înapoi
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+// App wrapper component
 const AppWrapper = () => {
   const dispatch = useDispatch();
   const { authChecked } = useSelector((state) => state.auth);
 
+  // Check authentication on app load
   useEffect(() => {
     if (!authChecked) {
-      dispatch(checkAuth()); // ✅ Se apelează doar dacă autentificarea nu este deja verificată
+      dispatch(checkAuth());
     }
   }, [dispatch, authChecked]);
 
+  // Show loading screen while checking authentication
   if (!authChecked) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
+    return <FullPageLoading message="Inițializare aplicație..." />;
   }
 
   return (
     <ErrorBoundary>
       <Routes>
-        <Route
-          path="/"
+        {/* Generate routes dynamically from config */}
+        {routeConfig.map((route) => {
+          const { path, component, layout, protection, title } = route;
+          
+          return (
+            <Route
+              key={path}
+              path={path}
+              element={
+                <RouteWrapper
+                  component={component}
+                  layout={layout}
+                  protection={protection}
+                  title={title}
+                />
+              }
+            />
+          );
+        })}
+        
+        {/* 404 Route - must be last */}
+        <Route 
+          path="*" 
           element={
-            <Layout>
-              <Home />
-            </Layout>
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            <Layout>
-              <Home />
-            </Layout>
-          }
-        />
-        <Route
-          path="/ford-mustang"
-          element={
-            <Layout>
-              <FordMustangPage />
-            </Layout>
-          }
-        />
-        <Route
-          path="/contact"
-          element={
-            <Layout>
-              <Contact />
-            </Layout>
-          }
-        />
-        <Route
-          path="/signin"
-          element={
-            <PublicRoute>
-              <Layout>
-                <Signin />
-              </Layout>
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <Layout>
-                <Register />
-              </Layout>
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/reset-password"
-          element={
-            <PublicRoute>
-              <ResetPasswordRequest />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/reset-password/:token"
-          element={
-            <PublicRoute>
-              <ResetPassword />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/terms"
-          element={
-            <Layout>
-              <TermsAndConditions />
-            </Layout>
-          }
-        />
-        <Route
-          path="/oil-products"
-          element={
-            <Layout>
-              <OilProducts />
-            </Layout>
-          }
-        />
-        <Route
-          path="/fire-products"
-          element={
-            <Layout>
-              <FireExtinguisherProducts />
-            </Layout>
-          }
-        />
-        <Route
-          path="/my-profile"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <MyProfile />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/offer/:offerId"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <OfferDetail />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/oil-products"
-          element={
-            <ProtectedAdminRoute>
-              <Layout>
-                <AdminOilProducts />
-              </Layout>
-            </ProtectedAdminRoute>
-          }
-        />
-        <Route
-          path="/admin/fire-extinguishers"
-          element={
-            <ProtectedAdminRoute>
-              <Layout>
-                <AdminFireExtinguishers />
-              </Layout>
-            </ProtectedAdminRoute>
-          }
-        />
-
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedAdminRoute>
-              <Layout>
-                <AdminDashboard />
-              </Layout>
-            </ProtectedAdminRoute>
-          }
-        />
-        <Route
-          path="/offer-generator/:orderId"
-          element={
-            <ProtectedAdminRoute>
-              <Layout>
-                <OfferGenerator />
-              </Layout>
-            </ProtectedAdminRoute>
-          }
-        />
-        <Route
-          path="/admin-orders"
-          element={
-            <ProtectedAdminRoute>
-              <Layout>
-                <AdminOrders />
-              </Layout>
-            </ProtectedAdminRoute>
-          }
-        />
-        <Route
-          path="/admin-offers"
-          element={
-            <ProtectedAdminRoute>
-              <Layout>
-                <AdminOffers />
-              </Layout>
-            </ProtectedAdminRoute>
-          }
-        />
-        <Route
-          path="/admin/reports"
-          element={
-            <ProtectedAdminRoute>
-              <Layout>
-                <RealtimeStats />
-              </Layout>
-            </ProtectedAdminRoute>
-          }
-        />
-        <Route
-          path="/orders/:id"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <OrderDetails />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-orders"
-          element={
-            <Layout>
-              <MyOrders />
-            </Layout>
-          }
-        />
-        <Route
-          path="/my-orders/:id"
-          element={
-            <Layout>
-              <MyOrders />
-            </Layout>
-          }
-        />
-        <Route
-          path="/my-offers"
-          element={
-            <Layout>
-              <MyOffers />
-            </Layout>
-          }
-        />
-        <Route
-          path="/request-order"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <RequestOrder />
-              </Layout>
-            </ProtectedRoute>
-          }
+            <RouteWrapper
+              component={NotFound}
+              layout={false}
+              protection="public"
+              title="Pagina nu a fost găsită"
+            />
+          } 
         />
       </Routes>
     </ErrorBoundary>
   );
 };
 
+// SEO Meta component
+const SEOMeta = () => {
+  const location = window.location;
+  const currentPath = location.pathname;
+  const meta = routeMeta[currentPath] || {
+    title: 'Piese Auto America',
+    description: 'Piese auto de calitate pentru toate tipurile de vehicule'
+  };
 
+  useEffect(() => {
+    // Update page title
+    document.title = meta.title;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', meta.description);
+    } else {
+      const newMeta = document.createElement('meta');
+      newMeta.name = 'description';
+      newMeta.content = meta.description;
+      document.head.appendChild(newMeta);
+    }
+
+    // Update Open Graph meta tags
+    const updateOrCreateOGMeta = (property, content) => {
+      let ogMeta = document.querySelector(`meta[property="${property}"]`);
+      if (ogMeta) {
+        ogMeta.setAttribute('content', content);
+      } else {
+        ogMeta = document.createElement('meta');
+        ogMeta.setAttribute('property', property);
+        ogMeta.setAttribute('content', content);
+        document.head.appendChild(ogMeta);
+      }
+    };
+
+    updateOrCreateOGMeta('og:title', meta.title);
+    updateOrCreateOGMeta('og:description', meta.description);
+    updateOrCreateOGMeta('og:url', location.href);
+    updateOrCreateOGMeta('og:type', 'website');
+  }, [currentPath, meta, location.href]);
+
+  return null;
+};
+
+// Performance monitoring hook
+const usePerformanceMonitoring = () => {
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      // Monitor navigation timing
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.entryType === 'navigation') {
+            // Log slow page loads
+            if (entry.loadEventEnd - entry.loadEventStart > 3000) {
+              console.warn('Slow page load detected:', entry.loadEventEnd - entry.loadEventStart, 'ms');
+            }
+          }
+        }
+      });
+
+      observer.observe({ type: 'navigation', buffered: true });
+
+      return () => observer.disconnect();
+    }
+  }, []);
+};
+
+// Main App component
 export default function App() {
+  usePerformanceMonitoring();
+
   return (
     <Provider store={store}>
-      <BrowserRouter>
-        <AppWrapper />
-      </BrowserRouter>
+      <HelmetProvider>
+        <BrowserRouter>
+          <SEOMeta />
+          <AppWrapper />
+        </BrowserRouter>
+      </HelmetProvider>
     </Provider>
   );
 }

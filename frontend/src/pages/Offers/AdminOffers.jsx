@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import "../../styles/AdminOffers.css";
@@ -11,15 +11,23 @@ const AdminOffers = () => {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");  // Filtru status ofertă
-  const [offerNumber, setOfferNumber] = useState("");   // Filtru număr ofertă
-  const [selectedDate, setSelectedDate] = useState("");   // Filtru dată selectată
-  const [partCode, setPartCode] = useState(""); // Filtru pentru codul de produs
-  const [currentPage, setCurrentPage] = useState(1);    // Paginare
+  const [actionLoading, setActionLoading] = useState({});
+  const [openDropdown, setOpenDropdown] = useState(null);
+  
+  // Filters state
+  const [filters, setFilters] = useState({
+    status: "",
+    offerNumber: "",
+    selectedDate: "",
+    partCode: ""
+  });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Funcția de obținere a ofertelor
-  const fetchOffers = async (selectedDate) => {
+  // Optimized fetch function with useCallback
+  const fetchOffers = useCallback(async () => {
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
@@ -27,6 +35,9 @@ const AdminOffers = () => {
       setLoading(false);
       return;
     }
+
+    setLoading(true);
+    setError("");
 
     try {
       const headers = {
@@ -36,13 +47,15 @@ const AdminOffers = () => {
 
       const url = new URL(`${API_URL}/offer/admin`);
       url.searchParams.append("page", currentPage);
-      url.searchParams.append("status", statusFilter);
-      url.searchParams.append("offerNumber", offerNumber);
-      if (selectedDate) {
-        url.searchParams.append("selectedDate", selectedDate); // Folosim selectedDate
+      url.searchParams.append("status", filters.status);
+      url.searchParams.append("offerNumber", filters.offerNumber);
+      
+      if (filters.selectedDate) {
+        const formattedDate = new Date(filters.selectedDate).toISOString().split('T')[0];
+        url.searchParams.append("selectedDate", formattedDate);
       }
-      if (partCode) {
-        url.searchParams.append("partCode", partCode); // Adaugă codul de produs la cerere
+      if (filters.partCode) {
+        url.searchParams.append("partCode", filters.partCode);
       }
 
       const response = await fetch(url.toString(), { method: "GET", headers });
@@ -60,26 +73,40 @@ const AdminOffers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filters]);
 
-  // Funcția de filtrare
-  const handleFilter = () => {
-    setCurrentPage(1); // Resetăm pagina la prima
-    // Convertește selectedDate într-un format corespunzător (fără ora)
-    const formattedDate = selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : ''; 
-    fetchOffers(formattedDate); // Apelăm funcția pentru a aplica filtrele
-  };
+  // Handle filter changes
+  const handleFilterChange = useCallback((key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }, []);
 
-  // Resetarea filtrelor
-  const handleResetFilters = () => {
-    setStatusFilter("");
-    setOfferNumber("");
-    setSelectedDate("");  // Resetăm și selectedDate
-    setCurrentPage(1); // Resetăm pagina
-    fetchOffers(""); // Reîncarcă ofertele după resetarea filtrelor
-  };
+  // Apply filters (resets to first page)
+  const handleApplyFilters = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
 
-  const updateOfferStatus = async (offerId, status) => {
+  // Reset all filters
+  const handleResetFilters = useCallback(() => {
+    setFilters({
+      status: "",
+      offerNumber: "",
+      selectedDate: "",
+      partCode: ""
+    });
+    setCurrentPage(1);
+  }, []);
+
+  // Optimized status update with individual loading states
+  const updateOfferStatus = useCallback(async (offerId, status) => {
+    if (!window.confirm(`Confirmați schimbarea statusului la "${status}"?`)) {
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [offerId]: true }));
+    
     try {
       const token = localStorage.getItem("accessToken");
 
@@ -99,21 +126,34 @@ const AdminOffers = () => {
         throw new Error("Eroare la actualizarea statusului ofertei.");
       }
 
-      await fetchOffers(""); // Reîncarcă ofertele după actualizare
+      // Update the offer in state instead of refetching all
+      setOffers(prevOffers => 
+        prevOffers.map(offer => 
+          offer._id === offerId 
+            ? { ...offer, status, updatedAt: new Date().toISOString() }
+            : offer
+        )
+      );
     } catch (error) {
       setError(error.message);
+    } finally {
+      setActionLoading(prev => ({ ...prev, [offerId]: false }));
     }
-  };
+  }, []);
 
-  const exportCSV = async () => {
+  const exportCSV = useCallback(async () => {
     try {
       const token = localStorage.getItem("accessToken");
 
       const url = new URL(`${API_URL}/offer/admin/export`);
-      url.searchParams.append("status", statusFilter);
-      url.searchParams.append("offerNumber", offerNumber);
-      if (selectedDate) {
-        url.searchParams.append("selectedDate", selectedDate); // Folosim selectedDate pentru export
+      url.searchParams.append("status", filters.status);
+      url.searchParams.append("offerNumber", filters.offerNumber);
+      if (filters.selectedDate) {
+        const formattedDate = new Date(filters.selectedDate).toISOString().split('T')[0];
+        url.searchParams.append("selectedDate", formattedDate);
+      }
+      if (filters.partCode) {
+        url.searchParams.append("partCode", filters.partCode);
       }
 
       const response = await fetch(url.toString(), {
@@ -131,40 +171,51 @@ const AdminOffers = () => {
       const urlBlob = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = urlBlob;
-      link.download = "offers" + new Date().toISOString() + ".csv";
+      link.download = `offers-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(urlBlob);
     } catch (error) {
       setError(error.message);
     }
-  };
+  }, [filters]);
 
+  // Simplified useEffect - only fetch when dependencies change
   useEffect(() => {
     if (isAuthenticated) {
-      fetchOffers(""); // Asigură-te că se încarcă ofertele la început
+      fetchOffers();
     } else {
       setError("Trebuie să fiți autentificat pentru a accesa ofertele.");
       setLoading(false);
     }
-  }, [isAuthenticated, currentPage, statusFilter, offerNumber, selectedDate]);  // Eliminăm phoneNumber din dependințe
+  }, [isAuthenticated, fetchOffers]);
 
-  const handleStatusChange = (event) => {
-    setStatusFilter(event.target.value);
-  };
+  // Memoized date formatter
+  const formatDateTime = useMemo(() => (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" });
+  }, []);
 
-  const handlePageChange = (direction) => {
+  const handlePageChange = useCallback((direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage((prev) => prev - 1);
     } else if (direction === "next" && currentPage < totalPages) {
       setCurrentPage((prev) => prev + 1);
     }
-  };
+  }, [currentPage, totalPages]);
 
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" });
-  };
+  // Handle dropdown toggle
+  const toggleDropdown = useCallback((offerId) => {
+    setOpenDropdown(prev => prev === offerId ? null : offerId);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdown(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   if (loading) return <div className="text-center">Se încarcă...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
@@ -178,8 +229,8 @@ const AdminOffers = () => {
         <div className="d-flex flex-wrap">
           <select
             className="form-select w-auto me-2"
-            value={statusFilter}
-            onChange={handleStatusChange}
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
           >
             <option value="">Toate Statusurile</option>
             <option value="proiect">Proiect</option>
@@ -192,24 +243,24 @@ const AdminOffers = () => {
             type="number"
             className="form-control w-auto me-2"
             placeholder="Număr ofertă"
-            value={offerNumber}
-            onChange={(e) => setOfferNumber(e.target.value)}
+            value={filters.offerNumber}
+            onChange={(e) => handleFilterChange('offerNumber', e.target.value)}
           />
           <input
             type="date"
             className="form-control w-auto me-2"
             placeholder="Selectează dată"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            value={filters.selectedDate}
+            onChange={(e) => handleFilterChange('selectedDate', e.target.value)}
           />
           <input
             type="text"
             className="form-control w-auto me-2"
             placeholder="Cod produs"
-            value={partCode}
-            onChange={(e) => setPartCode(e.target.value)}
+            value={filters.partCode}
+            onChange={(e) => handleFilterChange('partCode', e.target.value)}
           />
-          <button className="btn btn-outline-secondary" onClick={handleFilter}>
+          <button className="btn btn-outline-secondary" onClick={handleApplyFilters}>
             Filtrează
           </button>
           <button className="btn btn-outline-danger ms-2" onClick={handleResetFilters}>
@@ -256,53 +307,66 @@ const AdminOffers = () => {
                   <td>{formatDateTime(offer.createdAt)}</td>
                   <td>{formatDateTime(offer.updatedAt)}</td>
                   <td>
-                  <div className="dropdown">
+                  <div className="dropdown position-relative">
                 <button
-                  className="btn btn-primary btn-sm dropdown-toggle position-static"
+                  className="btn btn-primary btn-sm dropdown-toggle"
                   type="button"
-                  id={`dropdown-${offer._id}`}
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleDropdown(offer._id);
+                  }}
+                  disabled={actionLoading[offer._id]}
                 >
-                  Acțiuni
+                  {actionLoading[offer._id] ? "Se procesează..." : "Acțiuni"}
                 </button>
-                <ul
-                  className="dropdown-menu dropdown-menu-end" /* Poziționează meniul în afara containerului */
-                  aria-labelledby={`dropdown-${offer._id}`}
-                >
-                  <li>
-                    <Link to={`/offer/${offer._id}`} className="dropdown-item">
-                      Detalii
-                    </Link>
-                  </li>
-                  <li>
-                    <button
-                      className="dropdown-item"
-                      onClick={() => updateOfferStatus(offer._id, "livrare_in_procesare")}
-                      disabled={offer.status !== "oferta_acceptata"}
-                    >
-                      Livrare în Procesare
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      className="dropdown-item"
-                      onClick={() => updateOfferStatus(offer._id, "livrata")}
-                      disabled={offer.status !== "livrare_in_procesare"}
-                    >
-                      Livrată
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      className="dropdown-item text-danger"
-                      onClick={() => updateOfferStatus(offer._id, "anulata")}
-                      disabled={offer.status === "anulata"}
-                    >
-                      Anulată
-                    </button>
-                  </li>
-                </ul>
+                {openDropdown === offer._id && (
+                  <ul className="dropdown-menu dropdown-menu-end show position-absolute" style={{ zIndex: 1000 }}>
+                    <li>
+                      <Link to={`/offer/${offer._id}`} className="dropdown-item">
+                        Detalii
+                      </Link>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateOfferStatus(offer._id, "livrare_in_procesare");
+                          setOpenDropdown(null);
+                        }}
+                        disabled={offer.status !== "oferta_acceptata" || actionLoading[offer._id]}
+                      >
+                        {actionLoading[offer._id] && offer.status === "oferta_acceptata" ? "..." : "Livrare în Procesare"}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateOfferStatus(offer._id, "livrata");
+                          setOpenDropdown(null);
+                        }}
+                        disabled={offer.status !== "livrare_in_procesare" || actionLoading[offer._id]}
+                      >
+                        {actionLoading[offer._id] && offer.status === "livrare_in_procesare" ? "..." : "Livrată"}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item text-danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateOfferStatus(offer._id, "anulata");
+                          setOpenDropdown(null);
+                        }}
+                        disabled={offer.status === "anulata" || actionLoading[offer._id]}
+                      >
+                        {actionLoading[offer._id] ? "..." : "Anulată"}
+                      </button>
+                    </li>
+                  </ul>
+                )}
               </div>
               </td>
                 </tr>

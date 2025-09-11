@@ -1,7 +1,10 @@
+// Configurare variabile de mediu - TREBUIE SĂ FIE PRIMUL
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import path from "path";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import fs from 'fs';
@@ -17,8 +20,6 @@ import contactRoute from "./routes/contactRoute.js";
 import oilProductsRoutes from "./routes/oilProductsRoutes.js";
 import fireExtinguishersRoutes from "./routes/fireExtinguishersRoutes.js";
 import reportRoutes from './routes/reportRoutes.js';
-// Configurare variabile de mediu
-dotenv.config();
 
 // Inițializare aplicație Express
 const app = express();

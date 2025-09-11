@@ -20,6 +20,9 @@ const SelectProductsModal = ({
   const [showDecisionButtons, setShowDecisionButtons] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false); // Stare pentru noul modal
   const [confirmationMessage, setConfirmationMessage] = useState(""); // Stare pentru mesajul de confirmare
+  const [showQuantityModal, setShowQuantityModal] = useState(false); // Modal pentru editare cantitate
+  const [quantityModalData, setQuantityModalData] = useState({ partType: "", optionId: "", currentQuantity: 1 }); // Date pentru modal cantitate
+  const [newQuantity, setNewQuantity] = useState(1); // Cantitatea nouă din modal
 
 
   const [errors, setErrors] = useState({
@@ -334,11 +337,29 @@ const SelectProductsModal = ({
       }
   
       const dataToSave = {
-        selectedParts: selections.filter((selection) => selection.include && selection.selectedOption),
+        selectedParts: selections
+          .filter((selection) => selection.include && selection.selectedOption)
+          .map((selection) => {
+            // Asigură-te că cantitatea este actualizată cu cea din groupedParts
+            const groupedPart = groupedParts
+              .find(group => group.partType === selection.partType)
+              ?.options.find(option => option.optionId === selection.selectedOption);
+            
+            const finalQuantity = groupedPart?.quantity || selection.quantity;
+            console.log('Selection:', selection.partType, 'Original qty:', selection.quantity, 'New qty:', finalQuantity);
+            
+            return {
+              ...selection,
+              quantity: finalQuantity,
+              total: selection.pricePerUnit * finalQuantity,
+            };
+          }),
         billingAddress,
         deliveryAddress: pickupAtCentral ? null : deliveryAddress,
         pickupAtCentral,
       };
+      
+      console.log('Data to save:', dataToSave);
   
       // Salvează selecțiile
       let response = await fetch(
@@ -467,6 +488,59 @@ const handleSelectOption = (partType, optionId) => {
   );
 };
 
+const handleQuantityChange = (partType, optionId, newQuantity) => {
+  const quantity = Math.max(1, parseInt(newQuantity) || 1); // Minimum 1, default 1
+  setSelections((prevSelections) =>
+    prevSelections.map((selection) => {
+      if (selection.partType === partType && selection.selectedOption === optionId) {
+        return {
+          ...selection,
+          quantity: quantity,
+          total: selection.include ? selection.pricePerUnit * quantity : 0,
+        };
+      }
+      return selection;
+    })
+  );
+  
+  // Actualizează și în groupedParts pentru a reflecta cantitatea în interfață
+  setGroupedParts((prevGroupedParts) =>
+    prevGroupedParts.map((group) => {
+      if (group.partType === partType) {
+        return {
+          ...group,
+          options: group.options.map((option) => {
+            if (option.optionId === optionId) {
+              return {
+                ...option,
+                quantity: quantity,
+              };
+            }
+            return option;
+          }),
+        };
+      }
+      return group;
+    })
+  );
+};
+
+const openQuantityModal = (partType, optionId, currentQuantity) => {
+  setQuantityModalData({ partType, optionId, currentQuantity });
+  setNewQuantity(currentQuantity);
+  setShowQuantityModal(true);
+};
+
+const handleQuantityModalSave = () => {
+  handleQuantityChange(quantityModalData.partType, quantityModalData.optionId, newQuantity);
+  setShowQuantityModal(false);
+};
+
+const handleQuantityModalClose = () => {
+  setShowQuantityModal(false);
+  setNewQuantity(1);
+};
+
 const handleClearOption = (partType, optionId) => {
   setSelections((prevSelections) =>
     prevSelections.map((selection) => {
@@ -494,9 +568,9 @@ const renderStep1 = () => (
     </p>
 
     {groupedParts.length > 0 ? (
-      <div className="row">
+      <div className="row g-4">
         {groupedParts.map((group, index) => (
-          <div key={index} className="col-12 col-md-6 col-lg-4 mb-4">
+          <div key={index} className="col-12 col-lg-6 col-xl-4 mb-4">
             <Card className="shadow-sm h-100 border-0 rounded">
               <Card.Header className="bg-primary text-white text-center rounded-top">
                 <h5 className="m-0">{group.partType}</h5>
@@ -518,43 +592,84 @@ const renderStep1 = () => (
                       <Button
                         key={option.optionId}
                         variant={isSelected ? "danger" : "outline-success"}
-                        className="mb-2 text-start py-3 d-flex justify-content-between align-items-center"
+                        className="mb-3 text-start py-4 d-flex flex-column align-items-stretch position-relative"
                         onClick={() =>
                           isSelected
                             ? handleClearOption(group.partType, option.optionId)
                             : handleSelectOption(group.partType, option.optionId)
                         }
+                        style={{ minHeight: '200px' }}
                       >
-                        <div>
+                        <div className="flex-grow-1">
                           <span
-                            className="badge bg-info text-dark me-2"
+                            className="badge bg-info text-dark me-2 mb-2"
                             style={{ fontSize: "0.85rem" }}
                           >
                             Cod piesă: {option.partCode}
                           </span>
                           <br />
-                          Cantitate: <strong></strong>{option.quantity} bucăți
-                          <br /> 
-                          <strong>{option.manufacturer}</strong> - {option.price} RON/buc Fara TVA
-                          <br />
-                          Termen livrare: <strong>{option.deliveryTerm || 'N/A'}</strong>
                           
-                          <br />
-                          <small className="text-muted">
-                            Subtotal fara TVA: {option.price * option.quantity} RON
-                          </small>
-                          <br />
-                          <small className="text-muted">
-                            Subtotal cu TVA: {option.price * option.quantity *1.19} RON
-                          </small>
+                          <div className="mb-2">
+                            <strong>{option.manufacturer}</strong> - {option.price} RON/buc fara TVA
+                          </div>
+                          
+                          <div className="mb-2">
+                            <small className="text-muted">Termen livrare: <strong>{option.deliveryTerm || 'N/A'}</strong></small>
+                          </div>
+                          
+                          <div className="mb-3">
+                            <div className="mb-2">
+                              <span><strong>Cantitate:</strong> {
+                                isSelected ? 
+                                  (selections.find(s => s.partType === group.partType && s.selectedOption === option.optionId)?.quantity || option.quantity) :
+                                  option.quantity
+                              } bucăți</span>
+                            </div>
+                            <Button
+                              variant="warning"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const currentQuantity = isSelected ? 
+                                  (selections.find(s => s.partType === group.partType && s.selectedOption === option.optionId)?.quantity || option.quantity) :
+                                  option.quantity;
+                                openQuantityModal(group.partType, option.optionId, currentQuantity);
+                              }}
+                              className="w-100 fw-bold border-2"
+                              style={{ 
+                                backgroundColor: '#ffc107', 
+                                borderColor: '#f0ad4e',
+                                color: '#212529',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                              }}
+                            >
+                              <i className="fas fa-edit me-2"></i>Editează Cantitatea
+                            </Button>
+                          </div>
+                          
+                          <div className="small text-muted">
+                            <div>Subtotal fara TVA: <strong>{(option.price * (
+                              isSelected ? 
+                                (selections.find(s => s.partType === group.partType && s.selectedOption === option.optionId)?.quantity || option.quantity) :
+                                option.quantity
+                            )).toFixed(2)} RON</strong></div>
+                            <div>Subtotal cu TVA: <strong>{(option.price * (
+                              isSelected ? 
+                                (selections.find(s => s.partType === group.partType && s.selectedOption === option.optionId)?.quantity || option.quantity) :
+                                option.quantity
+                            ) * 1.19).toFixed(2)} RON</strong></div>
+                          </div>
                         </div>
-                        <div
-                          className={`badge px-3 py-2 ${
-                            isSelected ? "bg-danger text-white" : "bg-success text-white"
-                          }`}
-                          style={{ fontSize: "0.85rem", fontWeight: "bold" }}
-                        >
-                          {isSelected ? "Elimină selecția" : "Selectează"}
+                        
+                        <div className="mt-auto pt-2 border-top">
+                          <div
+                            className={`badge w-100 py-2 ${
+                              isSelected ? "bg-light text-danger" : "bg-light text-success"
+                            }`}
+                            style={{ fontSize: "1rem", fontWeight: "bold" }}
+                          >
+                            {isSelected ? "✓ SELECTAT - Elimină" : "⊕ SELECTEAZĂ"}
+                          </div>
                         </div>
                       </Button>
                     );
@@ -882,11 +997,11 @@ const renderStep2 = () => {
                   <div className="card-body">
                     <p><strong>Producător:</strong> {selection.manufacturer || "N/A"}</p>
                     <p><strong>Cod piesă:</strong> {selection.partCode || "N/A"}</p>
-                    <p><strong>Cantitate:</strong> {selection.quantity || 0}</p>
+                    <p><strong>Cantitate:</strong> {selection.quantity || 0} bucăți</p>
                     <p><strong>Preț/bucată fara TVA:</strong> {selection.pricePerUnit || 0} RON</p>
                     <p><strong>Termen livrare:</strong> {selection.deliveryTerm || "N/A"}</p>
-                    <p className="text-success"><strong>SubTotal fara TVA:</strong> {selection.total || 0} RON</p>
-                    <p className="text-success"><strong>SubTotal cu TVA:</strong> {selection.total*1.19 || 0} RON</p>
+                    <p className="text-success"><strong>SubTotal fara TVA:</strong> {(selection.total || 0).toFixed(2)} RON</p>
+                    <p className="text-success"><strong>SubTotal cu TVA:</strong> {((selection.total || 0) * 1.19).toFixed(2)} RON</p>
                   </div>
                 </div>
               </div>
@@ -904,9 +1019,9 @@ const renderStep2 = () => {
         <div className="card my-4">
           <div className="card-body text-center">
             <h5 className="text-primary">Total general fara TVA:</h5>
-            <h3 className="text-success">{totalGeneral || 0} RON</h3>
+            <h3 className="text-success">{(totalGeneral || 0).toFixed(2)} RON</h3>
             <h5 className="text-primary">Total general cu TVA:</h5>
-            <h3 className="text-success">{totalGeneral*1.19 || 0} RON</h3>
+            <h3 className="text-success">{((totalGeneral || 0) * 1.19).toFixed(2)} RON</h3>
           </div>
         </div>
   
@@ -961,7 +1076,7 @@ const renderStep2 = () => {
 
   return (
     <>
-      <Modal show={show} onHide={onHide} size="lg" centered>
+      <Modal show={show} onHide={onHide} size="xl" centered backdrop="static">
         <Modal.Header closeButton>
           <Modal.Title>
             {readonlyMode
@@ -1021,6 +1136,76 @@ const renderStep2 = () => {
           </Button>
           <Button variant="danger" className="px-4 py-2" onClick={handleRejectOffer}>
             Respinge
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal pentru Editare Cantitate */}
+      <Modal show={showQuantityModal} onHide={handleQuantityModalClose} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="fas fa-edit me-2"></i>
+            Editează Cantitatea
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="text-center mb-3">
+            <h5 className="text-primary">
+              {quantityModalData.partType}
+            </h5>
+            <p className="text-muted mb-4">
+              Specificați cantitatea dorită pentru această piesă
+            </p>
+          </div>
+          
+          <Form.Group className="mb-4">
+            <Form.Label className="h6">
+              <strong>Cantitate (bucăți):</strong>
+            </Form.Label>
+            <div className="d-flex align-items-center gap-3">
+              <Button
+                variant="outline-secondary"
+                onClick={() => setNewQuantity(Math.max(1, newQuantity - 1))}
+                disabled={newQuantity <= 1}
+              >
+                <i className="fas fa-minus"></i>
+              </Button>
+              
+              <Form.Control
+                type="number"
+                min="1"
+                value={newQuantity}
+                onChange={(e) => {
+                  const value = Math.max(1, parseInt(e.target.value) || 1);
+                  setNewQuantity(value);
+                }}
+                className="text-center fw-bold"
+                style={{ maxWidth: '100px', fontSize: '1.1rem' }}
+              />
+              
+              <Button
+                variant="outline-secondary"
+                onClick={() => setNewQuantity(newQuantity + 1)}
+              >
+                <i className="fas fa-plus"></i>
+              </Button>
+            </div>
+          </Form.Group>
+
+          <div className="alert alert-info">
+            <small>
+              <i className="fas fa-info-circle me-2"></i>
+              Cantitatea minimă este 1 bucată. Modificarea va actualiza automat prețurile.
+            </small>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleQuantityModalClose}>
+            Anulează
+          </Button>
+          <Button variant="primary" onClick={handleQuantityModalSave}>
+            <i className="fas fa-save me-2"></i>
+            Salvează
           </Button>
         </Modal.Footer>
       </Modal>

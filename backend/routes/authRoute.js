@@ -4,11 +4,15 @@ import {
   signin,
   signOut,
   refreshToken,
-  requestPasswordReset, // Noua rută
-  validateSignup,
-  validateSignin,
+  requestPasswordReset,
   resetPassword
 } from "../controllers/authController.js";
+import {
+  validateSignup,
+  validateSignin,
+  validatePasswordResetRequest,
+  validatePasswordReset
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -19,7 +23,7 @@ router.post("/signout", signOut); // Logout
 router.post("/refresh-token", refreshToken); // Refresh token
 
 // Rute pentru resetarea parolei
-router.post("/request-password-reset", requestPasswordReset); // Trimitere email resetare parolă
-router.post("/reset-password", resetPassword); // Resetare parolă efectivă
+router.post("/request-password-reset", validatePasswordResetRequest, requestPasswordReset); // Trimitere email resetare parolă
+router.post("/reset-password", validatePasswordReset, resetPassword); // Resetare parolă efectivă
 
 export default router;

@@ -1,7 +1,7 @@
 import React, { useEffect, useReducer, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchWithAuth } from "../utils/fetchWithAuth";
-import { logout } from "../slices/authSlice";
+import { logoutUser } from "../slices/authSlice";
 import locations from "../assets/locations.json";
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -135,7 +135,7 @@ const MyProfile = () => {
       await fetchWithAuth(`${API_URL}/user/delete/${state.profile._id}`, {
         method: "DELETE",
       });
-      reduxDispatch(logout());
+      reduxDispatch(logoutUser());
       alert("Contul a fost șters cu succes!");
     } catch (err) {
       alert("Eroare la ștergerea contului: " + err.message);

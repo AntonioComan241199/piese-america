@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
-import { login } from "../../slices/authSlice";
+import { loginUser } from "../../slices/authSlice";
 import Logo from "../../assets/all-images/home-images/Logo.webp";
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -89,37 +89,11 @@ export default function Register() {
         throw new Error(errorData.message || "Înregistrare eșuată.");
       }
 
-      // Login automat după înregistrare
-      const loginResponse = await fetch(`${API_URL}/auth/signin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
-      });
-
-      if (!loginResponse.ok) {
-        const errorData = await loginResponse.json();
-        throw new Error(errorData.message || "Autentificare automată eșuată.");
-      }
-
-      const userData = await loginResponse.json();
-
-      // Salvare token-uri în localStorage
-      localStorage.setItem("accessToken", userData.accessToken);
-      localStorage.setItem("refreshToken", userData.refreshToken);
-
-      // Actualizare stare utilizator în Redux
-      dispatch(
-        login({
-          user: {
-            id: userData.user.id,
-            email: userData.user.email,
-            role: userData.user.role,
-            userType: userData.user.userType,
-          },
-          accessToken: userData.accessToken,
-          refreshToken: userData.refreshToken,
-        })
-      );
+      // Login automat după înregistrare prin Redux
+      await dispatch(loginUser({
+        email: formData.email,
+        password: formData.password
+      })).unwrap();
 
       // Navigare către pagina principală
       navigate("/home");

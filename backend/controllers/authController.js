@@ -1,300 +1,339 @@
-import User from "../models/User.js";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { body, validationResult } from "express-validator";
-import nodemailer from "nodemailer";
+import { AuthService } from "../services/authService.js";
+import { AuthEmailService } from "../services/authEmailService.js";
+import { AuthValidator } from "../validators/authValidator.js";
+import { UnauthorizedError } from "../utils/errors.js";
 
-// Funcții auxiliare pentru generarea token-urilor
-const generateAccessToken = (user) => {
-  return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "24h" }
-  );
-};
+let authEmailService = null;
 
-const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: "30d",
-  });
-};
+function getAuthEmailService() {
+  if (!authEmailService) {
+    authEmailService = new AuthEmailService();
+  }
+  return authEmailService;
+}
 
-// Înregistrare utilizator
+/**
+ * Înregistrare utilizator nou
+ */
 export const signup = async (req, res, next) => {
-  const {
-    email,
-    password,
-    phone,
-    firstName,
-    lastName,
-    userType,
-    companyDetails,
-  } = req.body;
-
   try {
-    // Validare input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    // Datele sunt deja sanitizate și validate de middleware
+    const user = await AuthService.createUser(req.body);
 
-    // Verifică dacă email-ul este deja utilizat
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        code: "USER_EXISTS",
-        message: "Acest email este deja utilizat.",
-      });
-    }
-
-    // Validări specifice pentru persoana juridică
-    if (userType === "persoana_juridica") {
-      if (
-        !companyDetails ||
-        !companyDetails.companyName ||
-        !companyDetails.cui ||
-        !companyDetails.nrRegCom
-      ) {
-        return res.status(400).json({
-          code: "INVALID_COMPANY_DETAILS",
-          message:
-            "Pentru persoanele juridice, trebuie să completați toate detaliile firmei (nume, CUI, număr înregistrare).",
-        });
-      }
-    }
-
-    // Validări specifice pentru persoana fizică
-    if (userType === "persoana_fizica" && (!firstName || !lastName)) {
-      return res.status(400).json({
-        code: "INVALID_PERSONAL_DETAILS",
-        message: "Pentru persoanele fizice, prenumele și numele sunt obligatorii.",
-      });
-    }
-
-    // Creăm utilizatorul
-    const newUser = new User({
-      email,
-      password, // Parola brută va fi hash-uită automat în schema utilizatorului
-      phone,
-      firstName,
-      lastName,
-      userType,
-      companyDetails: userType === "persoana_juridica" ? companyDetails : {},
+    // Trimite email de bun venit (non-blocking)
+    getAuthEmailService().sendWelcomeEmail(
+      user.email, 
+      user.firstName || user.companyDetails?.companyName, 
+      user.userType
+    ).catch(error => {
+      console.error('Failed to send welcome email:', error);
     });
 
-    // Salvăm utilizatorul în baza de date
-    await newUser.save();
-
-    res.status(201).json({ message: "Utilizator creat cu succes!" });
+    res.status(201).json({ 
+      success: true,
+      message: "Utilizator creat cu succes!" 
+    });
   } catch (error) {
     next(error);
   }
 };
 
-// Autentificare utilizator
+/**
+ * Autentificare utilizator
+ */
 export const signin = async (req, res, next) => {
-  const { email, password } = req.body;
-
   try {
-    // Validare input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    const { email, password } = req.body;
+    
+    // Datele sunt deja validate de middleware
+    const user = await AuthService.authenticateUser(email, password);
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ code: "USER_NOT_FOUND", message: "Utilizatorul nu a fost găsit." });
-    }
+    // Generare tokens
+    const authData = await AuthService.generateTokensForUser(user);
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return res.status(401).json({ code: "INVALID_CREDENTIALS", message: "Credențiale invalide." });
-    }
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    user.refreshToken = refreshToken;
-    await user.save();
+    // Actualizare activitate utilizator
+    AuthService.updateUserActivity(user._id).catch(console.error);
 
     res.status(200).json({
-      accessToken,
-      refreshToken,
+      success: true,
+      message: "Autentificare reușită.",
+      ...authData
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Reîmprospătează access token-ul
+ */
+export const refreshToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    
+    // Validare token
+    AuthValidator.validateRefreshToken(token);
+
+    // Reîmprospătează token-ul
+    const authData = await AuthService.refreshAccessToken(token);
+
+    res.status(200).json({
+      success: true,
+      message: "Token reîmprospătat cu succes.",
+      accessToken: authData.accessToken,
+      refreshToken: authData.refreshToken,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Deconectare utilizator
+ */
+export const signOut = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email-ul este obligatoriu pentru deconectare."
+      });
+    }
+
+    await AuthService.signOutUser(email);
+
+    res.status(200).json({ 
+      success: true,
+      message: "Deconectare reușită." 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Cerere pentru resetarea parolei
+ */
+export const requestPasswordReset = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    
+    // Validare email
+    AuthValidator.validatePasswordResetEmail(email);
+
+    // Inițiează procesul de resetare
+    const result = await AuthService.initiatePasswordReset(email);
+
+    // Dacă utilizatorul există, trimite email
+    if (result.token && result.user) {
+      await getAuthEmailService().sendPasswordResetEmail(
+        email,
+        result.token,
+        result.user.firstName || result.user.companyDetails?.companyName
+      );
+    }
+
+    // Răspuns identic indiferent dacă utilizatorul există sau nu (pentru securitate)
+    res.status(200).json({ 
+      success: true,
+      message: result.message 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Resetarea parolei
+ */
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    // Validare date
+    AuthValidator.validatePasswordReset({ token, newPassword });
+
+    // Resetează parola
+    await AuthService.resetUserPassword(token, newPassword);
+
+    res.status(200).json({ 
+      success: true,
+      message: "Parola a fost resetată cu succes!" 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Schimbare parolă (pentru utilizatori autentificați)
+ */
+export const changePassword = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new UnauthorizedError("Autentificare necesară.");
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    
+    // Validare date
+    AuthValidator.validatePasswordChange({ 
+      currentPassword, 
+      newPassword, 
+      confirmPassword 
+    });
+
+    // Schimbă parola
+    await AuthService.changeUserPassword(req.user.id, currentPassword, newPassword);
+
+    // Trimite email de confirmare (non-blocking)
+    const user = await AuthService.getUserProfile(req.user.id);
+    getAuthEmailService().sendPasswordChangedEmail(
+      user.email,
+      user.firstName || user.companyDetails?.companyName
+    ).catch(error => {
+      console.error('Failed to send password changed email:', error);
+    });
+
+    res.status(200).json({ 
+      success: true,
+      message: "Parola a fost schimbată cu succes. Toate sesiunile active au fost deconectate." 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Obține profilul utilizatorului curent
+ */
+export const getProfile = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new UnauthorizedError("Autentificare necesară.");
+    }
+
+    const userProfile = await AuthService.getUserProfile(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      user: userProfile
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verifică validitatea token-ului
+ */
+export const verifyToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      throw new UnauthorizedError("Token-ul este obligatoriu.");
+    }
+
+    const user = await AuthService.getUserFromToken(token);
+
+    res.status(200).json({
+      success: true,
+      message: "Token valid.",
       user: {
         id: user._id,
         email: user.email,
         role: user.role,
-        userType: user.userType,
-      },
+        userType: user.userType
+      }
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Refresh Token
-export const refreshToken = async (req, res, next) => {
-  const { token } = req.body;
-
-  if (!token) {
-    return res.status(401).json({ code: "NO_REFRESH_TOKEN", message: "No refresh token provided." });
-  }
-
+/**
+ * Invalidează toate sesiunile utilizatorului
+ */
+export const revokeAllSessions = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (!user || user.refreshToken !== token) {
-      return res.status(403).json({ code: "INVALID_REFRESH_TOKEN", message: "Invalid refresh token." });
+    if (!req.user) {
+      throw new UnauthorizedError("Autentificare necesară.");
     }
 
-    // Generează un nou access token și un nou refresh token
-    const newAccessToken = generateAccessToken(user);
-    const newRefreshToken = generateRefreshToken(user);
+    await AuthService.revokeAllSessions(req.user.id);
 
-    // Salvează noul refresh token în baza de date
-    user.refreshToken = newRefreshToken;
-    await user.save();
+    // Trimite alertă de securitate (non-blocking)
+    const user = await AuthService.getUserProfile(req.user.id);
+    getAuthEmailService().sendSecurityAlert(
+      user.email,
+      user.firstName || user.companyDetails?.companyName,
+      "Toate sesiunile au fost deconectate",
+      {
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      }
+    ).catch(error => {
+      console.error('Failed to send security alert:', error);
+    });
 
     res.status(200).json({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
+      success: true,
+      message: "Toate sesiunile au fost invalidate cu succes."
     });
-  } catch (error) {
-    res.status(403).json({ code: "EXPIRED_REFRESH_TOKEN", message: "Invalid or expired refresh token." });
-  }
-};
-
-
-// Deconectare utilizator
-export const signOut = async (req, res, next) => {
-  try {
-    const user = await User.findOne({ email: req.body.email });
-
-    if (!user) {
-      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
-    }
-
-    // Șterge refreshToken-ul
-    user.refreshToken = null;
-    await user.save();
-
-    res.status(200).json({ message: "Deconectare reușită." });
   } catch (error) {
     next(error);
   }
 };
 
-
-
-
-
-// Middleware pentru validarea datelor din cereri
-export const validateSignup = [
-  body("email").isEmail().withMessage("Adresa de email este invalidă."),
-  body("password")
-    .isLength({ min: 6 })
-    .withMessage("Parola trebuie să aibă cel puțin 6 caractere."),
-  body("userType")
-    .isIn(["persoana_fizica", "persoana_juridica"])
-    .withMessage("Tipul de utilizator este invalid."),
-];
-
-// Validare pentru autentificare
-export const validateSignin = [
-  body("email").isEmail().withMessage("Adresa de email este invalidă."),
-  body("password").notEmpty().withMessage("Parola este obligatorie."),
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    next();
-  },
-];
-
-// Funcție pentru trimiterea email-ului de resetare a parolei folosind configurația corectă SMTP
-const sendResetPasswordEmail = async (email, token) => {
+/**
+ * Testează configurația email-ului (doar pentru admini)
+ */
+export const testEmailConfig = async (req, res, next) => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: "mail.pieseautoamerica.ro", // Serverul SMTP
-      port: 587, // Portul SMTP pentru SSL
-      secure: true, // Folosește SSL
-      auth: {
-        user: "no-reply@pieseautoamerica.ro", // Adresa de email utilizată pentru trimitere
-        pass: "Automed14!@", // Parola asociată
-      },
-    });
-
-    const resetLink = `http://pieseautoamerica.ro/reset-password/${token}`; // Modifică URL-ul cu domeniul tău
-
-    const mailOptions = {
-      from: "no-reply@pieseautoamerica.ro", // Adresa expeditorului
-      to: email, // Adresa destinatarului
-      subject: "Piese Auto America - Resetare Parolă",
-      text: `Ai solicitat resetarea parolei pentru contul tău. Accesează link-ul pentru a-ți reseta parola: ${resetLink}`,
-      html: `
-        <h1>Resetare Parolă</h1>
-        <p>Ai primit acest email deoarece ai solicitat resetarea parolei pentru contul tău.</p>
-        <p>Dacă nu ai solicitat resetarea parolei, te rugăm să ignori acest email.</p>
-        <p>Click <a href="${resetLink}">aici</a> pentru a-ți reseta parola.</p>`,
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email trimis cu succes:", info.messageId);
-  } catch (error) {
-    console.error("Eroare la trimiterea email-ului de resetare a parolei:", error.message);
-    throw new Error("Eroare la trimiterea email-ului de resetare a parolei.");
-  }
-};
-
-
-// Cerere pentru resetarea parolei
-export const requestPasswordReset = async (req, res, next) => {
-  const { email } = req.body;
-
-  try {
-    // Verificăm dacă utilizatorul există
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    if (!req.user || req.user.role !== 'admin') {
+      throw new UnauthorizedError("Acces interzis. Doar administratorii pot testa configurația email-ului.");
     }
 
-    // Generăm token-ul de resetare a parolei
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+    const result = await getAuthEmailService().testEmailConnection();
+
+    res.status(200).json({
+      success: result.success,
+      message: result.message,
+      ...(result.error && { error: result.error })
     });
-
-    // Trimiterea email-ului de resetare a parolei folosind SMTP
-    await sendResetPasswordEmail(email, token);
-
-    res.status(200).json({ message: "Un email a fost trimis pentru resetarea parolei." });
   } catch (error) {
     next(error);
   }
 };
 
-// Resetarea parolei
-export const resetPassword = async (req, res, next) => {
-  const { token, newPassword } = req.body;
-
+/**
+ * Verifică disponibilitatea unui email
+ */
+export const checkEmailAvailability = async (req, res, next) => {
   try {
-    // Verificăm token-ul
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { email } = req.query;
 
-    // Găsește utilizatorul asociat token-ului
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email-ul este obligatoriu."
+      });
     }
 
-    // Actualizăm parola utilizatorului
-    user.password = newPassword
-    await user.save();
+    AuthValidator.validatePasswordResetEmail(email);
 
-    res.status(200).json({ message: "Parola a fost resetată cu succes!" });
+    const isAvailable = await AuthService.isEmailAvailable(email);
+
+    res.status(200).json({
+      success: true,
+      available: isAvailable,
+      message: isAvailable ? "Email disponibil." : "Email-ul este deja folosit."
+    });
   } catch (error) {
     next(error);
   }
 };
+

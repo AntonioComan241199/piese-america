@@ -1,43 +1,39 @@
-import React from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { logout, checkAuth } from "../../slices/authSlice";
-import TopHeader from "./TopHeader";
-import MobileNavbar from "./MobileNavbar";
+import React, { memo } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { logoutUser } from '../../slices/authSlice';
+import TopHeader from './TopHeader';
+import MobileNavbar from './MobileNavbar';
 
-const Header = () => {
+const Header = memo(() => {
   const dispatch = useDispatch();
-  const { isAuthenticated, user, authChecked } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
-  const handleLogout = () => {
-    dispatch(logout());
-  };
-
-  React.useEffect(() => {
-    if (!authChecked) {
-      dispatch(checkAuth());
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch (error) {
+      // Logout errors are generally not critical - user intent is clear
+      console.warn('Logout warning:', error);
     }
-  }, [dispatch, authChecked]);
+  };
 
   return (
     <header>
-      {/* Secțiunea superioară */}
-      <TopHeader isAuthenticated={isAuthenticated} user={user} onLogout={handleLogout} />
-
-      {/* MobileNavbar pentru dispozitive mobile */}
+      <TopHeader 
+        isAuthenticated={isAuthenticated} 
+        user={user} 
+        onLogout={handleLogout} 
+      />
+      
       <MobileNavbar
         isAuthenticated={isAuthenticated}
         user={user}
         onLogout={handleLogout}
-        navLinks={[
-          { path: "/home", display: "Home" },
-          { path: "/contact", display: "Contact" },
-          { path: "/request-order", display: "Solicita oferta" },
-          { path: "/oil-products", display: "Uleiuri si Lubrifianti" },
-          { path: "/fire-products", display: "Stingatoare" },
-        ]}
       />
     </header>
   );
-};
+});
+
+Header.displayName = 'Header';
 
 export default Header;

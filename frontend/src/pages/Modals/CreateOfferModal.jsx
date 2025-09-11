@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Modal, Button, Form } from "react-bootstrap";
+import React, { useState, useEffect, useCallback } from "react";
+import { Modal, Button, Form, Alert } from "react-bootstrap";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -14,17 +14,64 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
     deliveryTerm: "",
   });
   const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false); // Flag pentru prevenirea apelurilor multiple
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDraftAlert, setShowDraftAlert] = useState(false);
+  const [draftInfo, setDraftInfo] = useState(null);
 
+  // Draft management functions
+  const getDraftKey = useCallback((orderId) => `draft_offer_${orderId}`, []);
+
+  const saveDraft = useCallback((orderId, partsData) => {
+    if (!orderId || !partsData.length) return;
+    
+    const draftData = {
+      parts: partsData,
+      timestamp: new Date().toISOString(),
+      orderNumber: order?.orderNumber
+    };
+    
+    localStorage.setItem(getDraftKey(orderId), JSON.stringify(draftData));
+  }, [getDraftKey, order?.orderNumber]);
+
+  const loadDraft = useCallback((orderId) => {
+    const draftData = localStorage.getItem(getDraftKey(orderId));
+    return draftData ? JSON.parse(draftData) : null;
+  }, [getDraftKey]);
+
+  const deleteDraft = useCallback((orderId) => {
+    localStorage.removeItem(getDraftKey(orderId));
+  }, [getDraftKey]);
+
+  // Auto-save draft when parts change
   useEffect(() => {
-    if (order) {
-      setParts([]);
-      setError("");
-      setIsSubmitting(false); // Resetăm flag-ul la deschiderea modalului
+    if (order?._id && parts.length > 0) {
+      saveDraft(order._id, parts);
     }
-  }, [order]);
+  }, [parts, order?._id, saveDraft]);
+
+  // Check for existing draft when modal opens
+  useEffect(() => {
+    if (order && show) {
+      const existingDraft = loadDraft(order._id);
+      if (existingDraft && existingDraft.parts.length > 0) {
+        setDraftInfo(existingDraft);
+        setShowDraftAlert(true);
+      } else {
+        setParts([]);
+        setError("");
+        setIsSubmitting(false);
+        setShowDraftAlert(false);
+      }
+    }
+  }, [order, show, loadDraft]);
 
   const handleAddPart = () => {
+    // Block adding parts if draft decision is pending
+    if (showDraftAlert) {
+      setError("Trebuie să alegi mai întâi ce faci cu draft-ul existent.");
+      return;
+    }
+
     const { partCode, partType, manufacturer, pricePerUnit, quantity, deliveryTerm } = newPart;
 
     if (!partCode || !partType || !manufacturer || !pricePerUnit || !quantity || !deliveryTerm) {
@@ -51,6 +98,32 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
 
   const handleRemovePart = (index) => {
     setParts(parts.filter((_, i) => i !== index));
+  };
+
+  // Draft management handlers
+  const handleContinueDraft = () => {
+    if (draftInfo) {
+      setParts(draftInfo.parts);
+      setShowDraftAlert(false);
+      setError("");
+    }
+  };
+
+  const handleStartFresh = () => {
+    setParts([]);
+    setShowDraftAlert(false);
+    setError("");
+    if (order?._id) {
+      deleteDraft(order._id);
+    }
+  };
+
+  const handleClearDraft = () => {
+    if (order?._id) {
+      deleteDraft(order._id);
+      setParts([]);
+      setError("");
+    }
   };
 
   const handleSubmit = async () => {
@@ -90,6 +163,12 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
       if (response.ok) {
         const data = await response.json();
         onCreateOffer(data.offer); // Callback pentru actualizare
+        
+        // Clear draft after successful offer creation
+        if (order?._id) {
+          deleteDraft(order._id);
+        }
+        
         setParts([]); // Resetăm piesele
         setError(""); // Resetăm erorile
   
@@ -135,12 +214,68 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
         <Form>
           {error && <div className="alert alert-danger">{error}</div>}
 
+          {/* Draft Alert */}
+          {showDraftAlert && draftInfo && (
+            <Alert variant="info" className="mb-3">
+              <div className="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 className="mb-2">
+                    <i className="ri-draft-line me-2"></i>
+                    Draft găsit pentru comanda #{draftInfo.orderNumber}
+                  </h6>
+                  <p className="mb-2">
+                    Ai un draft salvat cu <strong>{draftInfo.parts.length} piese</strong>.
+                    <br />
+                    <small className="text-muted">
+                      Salvat la: {new Date(draftInfo.timestamp).toLocaleString('ro-RO')}
+                    </small>
+                  </p>
+                  <div className="d-flex gap-2">
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      onClick={handleContinueDraft}
+                    >
+                      Continuă draft-ul
+                    </Button>
+                    <Button 
+                      variant="outline-secondary" 
+                      size="sm" 
+                      onClick={handleStartFresh}
+                    >
+                      Începe de la zero
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Alert>
+          )}
+
+          {/* Draft Status */}
+          {!showDraftAlert && parts.length > 0 && order?._id && (
+            <Alert variant="success" className="mb-3 py-2">
+              <small>
+                <i className="ri-save-line me-1"></i>
+                Draft salvat automat ({parts.length} piese)
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="p-0 ms-2 text-decoration-none" 
+                  onClick={handleClearDraft}
+                >
+                  Șterge draft
+                </Button>
+              </small>
+            </Alert>
+          )}
+
           <h5>Adaugă piese</h5>
           <div className="d-flex gap-2 mb-3">
             <Form.Control
               type="text"
               placeholder="Cod piesă"
               value={newPart.partCode}
+              disabled={showDraftAlert}
               onChange={(e) =>
                 setNewPart((prev) => ({ ...prev, partCode: e.target.value }))
               }
@@ -149,6 +284,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
               type="text"
               placeholder="Tip piesă"
               value={newPart.partType}
+              disabled={showDraftAlert}
               onChange={(e) =>
                 setNewPart((prev) => ({ ...prev, partType: e.target.value }))
               }
@@ -157,6 +293,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
               type="text"
               placeholder="Producător"
               value={newPart.manufacturer}
+              disabled={showDraftAlert}
               onChange={(e) =>
                 setNewPart((prev) => ({ ...prev, manufacturer: e.target.value }))
               }
@@ -165,6 +302,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
               type="number"
               placeholder="Preț/unitate"
               value={newPart.pricePerUnit}
+              disabled={showDraftAlert}
               onChange={(e) =>
                 setNewPart((prev) => ({
                   ...prev,
@@ -176,6 +314,7 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
               type="number"
               placeholder="Cantitate"
               value={newPart.quantity}
+              disabled={showDraftAlert}
               onChange={(e) =>
                 setNewPart((prev) => ({
                   ...prev,
@@ -187,11 +326,17 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
               type="text"
               placeholder="Termen livrare ex: 2-3 zile lucrătoare"
               value={newPart.deliveryTerm}
+              disabled={showDraftAlert}
               onChange={(e) =>
                 setNewPart((prev) => ({ ...prev, deliveryTerm: e.target.value }))
               }
             />
-            <Button variant="primary" onClick={handleAddPart}>
+            <Button 
+              variant="primary" 
+              onClick={handleAddPart}
+              disabled={showDraftAlert}
+              title={showDraftAlert ? "Alege mai întâi ce faci cu draft-ul" : ""}
+            >
               Adaugă
             </Button>
           </div>
@@ -212,6 +357,8 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
                     variant="danger"
                     size="sm"
                     onClick={() => handleRemovePart(index)}
+                    disabled={showDraftAlert}
+                    title={showDraftAlert ? "Alege mai întâi ce faci cu draft-ul" : ""}
                   >
                     Șterge
                   </Button>
@@ -225,7 +372,12 @@ const CreateOfferModal = ({ show, onHide, onCreateOffer, order }) => {
         <Button variant="secondary" onClick={onHide}>
           Închide
         </Button>
-        <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+        <Button 
+          variant="primary" 
+          onClick={handleSubmit} 
+          disabled={isSubmitting || showDraftAlert}
+          title={showDraftAlert ? "Alege mai întâi ce faci cu draft-ul" : ""}
+        >
           Creează ofertă
         </Button>
       </Modal.Footer>

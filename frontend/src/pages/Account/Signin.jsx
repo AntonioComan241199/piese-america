@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Logo from "../../assets/all-images/home-images/Logo.webp";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { login } from "../../slices/authSlice";
+import { loginUser } from "../../slices/authSlice";
 import { Link } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -38,51 +38,21 @@ const Signin = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Autentificare eșuată.");
-      }
-
-      console.log("API URL:", import.meta.env.VITE_API_URL);
-
-
-      const data = await response.json();
-
-      // Salvare token-uri în localStorage
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-
-      // Actualizarea stării autentificării în Redux
-      dispatch(login({
-        user: {
-          id: data.user.id,
-          email: data.user.email,
-          role: data.user.role,
-        },
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-      }));
+      // Folosește Redux action pentru login
+      const result = await dispatch(loginUser({
+        email: formData.email,
+        password: formData.password
+      })).unwrap();
 
       // Verifică dacă există un URL salvat în localStorage
-      const redirectTo = localStorage.getItem('redirectTo') || '/home'; // Folosește /home ca fallback
-      console.log("Redirecting to:", redirectTo); // Verificare debug
-
-      // **Curăță URL-ul salvat** după ce redirecționezi utilizatorul
-      localStorage.removeItem('redirectTo'); // Asigură-te că ștergi redirectTo după redirecționare
+      const redirectTo = localStorage.getItem('redirectTo') || '/home';
+      localStorage.removeItem('redirectTo');
 
       // Redirecționează utilizatorul
-      setLoading(false); // Asigură-te că redirecționarea se face după setarea stării
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Autentificare eșuată.");
+    } finally {
       setLoading(false);
     }
   };
