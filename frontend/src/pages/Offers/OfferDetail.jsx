@@ -83,7 +83,7 @@ const OfferDetail = () => {
     GLOBAL QUALITY SOLUTIONS SRL
     Bdul. Mărăști 25, București, Sector 1
     CUI: 17426176
-    Nr reg comertului: J40/6018/2005`);
+    Nr reg comertului: J2005006018400`);
 
       // Detalii cumpărător
       const buyerDetails = normalizeText(
