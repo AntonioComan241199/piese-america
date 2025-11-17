@@ -90,7 +90,7 @@ const AddProductsModal = ({ show, onHide, offer, onUpdate }) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ newProducts: formattedProducts }),
+          body: JSON.stringify({ products: formattedProducts }),
         }
       );
 

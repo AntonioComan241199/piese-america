@@ -87,17 +87,6 @@ class GlobalErrorBoundary extends React.Component {
   }
 }
 
-// Performance monitoring (opțional)
-if (process.env.NODE_ENV === 'production') {
-  // Web Vitals pentru monitoring performanță
-  import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-    getCLS(console.log);
-    getFID(console.log);
-    getFCP(console.log);
-    getLCP(console.log);
-    getTTFB(console.log);
-  });
-}
 
 const root = createRoot(document.getElementById('root'));
 

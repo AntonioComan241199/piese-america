@@ -64,7 +64,7 @@ const EditProductsModal = ({ show, onHide, offer, onUpdate }) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            updatedProducts: parts.map(part => ({
+            products: parts.map(part => ({
               partCode: part.partCode,
               partType: part.partType,
               manufacturer: part.manufacturer,

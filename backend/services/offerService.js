@@ -550,17 +550,18 @@ export class OfferService {
       throw new ValidationError("Lista de produse este obligatorie și nu poate fi goală.");
     }
 
-    // Înlocuiesc toate produsele
+    // Înlocuiesc toate produsele - MAPARE CORECTĂ conform PartSchema
     offer.parts = products.map(product => ({
-      partName: product.partName,
-      partCode: product.partCode || `PART-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      quantity: product.quantity || 1,
-      pricePerUnit: product.pricePerUnit || 0,
-      total: (product.quantity || 1) * (product.pricePerUnit || 0),
-      supplier: product.supplier || 'Standard',
-      deliveryDays: product.deliveryDays || 7,
-      warranty: product.warranty || '12 luni',
-      notes: product.notes || ''
+      _id: product._id,                    // păstrăm _id-ul dacă există
+      partCode: product.partCode,
+      partType: product.partType,          // OBLIGATORIU în schemă
+      manufacturer: product.manufacturer,  // OBLIGATORIU în schemă
+      pricePerUnit: product.pricePerUnit,
+      quantity: product.quantity,
+      deliveryTerm: product.deliveryTerm,  // OBLIGATORIU în schemă (nu deliveryDays)
+      total: product.quantity * product.pricePerUnit,
+      options: product.options || [],
+      selectedOption: product.selectedOption || null
     }));
 
     // Recalculez totalul
@@ -584,17 +585,17 @@ export class OfferService {
       throw new ValidationError("Lista de produse este obligatorie și nu poate fi goală.");
     }
 
-    // Adaug produsele noi
+    // Adaug produsele noi - MAPARE CORECTĂ conform PartSchema
     const newProducts = products.map(product => ({
-      partName: product.partName,
-      partCode: product.partCode || `PART-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      quantity: product.quantity || 1,
-      pricePerUnit: product.pricePerUnit || 0,
-      total: (product.quantity || 1) * (product.pricePerUnit || 0),
-      supplier: product.supplier || 'Standard',
-      deliveryDays: product.deliveryDays || 7,
-      warranty: product.warranty || '12 luni',
-      notes: product.notes || ''
+      partCode: product.partCode,
+      partType: product.partType,          // OBLIGATORIU în schemă
+      manufacturer: product.manufacturer,  // OBLIGATORIU în schemă
+      pricePerUnit: product.pricePerUnit,
+      quantity: product.quantity,
+      deliveryTerm: product.deliveryTerm,  // OBLIGATORIU în schemă
+      total: product.quantity * product.pricePerUnit,
+      options: product.options || [],
+      selectedOption: product.selectedOption || null
     }));
 
     offer.parts.push(...newProducts);
@@ -603,5 +604,5 @@ export class OfferService {
     offer.total = offer.parts.reduce((sum, part) => sum + part.total, 0);
 
     return await offer.save();
-  }
+}
 }

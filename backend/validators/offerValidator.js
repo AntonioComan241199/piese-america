@@ -251,6 +251,16 @@ export class OfferValidator {
     }
   }
 
+  static validateOfferId(offerId) {
+    if (!offerId) {
+      throw new ValidationError("ID-ul ofertei este obligatoriu.");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(offerId)) {
+      throw new ValidationError("ID-ul ofertei este invalid.");
+    }
+  }
+
   /**
    * Validează datele pentru actualizarea unei oferte
    */
