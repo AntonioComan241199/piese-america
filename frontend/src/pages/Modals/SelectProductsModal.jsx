@@ -657,7 +657,7 @@ const renderStep1 = () => (
                               isSelected ? 
                                 (selections.find(s => s.partType === group.partType && s.selectedOption === option.optionId)?.quantity || option.quantity) :
                                 option.quantity
-                            ) * 1.19).toFixed(2)} RON</strong></div>
+                            ) * 1.21).toFixed(2)} RON</strong></div>
                           </div>
                         </div>
                         
@@ -694,7 +694,7 @@ const renderStep1 = () => (
       <h5 className="text-primary">Total selecție fara TVA: {totalSelectie} RON</h5>
     </div>
     <div className="d-flex justify-content-end mt-4">
-      <h5 className="text-primary">Total selecție cu TVA: {totalSelectie*1.19} RON</h5>
+      <h5 className="text-primary">Total selecție cu TVA: {totalSelectie*1.21} RON</h5>
     </div>
   </Form>
 );
@@ -1001,7 +1001,7 @@ const renderStep2 = () => {
                     <p><strong>Preț/bucată fara TVA:</strong> {selection.pricePerUnit || 0} RON</p>
                     <p><strong>Termen livrare:</strong> {selection.deliveryTerm || "N/A"}</p>
                     <p className="text-success"><strong>SubTotal fara TVA:</strong> {(selection.total || 0).toFixed(2)} RON</p>
-                    <p className="text-success"><strong>SubTotal cu TVA:</strong> {((selection.total || 0) * 1.19).toFixed(2)} RON</p>
+                    <p className="text-success"><strong>SubTotal cu TVA:</strong> {((selection.total || 0) * 1.21).toFixed(2)} RON</p>
                   </div>
                 </div>
               </div>
@@ -1021,7 +1021,7 @@ const renderStep2 = () => {
             <h5 className="text-primary">Total general fara TVA:</h5>
             <h3 className="text-success">{(totalGeneral || 0).toFixed(2)} RON</h3>
             <h5 className="text-primary">Total general cu TVA:</h5>
-            <h3 className="text-success">{((totalGeneral || 0) * 1.19).toFixed(2)} RON</h3>
+            <h3 className="text-success">{((totalGeneral || 0) * 1.21).toFixed(2)} RON</h3>
           </div>
         </div>
   

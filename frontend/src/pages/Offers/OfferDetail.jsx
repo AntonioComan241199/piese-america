@@ -168,7 +168,7 @@ const OfferDetail = () => {
           "Pret unitar",
           "Cantitate",
           "Valoare fara TVA",
-          "TVA (19%)",
+          "TVA (21%)",
           "Valoare cu TVA",
       ];
       const tableRows = [];
@@ -181,7 +181,7 @@ const OfferDetail = () => {
 
       partsToExport.forEach((part) => {
           const subtotalFaraTVA = part.pricePerUnit * part.quantity;
-          const tva = subtotalFaraTVA * 0.19;
+          const tva = subtotalFaraTVA * 0.21;
           const subtotalCuTVA = subtotalFaraTVA + tva;
 
           totalFaraTVA += subtotalFaraTVA;
@@ -211,7 +211,7 @@ const OfferDetail = () => {
 
       if (!isDraft) {
           const totalText = normalizeText(`Total fără TVA: ${totalFaraTVA.toFixed(2)} RON`);
-          const tvaText = normalizeText(`TVA (19%): ${totalTVA.toFixed(2)} RON`);
+          const tvaText = normalizeText(`TVA (21%): ${totalTVA.toFixed(2)} RON`);
           const totalCuTVAText = normalizeText(`Total cu TVA: ${totalCuTVA.toFixed(2)} RON`);
           const totalX = doc.internal.pageSize.width - doc.getTextWidth(totalText) - 10;
 
@@ -238,7 +238,7 @@ const OfferDetail = () => {
     if (!offer?.selectedParts?.length) return null;
   
     const totalFaraTVA = offer.selectedParts.reduce((sum, part) => sum + (part.pricePerUnit * part.quantity), 0);
-    const totalTVA = totalFaraTVA * 0.19;
+    const totalTVA = totalFaraTVA * 0.21;
     const totalCuTVA = totalFaraTVA + totalTVA;
   
     return { totalFaraTVA, totalTVA, totalCuTVA };
@@ -300,7 +300,7 @@ const OfferDetail = () => {
             const selectedPart = offer.selectedParts.find((sp) => sp.partCode === part.partCode);
             const isSelected = !!selectedPart;
             const subtotalFaraTVA = part.pricePerUnit * part.quantity;
-            const tva = subtotalFaraTVA * 0.19;
+            const tva = subtotalFaraTVA * 0.21;
             const subtotalCuTVA = subtotalFaraTVA + tva;
   
             return (
@@ -376,7 +376,7 @@ const OfferDetail = () => {
                       },
                       {
                         icon: 'ri-percent-line',
-                        label: 'TVA (19%)',
+                        label: 'TVA (21%)',
                         value: `${tva.toFixed(2)} RON`,
                         valueClass: 'text-danger'
                       },
@@ -384,7 +384,7 @@ const OfferDetail = () => {
                         icon: 'ri-money-euro-box-line',
                         label: 'Valoare cu TVA',
                         value: isSelected
-                          ? `${(selectedPart.pricePerUnit * selectedPart.quantity * 1.19).toFixed(2)} RON`
+                          ? `${(selectedPart.pricePerUnit * selectedPart.quantity * 1.21).toFixed(2)} RON`
                           : `${subtotalCuTVA.toFixed(2)} RON`,
                         valueClass: 'fw-bold'
                       },
@@ -444,7 +444,7 @@ const OfferDetail = () => {
               {total !== null ? (
                   <div>
                   <h4>Total ofertă fără TVA: <span className="text-primary">{total.totalFaraTVA.toFixed(2)} RON</span></h4>
-                  <h4>TVA (19%): <span className="text-danger">{total.totalTVA.toFixed(2)} RON</span></h4>
+                  <h4>TVA (21%): <span className="text-danger">{total.totalTVA.toFixed(2)} RON</span></h4>
                   <h4>Total ofertă cu TVA: <span className="text-success">{total.totalCuTVA.toFixed(2)} RON</span></h4>
                 </div>
               ) : (
