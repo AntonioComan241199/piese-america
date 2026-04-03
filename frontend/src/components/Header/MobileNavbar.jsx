@@ -84,7 +84,7 @@ const MobileAuthSection = memo(({
 MobileAuthSection.displayName = 'MobileAuthSection';
 
 // Main Mobile Navbar Component
-const MobileNavbar = memo(({ isAuthenticated, user, onLogout }) => {
+const MobileNavbar = memo(({ isAuthenticated, user, onLogout, cartItemsCount = 0 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { handleNavigationClick } = useNavigation();
   
@@ -128,6 +128,29 @@ const MobileNavbar = memo(({ isAuthenticated, user, onLogout }) => {
           <i className="ri-car-line me-2"></i>
           {COMPANY_INFO.NAME}
         </Navbar.Brand>
+
+        {/* Cart Button - mereu vizibil pe mobile */}
+        <Link
+          to="/cart"
+          className="d-flex align-items-center gap-1 px-2 py-1 rounded fw-semibold ms-auto me-2 text-decoration-none"
+          style={{
+            backgroundColor: '#ffc107',
+            color: '#212529',
+            border: '2px solid #ffc107',
+          }}
+          aria-label={`Coș cumpărături${cartItemsCount > 0 ? ` - ${cartItemsCount} produse` : ''}`}
+        >
+          <i className="ri-shopping-cart-2-line fs-5"></i>
+          <span
+            className="badge rounded-pill"
+            style={{
+              backgroundColor: cartItemsCount > 0 ? '#dc3545' : '#6c757d',
+              minWidth: '20px'
+            }}
+          >
+            {cartItemsCount}
+          </span>
+        </Link>
 
         {/* Mobile Menu Toggle */}
         <Navbar.Toggle

@@ -8,6 +8,8 @@ import RouteWrapper from "./components/common/RouteWrapper";
 import { FullPageLoading } from "./components/common/LoadingFallback";
 import { checkAuth } from "./slices/authSlice";
 import { routeConfig, routeMeta } from "./config/routes";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // <--- ADAUGĂ ACEASTĂ LINIE
 
 // 404 Page component
 const NotFound = () => (
@@ -90,6 +92,7 @@ const AppWrapper = () => {
           } 
         />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
     </ErrorBoundary>
   );
 };

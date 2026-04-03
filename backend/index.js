@@ -20,6 +20,8 @@ import contactRoute from "./routes/contactRoute.js";
 import oilProductsRoutes from "./routes/oilProductsRoutes.js";
 import fireExtinguishersRoutes from "./routes/fireExtinguishersRoutes.js";
 import reportRoutes from './routes/reportRoutes.js';
+import stockProductRoutes from './routes/stockProductRoute.js'
+import catalogOrderRoutes from './routes/catalogOrderRoutes.js';
 
 // Inițializare aplicație Express
 const app = express();
@@ -69,7 +71,8 @@ app.use("/api/contact", contactRoute); // Rute pentru formularul de contact
 app.use("/api/oil-products", oilProductsRoutes);
 app.use("/api/fire-extinguishers", fireExtinguishersRoutes);
 app.use('/api/reports', reportRoutes);
-
+app.use('/api/stock-products', stockProductRoutes);
+app.use('/api/catalog-orders', catalogOrderRoutes);
 
 
 // Middleware pentru gestionarea erorilor

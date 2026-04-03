@@ -1,6 +1,7 @@
+// frontend/src/components/Header/TopHeader.jsx
 import React, { memo } from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useResponsive, useNavigation } from '../../hooks/useResponsive';
 import { getUserDisplayName } from '../../utils/navigationHelpers';
 import { 
@@ -31,7 +32,7 @@ const ContactSection = memo(() => (
 ContactSection.displayName = 'ContactSection';
 
 // Auth Section Component
-const AuthSection = memo(({ isAuthenticated, user, onLogout, isMobile }) => {
+const AuthSection = memo(({ isAuthenticated, user, onLogout, isMobile, cartItemsCount }) => {
   const navigate = useNavigate();
   const { handleNavigationClick } = useNavigation();
 
@@ -41,48 +42,78 @@ const AuthSection = memo(({ isAuthenticated, user, onLogout, isMobile }) => {
   };
 
   const colClass = `d-flex ${
-    isMobile ? 'flex-column text-center mt-3' : 'justify-content-end'
-  } gap-2`;
-
-  if (isAuthenticated) {
-    return (
-      <Col xs={12} md={6} className={colClass}>
-        <span className={isMobile ? 'd-block mb-2' : 'align-self-center me-3'}>
-          Salut, {getUserDisplayName(user)}!
-        </span>
-        <Button
-          onClick={handleLogout}
-          variant="outline-light"
-          size="sm"
-          className={isMobile ? 'w-50 mx-auto' : ''}
-          aria-label="Logout din cont"
-        >
-          Logout
-        </Button>
-      </Col>
-    );
-  }
+    isMobile ? 'flex-column text-center mt-3' : 'justify-content-end align-items-center'
+  } gap-3`;
 
   return (
     <Col xs={12} md={6} className={colClass}>
-      <Button
-        onClick={() => handleNavigationClick(navigate, '/signin')}
-        variant="outline-light"
-        size="sm"
-        className={isMobile ? 'w-50 mx-auto' : 'me-2'}
-        aria-label="Conectează-te în cont"
+      {/* Iconița de Coș - ascuns pe mobile (e in MobileNavbar) */}
+      <Link
+        to="/cart"
+        className="position-relative text-decoration-none d-none d-md-flex align-items-center gap-1 px-3 py-1 rounded fw-semibold"
+        style={{
+          backgroundColor: '#ffc107',
+          color: '#212529',
+          border: '2px solid #ffc107',
+          transition: 'all 0.2s ease',
+          whiteSpace: 'nowrap'
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.backgroundColor = '#ffca2c';
+          e.currentTarget.style.borderColor = '#ffca2c';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.backgroundColor = '#ffc107';
+          e.currentTarget.style.borderColor = '#ffc107';
+        }}
+        aria-label={`Coș cumpărături${cartItemsCount > 0 ? ` - ${cartItemsCount} produse` : ''}`}
       >
-        Conectare
-      </Button>
-      <Button
-        onClick={() => handleNavigationClick(navigate, '/register')}
-        variant="outline-light"
-        size="sm"
-        className={isMobile ? 'w-50 mx-auto' : ''}
-        aria-label="Creează cont nou"
-      >
-        Înregistrare
-      </Button>
+        <i className="ri-shopping-cart-2-line fs-5"></i>
+        <span className="d-none d-sm-inline">Coș</span>
+        <span
+          className="badge rounded-pill ms-1"
+          style={{
+            backgroundColor: cartItemsCount > 0 ? '#dc3545' : '#6c757d',
+            minWidth: '20px'
+          }}
+        >
+          {cartItemsCount}
+        </span>
+      </Link>
+
+      {/* Autentificare / Profil */}
+      {isAuthenticated ? (
+        <div className="d-flex align-items-center gap-2">
+          <span>Salut, {getUserDisplayName(user)}!</span>
+          <Button
+            onClick={handleLogout}
+            variant="outline-light"
+            size="sm"
+            aria-label="Logout din cont"
+          >
+            Logout
+          </Button>
+        </div>
+      ) : (
+        <div className="d-flex gap-2">
+          <Button
+            onClick={() => handleNavigationClick(navigate, '/signin')}
+            variant="outline-light"
+            size="sm"
+            aria-label="Conectează-te în cont"
+          >
+            Conectare
+          </Button>
+          <Button
+            onClick={() => handleNavigationClick(navigate, '/register')}
+            variant="outline-light"
+            size="sm"
+            aria-label="Creează cont nou"
+          >
+            Înregistrare
+          </Button>
+        </div>
+      )}
     </Col>
   );
 });
@@ -158,7 +189,7 @@ const InfoBanner = memo(({ isMobile, sidebarOffset }) => (
 InfoBanner.displayName = 'InfoBanner';
 
 // Main TopHeader Component
-const TopHeader = memo(({ isAuthenticated, user, onLogout }) => {
+const TopHeader = memo(({ isAuthenticated, user, onLogout, cartItemsCount }) => {
   const { isMobile } = useResponsive();
 
   const sidebarOffset = {
@@ -193,6 +224,7 @@ const TopHeader = memo(({ isAuthenticated, user, onLogout }) => {
               user={user}
               onLogout={onLogout}
               isMobile={isMobile}
+              cartItemsCount={cartItemsCount} // 👈 Pasăm cartItemsCount
             />
           </Row>
         </Container>

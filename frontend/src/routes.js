@@ -18,6 +18,9 @@ const routes = [
   { path: "/my-orders/:id" },
   { path: "/my-offers" },
   { path: "/request-order" },
+  {
+  path: "/cart",
+},
 ];
 
 export default routes;

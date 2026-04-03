@@ -18,7 +18,7 @@ export class OrderService {
   /**
    * Construiește filtrul pentru căutarea comenzilor
    */
-  static buildFilters({ status, orderNumber, selectedDate, phoneNumber, userId }) {
+  static buildFilters({ status, type, orderNumber, selectedDate, phoneNumber, userId }) {
     const filters = {};
     
     if (userId) filters.userId = userId;
@@ -38,7 +38,20 @@ export class OrderService {
         $lte: endOfDay.toISOString() 
       };
     }
-    
+
+    // 🔥 FILTRARE CUSTOM OFFER: tipul este "custom_offer" SAU nu există
+    if (type === "custom_offer") {
+      filters.$or = [
+        { type: "custom_offer" },
+        { type: { $exists: false } }
+      ];
+    }
+
+    // 🔥 FILTRARE CATALOG ORDER: doar dacă se cere expres
+    if (type === "catalog_order") {
+      filters.type = "catalog_order";
+    }
+
     return filters;
   }
 

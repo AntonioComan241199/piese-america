@@ -55,6 +55,7 @@ export const NAVIGATION_CONFIG = {
     { path: '/request-order', display: 'Solicita oferta', icon: 'ri-add-circle-line', excludeForRoles: ['admin'] },
     { path: '/oil-products', display: 'Uleiuri si Lubrifianti', icon: 'ri-drop-line' },
     { path: '/fire-products', display: 'Stingatoare', icon: 'ri-fire-line' },
+    { path: '/catalog', display: 'Catalog piese in stoc', icon: 'ri-car-line' },
 
   ],
   
@@ -65,11 +66,14 @@ export const NAVIGATION_CONFIG = {
   
   CLIENT: [
     { path: '/my-orders', display: 'Evidenta oferte', icon: 'ri-file-list-line' },
-    { path: '/my-offers', display: 'Evidenta Comenzi', icon: 'ri-shopping-cart-line' }
+    { path: '/my-offers', display: 'Evidenta Comenzi', icon: 'ri-shopping-cart-line' },
+    { path: '/my-orders-catalog', display: 'Comenzile mele din catalog', icon: 'ri-file-list-line' },
   ],
   
   ADMIN: [
     { path: '/admin/dashboard', display: 'Panou de Administrare', icon: 'ri-dashboard-line' },
+    { path: '/admin/catalog', display: 'Administrare catalog piese', icon: 'ri-car-line' },
+    { path: '/admin/catalog-orders', display: 'Evidenta comenzi din catalog', icon: 'ri-car-line' },
   ],
   
   GUEST: [

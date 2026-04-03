@@ -7,12 +7,17 @@ import MobileNavbar from './MobileNavbar';
 const Header = memo(() => {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  
+  // 1. Extrage produsele din coș
+  const { items } = useSelector((state) => state.cart);
+  
+  // 2. Calculează numărul total de produse
+  const cartItemsCount = items.reduce((acc, item) => acc + item.qty, 0);
 
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser()).unwrap();
     } catch (error) {
-      // Logout errors are generally not critical - user intent is clear
       console.warn('Logout warning:', error);
     }
   };
@@ -22,13 +27,15 @@ const Header = memo(() => {
       <TopHeader 
         isAuthenticated={isAuthenticated} 
         user={user} 
-        onLogout={handleLogout} 
+        onLogout={handleLogout}
+        cartItemsCount={cartItemsCount} // 3. Trimite numărul către TopHeader
       />
       
       <MobileNavbar
         isAuthenticated={isAuthenticated}
         user={user}
         onLogout={handleLogout}
+        cartItemsCount={cartItemsCount} // 4. Trimite numărul către MobileNavbar
       />
     </header>
   );

@@ -19,6 +19,8 @@ const FordMustangPage = lazy(() => import('../pages/DedicatedCars/FordMustangPag
 const MyOrders = lazy(() => import('../pages/Orders/MyOrders'));
 const RequestOrder = lazy(() => import('../pages/Orders/RequestOrder'));
 const OrderDetails = lazy(() => import('../pages/Orders/OrderDetails'));
+const MyOrdersCatalog = lazy(() => import('../pages/Catalog/UserOrders.jsx'));
+const MyOrdersCatalogDetails = lazy(() => import('../pages/Catalog/UserOrdersDetail.jsx'));
 
 // Offer pages
 const MyOffers = lazy(() => import('../pages/Offers/MyOffers'));
@@ -27,11 +29,20 @@ const OfferDetail = lazy(() => import('../pages/Offers/OfferDetail'));
 // Admin pages - separate chunks pentru admin
 const AdminDashboard = lazy(() => import('../pages/Admin/AdminDashboard'));
 const AdminOrders = lazy(() => import('../pages/Orders/AdminOrders'));
+const AdminCatalogOrders = lazy(() => import('../pages/Orders/AdminCatalogOrders'));
+const AdminCatalogOrdersDetail = lazy(() => import('../pages/Orders/AdminCatalogOrdersDetail'));
 const AdminOffers = lazy(() => import('../pages/Offers/AdminOffers'));
 const AdminOilProducts = lazy(() => import('../pages/Admin/AdminOilProducts'));
 const AdminFireExtinguishers = lazy(() => import('../pages/Admin/AdminFireExtinguishers'));
 const RealtimeStats = lazy(() => import('../pages/Admin/RealtimeStats'));
 const OfferGenerator = lazy(() => import('../pages/Offers/OfferGenerator'));
+
+const CatalogPage = lazy(() => import('../pages/Catalog/CatalogPage'));
+const CatalogDetail = lazy(() => import('../pages/Catalog/CatalogDetail'));
+const AdminCatalog = lazy(() => import('../pages/Admin/AdminCatalog'));
+const AdminCatalogForm = lazy(() => import('../pages/Admin/AdminCatalogForm'));
+const cart = lazy(() => import('../pages/Cart/CartPage'));
+const CheckoutPage = lazy(() => import('../pages/Cart/CheckoutPage'));
 
 // Route configuration
 export const routeConfig = [
@@ -112,6 +123,12 @@ export const routeConfig = [
     layout: true,
     protection: 'auth'
   },
+  { 
+    path: '/checkout', 
+    component: CheckoutPage,
+    title: 'Finalizare Comandă',
+    protection: 'auth' // Recomandat să fie doar pentru utilizatori logați
+  },
   {
     path: '/my-orders',
     component: MyOrders,
@@ -123,6 +140,18 @@ export const routeConfig = [
     component: MyOrders,
     layout: true,
     protection: 'public'
+  },
+  {
+    path: '/my-orders-catalog',
+    component: MyOrdersCatalog,
+    layout: 'true',
+    protected: 'public'
+  },
+  {
+    path: '/my-orders-catalog/:id',
+    component: MyOrdersCatalogDetails,
+    layout: 'true',
+    protected: 'public'
   },
   {
     path: '/my-offers',
@@ -148,6 +177,7 @@ export const routeConfig = [
     layout: true,
     protection: 'auth'
   },
+  
 
   // Admin routes
   {
@@ -163,6 +193,21 @@ export const routeConfig = [
     layout: true,
     protection: 'admin',
     title: 'Gestionare Comenzi'
+  },
+  // În routeConfig (partea de admin)
+  {
+    path: '/admin/catalog-orders',
+    component: AdminCatalogOrders,
+    layout: true, // sau layout-ul tău de admin
+    protection: 'admin',
+    title: 'Gestionare Comenzi Catalog'
+  },
+  {
+    path: '/admin/catalog-orders/:id',
+    component: AdminCatalogOrdersDetail, // Pagina de detalii pe care o putem face imediat
+    layout: true,
+    protection: 'admin',
+    title: 'Detalii Comandă Catalog'
   },
   {
     path: '/admin-offers',
@@ -198,7 +243,14 @@ export const routeConfig = [
     layout: true,
     protection: 'admin',
     title: 'Generator Oferte'
-  }
+  },
+
+  { path: "/cart", component: cart, layout: true, protection: "public" },
+  { path: "/catalog", component: CatalogPage, layout: true, protection: "public" },
+  { path: "/catalog/:id", component: CatalogDetail, layout: true, protection: "public" },
+  { path: "/admin/catalog", component: AdminCatalog, layout: true, protection: "admin" },
+  { path: "/admin/catalog/add", component: AdminCatalogForm, layout: true, protection: "admin" },
+  { path: "/admin/catalog/:id/edit", component: AdminCatalogForm, layout: true, protection: "admin" },
 ];
 
 // Helper functions pentru routing
@@ -223,6 +275,7 @@ export const routeGroups = {
 export const navigationConfig = {
   main: [
     { path: '/', label: 'Acasă', icon: 'ri-home-line' },
+    { path: '/catalog', label: 'Catalog Stoc', icon: 'ri-store-2-line' },
     { path: '/oil-products', label: 'Uleiuri', icon: 'ri-drop-line' },
     { path: '/fire-products', label: 'Stingătoare', icon: 'ri-fire-line' },
     { path: '/contact', label: 'Contact', icon: 'ri-phone-line' }
@@ -252,6 +305,10 @@ export const routeMeta = {
   '/oil-products': {
     title: 'Uleiuri Auto - Piese Auto America',
     description: 'Uleiuri motor de calitate superioară pentru toate tipurile de vehicule.'
+  },
+  '/catalog': {
+    title: 'Catalog Piese în Stoc - Piese Auto America',
+    description: 'Catalog complet de piese auto disponibile în stoc. Găsește rapid piesa de care ai nevoie.'
   },
   '/fire-products': {
     title: 'Stingătoare Auto - Piese Auto America',
