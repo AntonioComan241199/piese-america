@@ -1,5 +1,11 @@
 // frontend/src/pages/Catalog/CatalogDetail.jsx
-import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
@@ -14,6 +20,101 @@ const STOCK_LABELS = {
   not_in_stock: { label: "Indisponibil", color: "danger" },
 };
 
+// Wrapper care stilizeaza HTML dinamic, inclusiv tabelele venite din MongoDB
+function RichContent({ html }) {
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    el.querySelectorAll("table").forEach((table) => {
+      table.removeAttribute("width");
+      table.removeAttribute("cellpadding");
+      table.removeAttribute("cellspacing");
+      table.removeAttribute("border");
+
+      table.style.removeProperty("width");
+      table.style.removeProperty("height");
+      table.style.removeProperty("min-width");
+      table.style.removeProperty("max-width");
+
+      table.style.setProperty("border-collapse", "collapse", "important");
+      table.style.setProperty("table-layout", "auto", "important");
+      table.style.setProperty("width", "auto", "important");
+      table.style.setProperty("max-width", "100%", "important");
+      table.style.setProperty("font-size", "0.9rem", "important");
+      table.style.setProperty("margin-bottom", "1rem", "important");
+      table.style.setProperty("display", "inline-table", "important");
+
+      if (!table.parentElement?.classList.contains("rich-table-wrap")) {
+        const wrap = document.createElement("div");
+
+        wrap.className = "rich-table-wrap";
+        wrap.style.overflowX = "auto";
+        wrap.style.maxWidth = "100%";
+        wrap.style.marginBottom = "1rem";
+
+        table.parentNode.insertBefore(wrap, table);
+        wrap.appendChild(table);
+      }
+    });
+
+    el.querySelectorAll("tr").forEach((row) => {
+      const cells = row.querySelectorAll("th, td");
+
+      cells.forEach((cell, index) => {
+        cell.removeAttribute("width");
+
+        cell.style.removeProperty("width");
+        cell.style.removeProperty("height");
+        cell.style.removeProperty("min-width");
+        cell.style.removeProperty("max-width");
+
+        if (
+          cell.childNodes.length === 1 &&
+          cell.childNodes[0].nodeType === Node.TEXT_NODE
+        ) {
+          cell.textContent = cell.textContent.replace(/\u00a0/g, " ").trim();
+        }
+
+        cell.style.setProperty("border", "1px solid #dee2e6", "important");
+        cell.style.setProperty("padding", "6px 10px", "important");
+        cell.style.setProperty("text-align", "left", "important");
+        cell.style.setProperty("vertical-align", "top", "important");
+        cell.style.setProperty("color", "#212529", "important");
+        cell.style.setProperty("opacity", "1", "important");
+        cell.style.setProperty("background-color", "#ffffff", "important");
+        cell.style.setProperty("white-space", "normal", "important");
+        cell.style.setProperty("word-break", "normal", "important");
+        cell.style.setProperty("overflow-wrap", "break-word", "important");
+
+        if (index === 0) {
+          cell.style.setProperty("width", "1%", "important");
+          cell.style.setProperty("max-width", "220px", "important");
+          cell.style.setProperty("font-weight", "600", "important");
+          cell.style.setProperty("background-color", "#f8f9fa", "important");
+        } else {
+          cell.style.setProperty("max-width", "260px", "important");
+        }
+      });
+    });
+
+    el.querySelectorAll("img").forEach((img) => {
+      img.style.setProperty("max-width", "100%", "important");
+      img.style.setProperty("height", "auto", "important");
+    });
+  }, [html]);
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="rich-content"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
 export default function CatalogDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -27,7 +128,11 @@ export default function CatalogDetail() {
 
   const getImageUrl = useCallback((image) => {
     if (!image) return null;
-    if (image.startsWith("http://") || image.startsWith("https://")) return image;
+
+    if (image.startsWith("http://") || image.startsWith("https://")) {
+      return image;
+    }
+
     return `${API_ORIGIN}${image.startsWith("/") ? image : `/${image}`}`;
   }, []);
 
@@ -80,6 +185,7 @@ export default function CatalogDetail() {
 
   const handleAddToCart = useCallback(() => {
     if (!product) return;
+
     dispatch(addToCart(product));
     toast.success(`${product.title} a fost adăugat în coș.`);
   }, [dispatch, product]);
@@ -101,7 +207,10 @@ export default function CatalogDetail() {
               <div className="placeholder-glow p-3">
                 <span
                   className="placeholder w-100 rounded-3"
-                  style={{ height: "360px", display: "block" }}
+                  style={{
+                    height: "360px",
+                    display: "block",
+                  }}
                 ></span>
               </div>
             </div>
@@ -111,21 +220,27 @@ export default function CatalogDetail() {
             <div className="placeholder-glow mb-3">
               <span className="placeholder col-3"></span>
             </div>
+
             <div className="placeholder-glow mb-3">
               <span className="placeholder col-8"></span>
             </div>
+
             <div className="placeholder-glow mb-3">
               <span className="placeholder col-2"></span>
             </div>
+
             <div className="placeholder-glow mb-4">
               <span className="placeholder col-4 btn btn-success disabled"></span>
             </div>
+
             <div className="placeholder-glow mb-2">
               <span className="placeholder col-12"></span>
             </div>
+
             <div className="placeholder-glow mb-2">
               <span className="placeholder col-10"></span>
             </div>
+
             <div className="placeholder-glow">
               <span className="placeholder col-9"></span>
             </div>
@@ -141,10 +256,14 @@ export default function CatalogDetail() {
         <div className="card border-0 shadow-sm rounded-4">
           <div className="card-body text-center py-5">
             <i className="ri-file-search-line display-5 text-muted mb-3"></i>
+
             <h4 className="fw-bold">Produsul nu a fost găsit</h4>
+
             <p className="text-muted mb-4">
-              Este posibil ca produsul să nu mai fie disponibil sau linkul să fie invalid.
+              Este posibil ca produsul să nu mai fie disponibil sau linkul să
+              fie invalid.
             </p>
+
             <Link to="/catalog" className="btn btn-primary">
               Înapoi la catalog
             </Link>
@@ -191,10 +310,18 @@ export default function CatalogDetail() {
                 ) : (
                   <div
                     className="bg-light rounded-4 d-flex align-items-center justify-content-center w-100"
-                    style={{ minHeight: "320px" }}
+                    style={{
+                      minHeight: "320px",
+                    }}
                   >
                     <div className="text-center text-muted">
-                      <i className="ri-image-line" style={{ fontSize: 64 }}></i>
+                      <i
+                        className="ri-image-line"
+                        style={{
+                          fontSize: 64,
+                        }}
+                      ></i>
+
                       <div className="mt-2">Fără imagine disponibilă</div>
                     </div>
                   </div>
@@ -207,7 +334,9 @@ export default function CatalogDetail() {
                 Cod: <strong>{product.code || "—"}</strong>
               </div>
 
-              <h1 className="h2 fw-bold mb-3">{product.title || "Produs fără denumire"}</h1>
+              <h1 className="h2 fw-bold mb-3">
+                {product.title || "Produs fără denumire"}
+              </h1>
 
               <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
                 <span className={`badge bg-${stockInfo.color} px-3 py-2`}>
@@ -216,7 +345,7 @@ export default function CatalogDetail() {
 
                 {hasPrice ? (
                   <span className="fs-4 fw-bold text-primary">
-                    {product.price.toFixed(2)} RON
+                    {product.price.toFixed(2)} {product.currency || "RON"}
                   </span>
                 ) : (
                   <span className="fs-5 fw-semibold text-muted">
@@ -238,7 +367,12 @@ export default function CatalogDetail() {
 
               {product.short_description && (
                 <div className="mb-4">
-                  <p className="text-muted mb-0" style={{ whiteSpace: "pre-line" }}>
+                  <p
+                    className="text-muted mb-0"
+                    style={{
+                      whiteSpace: "pre-line",
+                    }}
+                  >
                     {product.short_description}
                   </p>
                 </div>
@@ -247,10 +381,8 @@ export default function CatalogDetail() {
               {product.content && (
                 <div className="border-top pt-4">
                   <h5 className="fw-bold mb-3">Descriere produs</h5>
-                  <div
-                    className="catalog-content"
-                    dangerouslySetInnerHTML={{ __html: product.content }}
-                  />
+
+                  <RichContent html={product.content} />
                 </div>
               )}
             </div>

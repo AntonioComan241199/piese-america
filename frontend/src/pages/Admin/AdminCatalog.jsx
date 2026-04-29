@@ -1,6 +1,12 @@
 // frontend/src/pages/Admin/AdminCatalog.jsx
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import stockProductService from "../../api/stockProductService";
@@ -14,7 +20,54 @@ const STOCK_LABELS = {
   not_in_stock: { label: "Indisponibil", color: "danger" },
 };
 
+// ─── ActionButtons component ────────────────────────────────────────────────
+function ActionButtons({ product, deletingId, openDeleteModal }) {
+  const isDeleting = deletingId === product._id;
+
+  return (
+    <div className="d-flex flex-wrap gap-2">
+      <Link
+        to={`/admin/catalog/${product._id}/edit`}
+        className="btn btn-sm btn-outline-primary"
+        aria-label={`Editează ${product.title || "produs"}`}
+        style={{ cursor: "pointer" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <i className="ri-edit-line me-1"></i>
+        <span className="d-inline d-xl-none">Editează</span>
+      </Link>
+
+      <button
+        type="button"
+        className="btn btn-sm btn-outline-danger"
+        style={{ cursor: "pointer" }}
+        onClick={(e) => {
+          e.stopPropagation();
+          openDeleteModal(product);
+        }}
+        disabled={isDeleting}
+        aria-label={`Șterge ${product.title || "produs"}`}
+      >
+        {isDeleting ? (
+          <span
+            className="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          />
+        ) : (
+          <>
+            <i className="ri-delete-bin-line me-1"></i>
+            <span className="d-inline d-xl-none">Șterge</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 export default function AdminCatalog() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialPage = Number(searchParams.get("page")) || 1;
@@ -54,9 +107,17 @@ export default function AdminCatalog() {
     setSearchParams(params, { replace: true });
   }, [page, debouncedSearch, setSearchParams]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
   const getImageUrl = useCallback((image) => {
     if (!image) return null;
-    if (image.startsWith("http://") || image.startsWith("https://")) return image;
+
+    if (image.startsWith("http://") || image.startsWith("https://")) {
+      return image;
+    }
+
     return `${API_ORIGIN}${image.startsWith("/") ? image : `/${image}`}`;
   }, []);
 
@@ -77,14 +138,9 @@ export default function AdminCatalog() {
         const safeProducts = Array.isArray(res?.products) ? res.products : [];
 
         const totalProducts =
-          res?.total ??
-          res?.pagination?.totalProducts ??
-          safeProducts.length;
+          res?.total ?? res?.pagination?.totalProducts ?? safeProducts.length;
 
-        const totalPages =
-          res?.pages ??
-          res?.pagination?.totalPages ??
-          1;
+        const totalPages = res?.pages ?? res?.pagination?.totalPages ?? 1;
 
         setProducts(safeProducts);
         setTotal(totalProducts);
@@ -108,10 +164,6 @@ export default function AdminCatalog() {
   );
 
   useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
-
-  useEffect(() => {
     loadProducts(page, debouncedSearch);
   }, [page, debouncedSearch, loadProducts]);
 
@@ -131,9 +183,35 @@ export default function AdminCatalog() {
 
   const closeDeleteModal = useCallback(() => {
     if (deletingId) return;
+
     setShowDeleteModal(false);
     setProductToDelete(null);
   }, [deletingId]);
+
+  const goToEditPage = useCallback(
+    (productId) => {
+      if (!productId) return;
+      navigate(`/admin/catalog/${productId}/edit`);
+    },
+    [navigate]
+  );
+
+  const handleRowClick = useCallback(
+    (productId) => {
+      goToEditPage(productId);
+    },
+    [goToEditPage]
+  );
+
+  const handleRowKeyDown = useCallback(
+    (e, productId) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+
+      e.preventDefault();
+      goToEditPage(productId);
+    },
+    [goToEditPage]
+  );
 
   const confirmDelete = useCallback(async () => {
     if (!productToDelete?._id) return;
@@ -142,6 +220,7 @@ export default function AdminCatalog() {
 
     try {
       await stockProductService.remove(productToDelete._id);
+
       toast.success("Produsul a fost șters.");
 
       const isLastItemOnPage = products.length === 1 && page > 1;
@@ -165,7 +244,10 @@ export default function AdminCatalog() {
 
   const goToPage = useCallback(
     (pageNum) => {
-      if (loading || pageNum < 1 || pageNum > pages || pageNum === page) return;
+      if (loading || pageNum < 1 || pageNum > pages || pageNum === page) {
+        return;
+      }
+
       setPage(pageNum);
     },
     [loading, page, pages]
@@ -175,8 +257,21 @@ export default function AdminCatalog() {
     if (pages <= 1) return [];
 
     const items = [];
-    const addPage = (value) => items.push({ type: "page", value, active: value === page });
-    const addEllipsis = (key) => items.push({ type: "ellipsis", value: key });
+
+    const addPage = (value) => {
+      items.push({
+        type: "page",
+        value,
+        active: value === page,
+      });
+    };
+
+    const addEllipsis = (key) => {
+      items.push({
+        type: "ellipsis",
+        value: key,
+      });
+    };
 
     addPage(1);
 
@@ -204,6 +299,7 @@ export default function AdminCatalog() {
             Catalog Piese în Stoc{" "}
             <span className="badge bg-secondary align-middle">{total}</span>
           </h4>
+
           <p className="text-muted mb-0">
             Administrează produsele din catalogul de piese.
           </p>
@@ -219,9 +315,13 @@ export default function AdminCatalog() {
         <div className="card-body p-3 p-md-4">
           <div className="row g-3 align-items-end">
             <div className="col-md-8 col-lg-5">
-              <label htmlFor="admin-catalog-search" className="form-label fw-semibold">
+              <label
+                htmlFor="admin-catalog-search"
+                className="form-label fw-semibold"
+              >
                 Caută produs
               </label>
+
               <input
                 id="admin-catalog-search"
                 type="text"
@@ -249,68 +349,130 @@ export default function AdminCatalog() {
       {!initialized && loading ? (
         <div className="card border-0 shadow-sm rounded-4">
           <div className="card-body py-5 text-center">
-            <div className="spinner-border text-primary mb-3" role="status" aria-hidden="true" />
+            <div
+              className="spinner-border text-primary mb-3"
+              role="status"
+              aria-hidden="true"
+            />
+
             <div>Se încarcă produsele...</div>
           </div>
         </div>
       ) : (
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div className="card border-0 shadow-sm rounded-4">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th style={{ minWidth: 90 }}>Imagine</th>
-                  <th style={{ minWidth: 130 }}>Cod</th>
-                  <th style={{ minWidth: 240 }}>Denumire</th>
-                  <th style={{ minWidth: 140 }}>Stoc</th>
+                  <th style={{ minWidth: 110 }}>Cod</th>
+                  <th style={{ minWidth: 260 }}>Denumire</th>
+                  <th style={{ minWidth: 120 }}>Stoc</th>
                   <th style={{ minWidth: 120 }}>Preț</th>
-                  <th style={{ minWidth: 100 }}>Activ</th>
-                  <th style={{ minWidth: 140 }}>Acțiuni</th>
+                  <th style={{ minWidth: 90 }}>Activ</th>
+
+                  <th
+                    className="d-none d-xl-table-cell"
+                    style={{
+                      minWidth: 110,
+                      position: "sticky",
+                      right: 0,
+                      background: "#f8f9fa",
+                      zIndex: 2,
+                      boxShadow: "-2px 0 6px rgba(0,0,0,0.06)",
+                    }}
+                  >
+                    Acțiuni
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center text-muted py-5">
+                    <td colSpan={6} className="text-center text-muted py-5">
                       Niciun produs găsit.
                     </td>
                   </tr>
                 ) : (
                   products.map((product) => {
                     const stockInfo =
-                      STOCK_LABELS[product.stock] || STOCK_LABELS.not_in_stock;
+                      STOCK_LABELS[product.stock] ||
+                      STOCK_LABELS.not_in_stock;
+
                     const imageUrl = getImageUrl(product.image);
-                    const isDeleting = deletingId === product._id;
+
                     const hasPrice =
-                      typeof product.price === "number" && Number.isFinite(product.price);
+                      typeof product.price === "number" &&
+                      Number.isFinite(product.price);
 
                     return (
-                      <tr key={product._id}>
-                        <td>
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={product.title || "Produs"}
-                              style={{ width: 56, height: 56, objectFit: "cover" }}
-                              className="rounded border"
-                            />
-                          ) : (
-                            <div
-                              className="d-flex align-items-center justify-content-center rounded border bg-light"
-                              style={{ width: 56, height: 56 }}
-                            >
-                              <i className="ri-image-line text-muted fs-5"></i>
-                            </div>
-                          )}
-                        </td>
-
+                      <tr
+                        key={product._id}
+                        onClick={() => handleRowClick(product._id)}
+                        onKeyDown={(e) => handleRowKeyDown(e, product._id)}
+                        tabIndex={0}
+                        role="button"
+                        style={{ cursor: "pointer" }}
+                      >
                         <td>
                           <code>{product.code || "—"}</code>
                         </td>
 
                         <td>
-                          <div className="fw-semibold">{product.title || "Produs fără denumire"}</div>
+                          <div
+                            className="d-flex align-items-start gap-2"
+                            style={{ minWidth: 0 }}
+                          >
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={product.title || "Produs"}
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  objectFit: "cover",
+                                  flexShrink: 0,
+                                }}
+                                className="rounded border"
+                              />
+                            ) : (
+                              <div
+                                className="d-flex align-items-center justify-content-center rounded border bg-light"
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <i className="ri-image-line text-muted"></i>
+                              </div>
+                            )}
+
+                            <div style={{ minWidth: 0 }}>
+                              <div
+                                className="fw-semibold text-truncate d-flex align-items-center gap-1"
+                                style={{ maxWidth: 260 }}
+                                title={product.title || "Produs fără denumire"}
+                              >
+                                <span className="text-truncate">
+                                  {product.title || "Produs fără denumire"}
+                                </span>
+                                <i
+                                  className="ri-pencil-line d-xl-none text-muted"
+                                  style={{ fontSize: "0.75rem", flexShrink: 0 }}
+                                  title="Click pentru editare"
+                                ></i>
+                              </div>
+
+                              <div className="d-xl-none mt-2">
+                                <ActionButtons
+                                  product={product}
+                                  deletingId={deletingId}
+                                  openDeleteModal={openDeleteModal}
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </td>
 
                         <td>
@@ -321,48 +483,40 @@ export default function AdminCatalog() {
 
                         <td>
                           {hasPrice
-                            ? `${product.price.toFixed(2)} ${product.currency || "RON"}`
+                            ? `${product.price.toFixed(2)} ${
+                                product.currency || "RON"
+                              }`
                             : "Preț la cerere"}
                         </td>
 
                         <td>
                           <span
                             className={`badge bg-${
-                              product.active === "active" ? "success" : "secondary"
+                              product.active === "active"
+                                ? "success"
+                                : "secondary"
                             }`}
                           >
                             {product.active === "active" ? "Activ" : "Inactiv"}
                           </span>
                         </td>
 
-                        <td>
-                          <div className="d-flex gap-2">
-                            <Link
-                              to={`/admin/catalog/${product._id}/edit`}
-                              className="btn btn-sm btn-outline-primary"
-                              aria-label={`Editează ${product.title}`}
-                            >
-                              <i className="ri-edit-line"></i>
-                            </Link>
-
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => openDeleteModal(product)}
-                              disabled={isDeleting}
-                              aria-label={`Șterge ${product.title}`}
-                            >
-                              {isDeleting ? (
-                                <span
-                                  className="spinner-border spinner-border-sm"
-                                  role="status"
-                                  aria-hidden="true"
-                                />
-                              ) : (
-                                <i className="ri-delete-bin-line"></i>
-                              )}
-                            </button>
-                          </div>
+                        <td
+                          className="d-none d-xl-table-cell"
+                          style={{
+                            position: "sticky",
+                            right: 0,
+                            background: "var(--bs-table-bg, #fff)",
+                            zIndex: 1,
+                            boxShadow: "-2px 0 6px rgba(0,0,0,0.06)",
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ActionButtons
+                            product={product}
+                            deletingId={deletingId}
+                            openDeleteModal={openDeleteModal}
+                          />
                         </td>
                       </tr>
                     );
@@ -384,7 +538,11 @@ export default function AdminCatalog() {
         <div className="mt-4">
           <nav aria-label="Paginare catalog admin">
             <ul className="pagination justify-content-center flex-wrap mb-0">
-              <li className={`page-item ${page === 1 || loading ? "disabled" : ""}`}>
+              <li
+                className={`page-item ${
+                  page === 1 || loading ? "disabled" : ""
+                }`}
+              >
                 <button
                   type="button"
                   className="page-link"
@@ -398,7 +556,10 @@ export default function AdminCatalog() {
               {paginationItems.map((item, index) => {
                 if (item.type === "ellipsis") {
                   return (
-                    <li key={`${item.value}-${index}`} className="page-item disabled">
+                    <li
+                      key={`${item.value}-${index}`}
+                      className="page-item disabled"
+                    >
                       <span className="page-link">...</span>
                     </li>
                   );
@@ -421,7 +582,11 @@ export default function AdminCatalog() {
                 );
               })}
 
-              <li className={`page-item ${page === pages || loading ? "disabled" : ""}`}>
+              <li
+                className={`page-item ${
+                  page === pages || loading ? "disabled" : ""
+                }`}
+              >
                 <button
                   type="button"
                   className="page-link"
@@ -444,6 +609,7 @@ export default function AdminCatalog() {
         <Modal.Body>
           Ești sigur că vrei să ștergi produsul{" "}
           <strong>{productToDelete?.title || "fără denumire"}</strong>?
+
           <div className="text-muted small mt-2">
             Această acțiune nu poate fi anulată.
           </div>
