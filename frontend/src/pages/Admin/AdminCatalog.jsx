@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import stockProductService from "../../api/stockProductService";
@@ -21,13 +21,14 @@ const STOCK_LABELS = {
 };
 
 // ─── ActionButtons component ────────────────────────────────────────────────
-function ActionButtons({ product, deletingId, openDeleteModal }) {
+function ActionButtons({ product, deletingId, openDeleteModal, returnTo }) {
   const isDeleting = deletingId === product._id;
 
   return (
     <div className="d-flex flex-wrap gap-2">
       <Link
         to={`/admin/catalog/${product._id}/edit`}
+        state={{ returnTo }}
         className="btn btn-sm btn-outline-primary"
         aria-label={`Editează ${product.title || "produs"}`}
         style={{ cursor: "pointer" }}
@@ -68,7 +69,10 @@ function ActionButtons({ product, deletingId, openDeleteModal }) {
 
 export default function AdminCatalog() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const returnTo = `${location.pathname}${location.search}`;
 
   const initialPage = Number(searchParams.get("page")) || 1;
   const initialSearch = searchParams.get("search") || "";
@@ -107,9 +111,6 @@ export default function AdminCatalog() {
     setSearchParams(params, { replace: true });
   }, [page, debouncedSearch, setSearchParams]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
 
   const getImageUrl = useCallback((image) => {
     if (!image) return null;
@@ -169,6 +170,7 @@ export default function AdminCatalog() {
 
   const handleSearchChange = useCallback((e) => {
     setSearch(e.target.value);
+    setPage(1);
   }, []);
 
   const handleClearSearch = useCallback(() => {
@@ -191,9 +193,12 @@ export default function AdminCatalog() {
   const goToEditPage = useCallback(
     (productId) => {
       if (!productId) return;
-      navigate(`/admin/catalog/${productId}/edit`);
+
+      navigate(`/admin/catalog/${productId}/edit`, {
+        state: { returnTo },
+      });
     },
-    [navigate]
+    [navigate, returnTo]
   );
 
   const handleRowClick = useCallback(
@@ -469,6 +474,7 @@ export default function AdminCatalog() {
                                   product={product}
                                   deletingId={deletingId}
                                   openDeleteModal={openDeleteModal}
+                                  returnTo={returnTo}
                                 />
                               </div>
                             </div>
@@ -516,6 +522,7 @@ export default function AdminCatalog() {
                             product={product}
                             deletingId={deletingId}
                             openDeleteModal={openDeleteModal}
+                            returnTo={returnTo}
                           />
                         </td>
                       </tr>

@@ -3,6 +3,10 @@ import axiosInstance from "./axiosInstance";
 
 const BASE = "/stock-products";
 
+const uploadConfig = {
+  timeout: 60000, // 60 secunde pentru create/update cu imagine
+};
+
 // 1. Obține toate produsele
 export const getAllStockProducts = async (filters = {}) => {
   const res = await axiosInstance.get(BASE, { params: filters });
@@ -17,17 +21,13 @@ export const getStockProductById = async (id) => {
 
 // 3. Creează un produs nou (ADMIN)
 export const createStockProduct = async (formData) => {
-  const res = await axiosInstance.post(BASE, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await axiosInstance.post(BASE, formData, uploadConfig);
   return res.data;
 };
 
 // 4. Actualizează un produs (ADMIN)
 export const updateStockProduct = async (id, formData) => {
-  const res = await axiosInstance.put(`${BASE}/${id}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await axiosInstance.put(`${BASE}/${id}`, formData, uploadConfig);
   return res.data;
 };
 

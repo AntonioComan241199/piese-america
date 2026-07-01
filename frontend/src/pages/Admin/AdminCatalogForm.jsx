@@ -1,6 +1,6 @@
 // frontend/src/pages/Admin/AdminCatalogForm.jsx
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import stockProductService from "../../api/stockProductService";
 
@@ -46,6 +46,9 @@ export default function AdminCatalogForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+
+  const location = useLocation();
+  const returnTo = location.state?.returnTo || "/admin/catalog";
 
   const [form, setForm] = useState(INITIAL_FORM);
   const [image, setImage] = useState(null);
@@ -167,7 +170,7 @@ export default function AdminCatalogForm() {
       } catch (err) {
         console.error("Eroare la încărcarea produsului:", err);
         toast.error("Nu am putut încărca produsul.");
-        navigate("/admin/catalog", { replace: true });
+        navigate(returnTo, { replace: true });
       } finally {
         if (currentRequestId === requestIdRef.current) {
           setLoadingProduct(false);
@@ -176,7 +179,7 @@ export default function AdminCatalogForm() {
     };
 
     fetchProduct();
-  }, [id, isEdit, navigate]);
+  }, [id, isEdit, navigate, returnTo]);
 
   useEffect(() => {
     return () => {
@@ -240,7 +243,13 @@ export default function AdminCatalogForm() {
       const fd = new FormData();
 
       Object.entries(normalizedForm).forEach(([key, value]) => {
-        fd.append(key, value);
+        if (typeof value === "boolean") {
+          fd.append(key, value ? "1" : "0");
+        } else if (value === null || value === undefined) {
+          fd.append(key, "");
+        } else {
+          fd.append(key, value);
+        }
       });
 
       if (image) {
@@ -255,18 +264,18 @@ export default function AdminCatalogForm() {
         toast.success("Produsul a fost adăugat.");
       }
 
-      navigate("/admin/catalog");
+      navigate(returnTo);
     } catch (err) {
       console.error("Eroare la salvare:", err);
       toast.error(err?.response?.data?.error || "Eroare la salvare.");
     } finally {
       setSaving(false);
     }
-  }, [form, id, image, isEdit, navigate, validateForm]);
+  }, [form, id, image, isEdit, navigate, returnTo, validateForm]);
 
   const handleCancel = useCallback(() => {
-    navigate("/admin/catalog");
-  }, [navigate]);
+    navigate(returnTo);
+  }, [navigate, returnTo]);
 
   if (loadingProduct) {
     return (
