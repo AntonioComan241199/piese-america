@@ -11,6 +11,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { addToCart } from "../../slices/cartSlice";
 import stockProductService from "../../api/stockProductService";
+import { Helmet } from 'react-helmet-async';
 
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
 
@@ -275,6 +276,28 @@ export default function CatalogDetail() {
 
   return (
     <div className="container py-4 py-lg-5">
+      <Helmet>
+        <title>{product.title} - Piese Auto America</title>
+        <meta
+          name="description"
+          content={
+            product.short_description
+              ? product.short_description.slice(0, 160)
+              : `${product.title} – Cod: ${product.code || 'N/A'}. Disponibil în stoc la Piese Auto America.`
+          }
+        />
+        <meta property="og:title" content={`${product.title} - Piese Auto America`} />
+        <meta
+          property="og:description"
+          content={
+            product.short_description
+              ? product.short_description.slice(0, 160)
+              : `${product.title} disponibil în stoc. Livrare rapidă.`
+          }
+        />
+        {imageUrl && <meta property="og:image" content={imageUrl} />}
+        <meta property="og:type" content="product" />
+      </Helmet>
       <div className="d-flex flex-wrap gap-2 mb-4">
         <button
           type="button"
@@ -344,9 +367,14 @@ export default function CatalogDetail() {
                 </span>
 
                 {hasPrice ? (
-                  <span className="fs-4 fw-bold text-primary">
-                    {product.price.toFixed(2)} {product.currency || "RON"}
-                  </span>
+                  <div className="d-flex flex-column">
+                    <span className="fs-4 fw-bold text-primary">
+                      {(product.price * 1.21).toFixed(2)} {product.currency || "RON"} (cu TVA)
+                    </span>
+                    <span className="text-muted small">
+                      {product.price.toFixed(2)} {product.currency || "RON"} (fără TVA)
+                    </span>
+                  </div>
                 ) : (
                   <span className="fs-5 fw-semibold text-muted">
                     Preț la cerere

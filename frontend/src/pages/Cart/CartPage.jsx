@@ -22,10 +22,13 @@ const CartPage = () => {
       return acc + ((Number(item.price) || 0) * (Number(item.qty) || 0));
     }, 0);
 
+    const totalPriceWithTVA = totalPrice * 1.21;
+
     return {
       distinctProducts,
       totalUnits,
       totalPrice,
+      totalPriceWithTVA,
     };
   }, [items]);
 
@@ -142,14 +145,22 @@ const CartPage = () => {
 
                       <div className="mb-1">
                         <span className="fw-bold text-primary fs-5">
-                          {hasPrice ? `${itemPrice.toFixed(2)} RON` : 'Preț la cerere'}
+                          {hasPrice ? `${(itemPrice * 1.21).toFixed(2)} RON / buc (cu TVA)` : 'Preț la cerere'}
                         </span>
                       </div>
-
                       {hasPrice && (
-                        <small className="text-muted">
-                          Subtotal: {lineTotal.toFixed(2)} RON
+                        <small className="text-muted d-block">
+                          {itemPrice.toFixed(2)} RON / buc (fără TVA)
                         </small>
+                      )}
+
+                      {hasPrice && itemQty > 1 && (
+                        <div className="mt-1">
+                          <span className="fw-semibold text-dark">
+                            Subtotal: {(lineTotal * 1.21).toFixed(2)} RON
+                          </span>
+                          <small className="text-muted ms-1">(cu TVA, {itemQty} buc)</small>
+                        </div>
                       )}
                     </Col>
 
@@ -242,10 +253,15 @@ const CartPage = () => {
 
               <hr />
 
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted">Total (fără TVA)</span>
+                <span className="fw-semibold">{cartSummary.totalPrice.toFixed(2)} RON</span>
+              </div>
+
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <span className="fw-bold fs-5">Total estimat</span>
+                <span className="fw-bold fs-5">Total cu TVA (21%)</span>
                 <span className="fw-bold fs-4 text-primary">
-                  {cartSummary.totalPrice.toFixed(2)} RON
+                  {cartSummary.totalPriceWithTVA.toFixed(2)} RON
                 </span>
               </div>
 

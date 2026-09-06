@@ -102,6 +102,8 @@ const CheckoutPage = () => {
     return items.reduce((acc, item) => acc + ((item.price || 0) * (item.qty || 0)), 0);
   }, [items]);
 
+  const totalPriceWithTVA = useMemo(() => totalPrice * 1.21, [totalPrice]);
+
   useEffect(() => {
     if (items.length === 0) {
       navigate('/cart');
@@ -245,10 +247,6 @@ const CheckoutPage = () => {
       if (field === 'city' && !isFilled(normalizedValue)) errorMessage = 'Orașul este obligatoriu.';
       if (field === 'street' && !isFilled(normalizedValue)) errorMessage = 'Strada este obligatorie.';
       if (field === 'number' && !isFilled(normalizedValue)) errorMessage = 'Numărul este obligatoriu.';
-
-      if (field === 'county' && currentSectionData?.city) {
-        // nu setăm eroare aici, doar resetăm orașul în handler
-      }
     }
 
     if (errorMessage) {
@@ -445,6 +443,7 @@ const CheckoutPage = () => {
         qty: item.qty || 1,
       })),
       totalAmount: totalPrice,
+      totalAmountWithTVA: totalPriceWithTVA,
     };
 
     setLoading(true);
@@ -474,6 +473,7 @@ const CheckoutPage = () => {
     deliveryOption,
     userType,
     totalPrice,
+    totalPriceWithTVA,
     dispatch,
     navigate,
   ]);
@@ -725,96 +725,87 @@ const CheckoutPage = () => {
               <h5 className="mb-4 text-secondary border-bottom pb-2 fw-bold">Opțiuni de Livrare</h5>
 
               <div className="mb-4 d-grid gap-2">
-              <div
-                role="button"
-                tabIndex={0}
-                className={`p-3 rounded border d-flex align-items-center justify-content-between ${
-                  deliveryOption === 'same_as_billing'
-                    ? 'border-primary bg-primary bg-opacity-10'
-                    : 'border-light bg-light'
-                }`}
-                onClick={() => setDeliveryOption('same_as_billing')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    setDeliveryOption('same_as_billing');
-                  }
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <div>
-                  <div className="fw-semibold">Aceeași cu adresa de facturare</div>
-                  <small className="text-muted">Vom folosi automat adresa introdusă mai sus.</small>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`p-3 rounded border d-flex align-items-center justify-content-between ${
+                    deliveryOption === 'same_as_billing'
+                      ? 'border-primary bg-primary bg-opacity-10'
+                      : 'border-light bg-light'
+                  }`}
+                  onClick={() => setDeliveryOption('same_as_billing')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setDeliveryOption('same_as_billing');
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div>
+                    <div className="fw-semibold">Aceeași cu adresa de facturare</div>
+                    <small className="text-muted">Vom folosi automat adresa introdusă mai sus.</small>
+                  </div>
+                  <Form.Check
+                    type="radio"
+                    name="delivery"
+                    checked={deliveryOption === 'same_as_billing'}
+                    onChange={() => setDeliveryOption('same_as_billing')}
+                    className="ms-3"
+                  />
                 </div>
 
-                <Form.Check
-                  type="radio"
-                  name="delivery"
-                  checked={deliveryOption === 'same_as_billing'}
-                  onChange={() => setDeliveryOption('same_as_billing')}
-                  className="ms-3"
-                />
-              </div>
-
-              <div
-                role="button"
-                tabIndex={0}
-                className={`p-3 rounded border d-flex align-items-center justify-content-between ${
-                  deliveryOption === 'pickup'
-                    ? 'border-primary bg-primary bg-opacity-10'
-                    : 'border-light bg-light'
-                }`}
-                onClick={() => setDeliveryOption('pickup')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    setDeliveryOption('pickup');
-                  }
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <div>
-                  <div className="fw-semibold">Ridicare de la sediul central</div>
-                  <small className="text-muted">Ridici personal comanda din locația noastră.</small>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`p-3 rounded border d-flex align-items-center justify-content-between ${
+                    deliveryOption === 'pickup'
+                      ? 'border-primary bg-primary bg-opacity-10'
+                      : 'border-light bg-light'
+                  }`}
+                  onClick={() => setDeliveryOption('pickup')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setDeliveryOption('pickup');
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div>
+                    <div className="fw-semibold">Ridicare de la sediul central</div>
+                    <small className="text-muted">Ridici personal comanda din locația noastră.</small>
+                  </div>
+                  <Form.Check
+                    type="radio"
+                    name="delivery"
+                    checked={deliveryOption === 'pickup'}
+                    onChange={() => setDeliveryOption('pickup')}
+                    className="ms-3"
+                  />
                 </div>
 
-                <Form.Check
-                  type="radio"
-                  name="delivery"
-                  checked={deliveryOption === 'pickup'}
-                  onChange={() => setDeliveryOption('pickup')}
-                  className="ms-3"
-                />
-              </div>
-
-              <div
-                role="button"
-                tabIndex={0}
-                className={`p-3 rounded border d-flex align-items-center justify-content-between ${
-                  deliveryOption === 'new_address'
-                    ? 'border-primary bg-primary bg-opacity-10'
-                    : 'border-light bg-light'
-                }`}
-                onClick={() => setDeliveryOption('new_address')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    setDeliveryOption('new_address');
-                  }
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <div>
-                  <div className="fw-semibold">Altă adresă de livrare</div>
-                  <small className="text-muted">Completezi o adresă separată pentru livrare.</small>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`p-3 rounded border d-flex align-items-center justify-content-between ${
+                    deliveryOption === 'new_address'
+                      ? 'border-primary bg-primary bg-opacity-10'
+                      : 'border-light bg-light'
+                  }`}
+                  onClick={() => setDeliveryOption('new_address')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setDeliveryOption('new_address');
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div>
+                    <div className="fw-semibold">Altă adresă de livrare</div>
+                    <small className="text-muted">Completezi o adresă separată pentru livrare.</small>
+                  </div>
+                  <Form.Check
+                    type="radio"
+                    name="delivery"
+                    checked={deliveryOption === 'new_address'}
+                    onChange={() => setDeliveryOption('new_address')}
+                    className="ms-3"
+                  />
                 </div>
-
-                <Form.Check
-                  type="radio"
-                  name="delivery"
-                  checked={deliveryOption === 'new_address'}
-                  onChange={() => setDeliveryOption('new_address')}
-                  className="ms-3"
-                />
               </div>
-            </div>
 
               {deliveryOption === 'new_address' && renderAddressFields(deliveryAddress, 'delivery')}
             </Card>
@@ -835,20 +826,34 @@ const CheckoutPage = () => {
                       <div style={{ maxWidth: '70%' }}>
                         <div className="fw-bold text-truncate">{item.title}</div>
                         <small className="text-muted">
-                          {itemQty} buc. x {itemPrice.toFixed(2)} RON
+                          {itemQty} buc. × {itemPrice.toFixed(2)} RON / buc (fără TVA)
+                        </small>
+                        <br />
+                        <small className="text-warning-emphasis">
+                          {(itemPrice * 1.21).toFixed(2)} RON / buc (cu TVA)
                         </small>
                       </div>
-                      <div className="fw-bold text-warning">
-                        {lineTotal.toFixed(2)} RON
+                      <div className="text-end">
+                        <div className="fw-bold text-warning">
+                          {(lineTotal * 1.21).toFixed(2)} RON
+                        </div>
+                        <small className="text-muted">
+                          {lineTotal.toFixed(2)} fără TVA
+                        </small>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
+              <div className="d-flex justify-content-between mb-2 text-muted">
+                <span>Total fără TVA:</span>
+                <span>{totalPrice.toFixed(2)} RON</span>
+              </div>
+
               <div className="d-flex justify-content-between fs-4 fw-bold mb-4">
-                <span>Total de plată:</span>
-                <span className="text-warning">{totalPrice.toFixed(2)} RON</span>
+                <span>Total cu TVA (21%):</span>
+                <span className="text-warning">{totalPriceWithTVA.toFixed(2)} RON</span>
               </div>
 
               <Button

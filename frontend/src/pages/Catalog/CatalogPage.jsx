@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { addToCart } from "../../slices/cartSlice";
 import stockProductService from "../../api/stockProductService";
+import { Helmet } from 'react-helmet-async';
 
 const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
 const PAGE_SIZE = 12;
@@ -284,6 +285,13 @@ export default function CatalogPage() {
 
   return (
     <div className="container py-4 py-lg-5">
+      <Helmet>
+        <title>Catalog Piese în Stoc - Piese Auto America</title>
+        <meta name="description" content="Catalog complet de piese auto disponibile în stoc. Caută rapid după cod sau denumire și adaugă direct în coș." />
+        <meta property="og:title" content="Catalog Piese în Stoc - Piese Auto America" />
+        <meta property="og:description" content="Catalog complet de piese auto disponibile în stoc. Livrare rapidă în România." />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
           <h2 className="mb-1 fw-bold">Catalog Piese în Stoc</h2>
@@ -406,7 +414,12 @@ export default function CatalogPage() {
 
                       <div className="mt-auto">
                         <p className="mb-3 fs-5 fw-bold text-primary">
-                          {hasPrice ? `${product.price.toFixed(2)} RON` : "Preț la cerere"}
+                          {hasPrice
+                            ? `${(product.price * 1.21).toFixed(2)} RON (cu TVA)`
+                            : "Preț la cerere"}
+                        </p>
+                        <p className="mb-2 text-muted small">
+                          {hasPrice && `${product.price.toFixed(2)} RON (fără TVA)`}
                         </p>
 
                         <div className="d-flex gap-2">

@@ -1,5 +1,5 @@
 import React from "react";
-import Helmet from "../components/Helmet/Helmet";
+import { Helmet } from 'react-helmet-async';
 import { Carousel, Button, Row, Col, Container } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
@@ -15,11 +15,11 @@ import "../styles/RequestOrder.css";
 
 const Home = () => {
   return (
-    <Helmet title="Piese Auto Americane | Import Direct SUA - Livrare Rapidă">
-      <meta
-        name="description"
-        content="Comandă piese auto originale și aftermarket pentru Ford, Chevrolet, Dodge, Mustang, Jeep. Import direct SUA. Livrare rapidă în România."
-      />
+    <>
+      <Helmet>
+        <title>Piese Auto Americane | Import Direct SUA - Livrare Rapidă</title>
+        <meta name="description" content="Comandă piese auto originale și aftermarket pentru Ford, Chevrolet, Dodge, Mustang, Jeep. Import direct SUA. Livrare rapidă în România." />
+      </Helmet>
 
       {/* Hero Section */}
       <section className="p-0 hero__slider-section">
@@ -159,7 +159,7 @@ const Home = () => {
           Cere Oferta
         </Button>
       </section>
-    </Helmet>
+    </>
   );
 };
 
