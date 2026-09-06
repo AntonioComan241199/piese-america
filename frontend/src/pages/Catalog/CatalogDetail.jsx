@@ -277,26 +277,72 @@ export default function CatalogDetail() {
   return (
     <div className="container py-4 py-lg-5">
       <Helmet>
-        <title>{product.title} - Piese Auto America</title>
+        <title>{product.code ? `${product.code} - ` : ''}{product.title} | Piese Auto America</title>
         <meta
           name="description"
           content={
             product.short_description
-              ? product.short_description.slice(0, 160)
-              : `${product.title} – Cod: ${product.code || 'N/A'}. Disponibil în stoc la Piese Auto America.`
+              ? `Cod: ${product.code || 'N/A'} - ${product.short_description.slice(0, 140)}`
+              : `${product.title} – Cod: ${product.code || 'N/A'}. Disponibil în stoc la Piese Auto America. Livrare rapidă în România.`
           }
         />
-        <meta property="og:title" content={`${product.title} - Piese Auto America`} />
+        <meta property="og:title" content={`${product.code ? `${product.code} - ` : ''}${product.title} | Piese Auto America`} />
         <meta
           property="og:description"
           content={
             product.short_description
-              ? product.short_description.slice(0, 160)
-              : `${product.title} disponibil în stoc. Livrare rapidă.`
+              ? `Cod: ${product.code || 'N/A'} - ${product.short_description.slice(0, 140)}`
+              : `${product.title} disponibil în stoc. Livrare rapidă în România.`
           }
         />
         {imageUrl && <meta property="og:image" content={imageUrl} />}
         <meta property="og:type" content="product" />
+        <meta name="keywords" content={[
+          product.code,
+          product.title,
+          product.code && `cumpara ${product.code}`,
+          product.code && `${product.code} pret`,
+          product.code && `${product.code} romania`,
+          product.title && `${product.title} pret`,
+          product.title && `${product.title} online`,
+          product.title && `${product.title} ieftin`,
+          'piese auto americane',
+          'piese auto america',
+          'piese auto import sua',
+          'piese auto online romania',
+        ].filter(Boolean).join(', ')} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.title,
+            "sku": product.code,
+            "mpn": product.code,
+            "description": product.short_description || product.title,
+            ...(imageUrl ? { "image": imageUrl } : {}),
+            "brand": {
+              "@type": "Brand",
+              "name": "Piese Auto America"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": `https://www.pieseautoamerica.ro/catalog/${product._id}`,
+              "priceCurrency": product.currency || "RON",
+              ...(hasPrice ? { "price": (product.price * 1.21).toFixed(2) } : {}),
+              "availability": product.stock === "in_stock"
+                ? "https://schema.org/InStock"
+                : product.stock === "in_supplier_stock"
+                ? "https://schema.org/LimitedAvailability"
+                : "https://schema.org/OutOfStock",
+              "itemCondition": "https://schema.org/NewCondition",
+              "seller": {
+                "@type": "Organization",
+                "name": "Piese Auto America",
+                "url": "https://www.pieseautoamerica.ro"
+              }
+            }
+          })}
+        </script>
       </Helmet>
       <div className="d-flex flex-wrap gap-2 mb-4">
         <button
