@@ -453,6 +453,17 @@ const CheckoutPage = () => {
 
       if ([200, 201, 204].includes(response.status)) {
         toast.success('Comanda a fost trimisă cu succes! Veți fi contactat în curând.');
+        
+        // Google Ads conversion tracking
+        if (window.gtag) {
+          window.gtag('event', 'conversion', {
+            send_to: 'AW-16859159917/vKR0CKzjhPAcEO26iec-',
+            value: totalPriceWithTVA,
+            currency: 'RON',
+            transaction_id: response.data?.orderId || '',
+          });
+        }
+
         dispatch(clearCart());
         navigate('/');
       }
