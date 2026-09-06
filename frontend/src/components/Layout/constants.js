@@ -101,5 +101,5 @@ export const ANIMATIONS = {
 export const SEO_CONFIG = {
   DEFAULT_TITLE: 'Piese Auto America',
   DEFAULT_DESCRIPTION: 'Piese auto de calitate pentru toate tipurile de vehicule',
-  SITE_INFO_MESSAGE: 'Comandă instant din stoc intern piese pentru o gam variată de auto!'
+  SITE_INFO_MESSAGE: 'Comandă instant din stoc intern piese pentru o gamă variată de auto!'
 };
